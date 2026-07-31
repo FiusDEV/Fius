@@ -136,7 +136,7 @@ install_fius_npm() {
     fi
     
     info "Installing Fius CLI via npm..."
-    npm install -g "fius${version_flag}"
+    npm install -g "@fiusdev/fius${version_flag}"
     success "Fius CLI installed successfully"
 }
 

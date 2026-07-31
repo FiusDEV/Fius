@@ -1,5 +1,5 @@
 {
-  "name": "fius",
+  "name": "@fiusdev/fius",
   "version": "1.0.0",
   "type": "module",
   "bin": {

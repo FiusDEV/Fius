@@ -15,7 +15,7 @@ AI-powered CLI and Web platform for coding, reasoning, and real-time collaborati
 ### npm (recommended)
 
 ```bash
-npm install -g fius
+npm install -g @fiusdev/fius
 ```
 
 ### curl (Linux / macOS)
