@@ -631,9 +631,18 @@ export class ToolManager {
                 }
             }
         }
+
+        let buildMode: 'build' | 'plan' = 'build';
+        try {
+            const { getBuildModeAsync } = await import('../utils/build-mode.js');
+            buildMode = await getBuildModeAsync();
+        } catch {}
+        try { require('fs').appendFileSync(require('path').join(require('os').homedir(), 'Desktop', 'fius-debug.log'), `[tool-manager] buildMode=${buildMode}\n`); } catch {}
+
         const baseContext: DynamicContributorContext = {
             mcpManager: this.mcpManager,
             workspace: baseWorkspace,
+            buildMode,
             ...(sessionId !== undefined
                 ? {
                       session: {

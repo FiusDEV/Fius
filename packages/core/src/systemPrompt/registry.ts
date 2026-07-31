@@ -4,7 +4,7 @@ import { DynamicContributorContext } from './types.js';
 
 export type DynamicPromptGenerator = (context: DynamicContributorContext) => Promise<string>;
 
-export const PROMPT_GENERATOR_SOURCES = ['date', 'env', 'resources'] as const;
+export const PROMPT_GENERATOR_SOURCES = ['date', 'env', 'resources', 'buildMode'] as const;
 
 export type PromptGeneratorSource = (typeof PROMPT_GENERATOR_SOURCES)[number];
 
@@ -12,6 +12,7 @@ export const PROMPT_GENERATOR_REGISTRY: Record<PromptGeneratorSource, DynamicPro
     date: handlers.getCurrentDate,
     env: handlers.getEnvironmentInfo,
     resources: handlers.getResourceData,
+    buildMode: handlers.getBuildModeInfo,
 };
 
 export function getPromptGenerator(

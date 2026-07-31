@@ -31,23 +31,21 @@ export function registerGracefulShutdown(
     let isShuttingDown = false;
 
     const performShutdown = async (signal: string) => {
-        if (isShuttingDown) return;
+        if (isShuttingDown) {
+            process.exit(0);
+        }
         isShuttingDown = true;
 
-        logger.info(`Received ${signal}, shutting down gracefully...`);
         try {
             const agent = getCurrentAgent();
             if (typeof agent.stop === 'function') {
-                await agent.stop();
+                await Promise.race([
+                    agent.stop(),
+                    new Promise((resolve) => setTimeout(resolve, 1000)),
+                ]);
             }
-            process.exit(0);
-        } catch (error) {
-            logger.error(
-                `Shutdown error: ${error instanceof Error ? error.message : String(error)}`,
-                { error }
-            );
-            process.exit(1);
-        }
+        } catch {}
+        process.exit(0);
     };
 
     signals.forEach((signal) => {

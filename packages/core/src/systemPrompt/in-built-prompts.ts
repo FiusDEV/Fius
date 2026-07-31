@@ -74,3 +74,30 @@ export async function getResourceData(context: DynamicContributorContext): Promi
     );
     return `<resources>\n${parts.join('\n')}\n</resources>`;
 }
+
+export async function getBuildModeInfo(context: DynamicContributorContext): Promise<string> {
+    const mode = context.buildMode || 'build';
+
+    if (mode === 'plan') {
+        return `<build_mode>
+Current mode: PLAN
+You are in Plan mode. In this mode you MUST:
+- ONLY think, analyze, and plan
+- Do NOT create, edit, or delete any files
+- Do NOT run commands that modify the filesystem
+- Do NOT use file creation or editing tools
+- Provide detailed plans, architecture decisions, and step-by-step approaches
+- When the user asks you to implement something, describe WHAT you would do and HOW, but do NOT actually do it
+- If the user explicitly asks you to switch to Build mode, tell them to press Ctrl+B or use /mode command
+</build_mode>`;
+    }
+
+    return `<build_mode>
+Current mode: BUILD
+You are in Build mode. In this mode you CAN:
+- Create, edit, and delete files
+- Run commands
+- Implement the user's requests fully
+- Plan AND execute
+</build_mode>`;
+}

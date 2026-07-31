@@ -49,6 +49,7 @@ interface InkCLIProps {
     soundService: SoundNotificationService | null;
     configFilePath: string | null;
     initialBypassPermissions?: boolean;
+    initialBuildMode?: 'build' | 'plan';
 }
 
 
@@ -60,6 +61,7 @@ function InkCLIInner({
     soundService,
     configFilePath,
     initialBypassPermissions = false,
+    initialBuildMode = 'build',
 }: InkCLIProps) {
     // Selection hint callback for alternate buffer mode
     const [, setSelectionHintShown] = useState(false);
@@ -87,6 +89,7 @@ function InkCLIInner({
                         useStreaming={streaming}
                         configFilePath={configFilePath}
                         initialBypassPermissions={initialBypassPermissions}
+                        initialBuildMode={initialBuildMode}
                         headerData={headerData}
                     />
                 </ScrollProvider>
@@ -105,6 +108,7 @@ function InkCLIInner({
                 useStreaming={streaming}
                 configFilePath={configFilePath}
                 initialBypassPermissions={initialBypassPermissions}
+                initialBuildMode={initialBuildMode}
                 headerData={headerData}
             />
         </SoundProvider>
@@ -120,6 +124,7 @@ export function InkCLIRefactored({
     soundService,
     configFilePath,
     initialBypassPermissions = false,
+    initialBuildMode = 'build',
 }: InkCLIProps) {
     return (
         <ErrorBoundary>
@@ -134,6 +139,7 @@ export function InkCLIRefactored({
                         soundService={soundService}
                         configFilePath={configFilePath}
                         initialBypassPermissions={initialBypassPermissions}
+                        initialBuildMode={initialBuildMode}
                     />
                 </MouseProvider>
             </KeypressProvider>
@@ -153,6 +159,7 @@ export interface InkCLIOptions {
     initialPrompt?: string | undefined;
     
     bypassPermissions?: boolean | undefined;
+    buildMode?: 'build' | 'plan' | undefined;
 }
 
 
@@ -274,6 +281,7 @@ export async function startInkCliRefactored(
             soundService={soundService}
             configFilePath={options.configFilePath ?? null}
             initialBypassPermissions={options.bypassPermissions ?? false}
+            initialBuildMode={options.buildMode ?? 'build'}
         />,
         {
             exitOnCtrlC: false,
@@ -451,4 +459,5 @@ export async function startInkCliRefactored(
 
     process.stdout.write(chalk.dim('─'.repeat(50)) + '\n');
     process.stdout.write('\n' + chalk.rgb(255, 165, 0)('Exiting Fius CLI. Goodbye!') + '\n');
+    process.exit(0);
 }

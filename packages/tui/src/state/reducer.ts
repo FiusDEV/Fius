@@ -360,6 +360,15 @@ export function cliReducer(state: CLIState, action: CLIAction): CLIState {
                 },
             };
 
+        case 'SET_BUILD_MODE':
+            return {
+                ...state,
+                ui: {
+                    ...state.ui,
+                    buildMode: action.payload,
+                },
+            };
+
         default:
             return state;
     }

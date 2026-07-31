@@ -125,6 +125,11 @@ export type CopyModeDisableAction = {
     type: 'COPY_MODE_DISABLE';
 };
 
+export type SetBuildModeAction = {
+    type: 'SET_BUILD_MODE';
+    payload: 'build' | 'plan';
+};
+
 
 export type CLIAction =
     // Input actions
@@ -159,4 +164,6 @@ export type CLIAction =
     | ExitWarningShowAction
     | ExitWarningClearAction
     | CopyModeEnableAction
-    | CopyModeDisableAction;
+    | CopyModeDisableAction
+    // Build mode
+    | SetBuildModeAction;

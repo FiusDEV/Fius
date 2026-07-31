@@ -43,6 +43,7 @@ interface AlternateBufferCLIProps {
     startupInfo: StartupInfo;
     configFilePath: string | null;
     initialBypassPermissions?: boolean;
+    initialBuildMode?: 'build' | 'plan';
     
     onSelectionAttempt?: () => void;
     
@@ -57,6 +58,7 @@ export function AlternateBufferCLI({
     startupInfo,
     configFilePath,
     initialBypassPermissions = false,
+    initialBuildMode = 'build',
     onSelectionAttempt,
     useStreaming = true,
     headerData = null,
@@ -111,6 +113,7 @@ export function AlternateBufferCLI({
         startupInfo,
         onKeyboardScroll: handleKeyboardScroll,
         initialBypassPermissions,
+        initialBuildMode,
     });
 
     // Get current git branch name
@@ -221,6 +224,7 @@ export function AlternateBufferCLI({
                         version={headerData?.version ?? null}
                         email={headerData?.email ?? ''}
                         plan={headerData?.plan ?? null}
+                        buildMode={ui.buildMode}
                     />
                 );
             }
@@ -239,6 +243,7 @@ export function AlternateBufferCLI({
             startupInfo,
             terminalWidth,
             ui.showReasoning,
+            ui.buildMode,
             headerData,
         ]
     );

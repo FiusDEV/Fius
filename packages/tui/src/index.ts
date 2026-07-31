@@ -10,3 +10,11 @@ export {
 export { setTuiRuntimeServices, type TuiRuntimeServices } from './host/index.js';
 
 export { wasLogoutRequested } from './interactive-commands/exit-handler.js';
+
+export {
+    getBuildModeAsync,
+    getBuildMode,
+    setBuildMode,
+    toggleBuildMode,
+    subscribeToBuildMode,
+} from './state/streaming-state.js';

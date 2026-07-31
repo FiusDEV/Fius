@@ -1180,6 +1180,13 @@ export class TurnExecutor {
               )
             : {};
 
+        if (input.contributorContext?.buildMode === 'plan') {
+            const filesystemTools = ['write_file', 'edit_file'];
+            for (const toolName of filesystemTools) {
+                delete toolDefinitions[toolName];
+            }
+        }
+
         let estimatedInputTokens =
             await this.contextManager.getEstimatedNextInputTokens(
                 systemPrompt,

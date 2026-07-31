@@ -19,6 +19,7 @@ export interface DynamicContributorContext {
     workspace?: WorkspaceContext | null;
     environment?: EnvironmentContext;
     session?: SessionContext | null;
+    buildMode?: 'build' | 'plan';
 }
 
 export type DynamicContributorContextOverrides = Partial<DynamicContributorContext>;

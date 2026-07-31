@@ -439,6 +439,7 @@ export const generalCommands: CommandDefinition[] = [
                             { keys: 'Ctrl+C', description: 'Clear input, then exit (press twice)' },
                             { keys: 'Ctrl+T', description: 'Toggle todo list (show/hide todos)' },
                             { keys: 'Escape', description: 'Cancel processing / close overlay' },
+                            { keys: 'Ctrl+B', description: 'Toggle Build/Plan mode' },
                         ],
                     },
                     {

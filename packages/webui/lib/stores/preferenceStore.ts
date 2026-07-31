@@ -4,14 +4,17 @@ import { getApiUrl } from '@/lib/api-url';
 
 export interface PreferenceState {
     isStreaming: boolean;
+    buildMode: 'build' | 'plan';
 }
 
 interface PreferenceStore extends PreferenceState {
     setStreaming: (enabled: boolean) => void;
+    setBuildMode: (mode: 'build' | 'plan') => void;
 }
 
 const defaultState: PreferenceState = {
     isStreaming: false,
+    buildMode: 'build',
 };
 
 export const usePreferenceStore = create<PreferenceStore>()(
@@ -25,6 +28,15 @@ export const usePreferenceStore = create<PreferenceStore>()(
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ enabled }),
+                }).catch(() => {});
+            },
+
+            setBuildMode: (mode) => {
+                set({ buildMode: mode });
+                fetch(`${getApiUrl()}/api/llm/build-mode`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ buildMode: mode }),
                 }).catch(() => {});
             },
         }),

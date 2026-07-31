@@ -278,6 +278,39 @@ export function createFiusApp(options: CreateFiusAppOptions): FiusApp {
         }
     });
 
+    fullApp.get('/api/llm/build-mode', async (ctx) => {
+        try {
+            const settingsPath = getFiusGlobalPath('', 'settings.json');
+            let mode = 'build';
+            if (existsSync(settingsPath)) {
+                const settings = JSON.parse(readFileSync(settingsPath, 'utf-8'));
+                mode = settings.buildMode === 'plan' ? 'plan' : 'build';
+            }
+            return ctx.json({ buildMode: mode }, 200);
+        } catch {
+            return ctx.json({ buildMode: 'build' }, 200);
+        }
+    });
+
+    fullApp.post('/api/llm/build-mode', async (ctx) => {
+        try {
+            const body = await ctx.req.json();
+            const mode = body?.buildMode === 'plan' ? 'plan' : 'build';
+            const settingsPath = getFiusGlobalPath('', 'settings.json');
+            let settings: Record<string, unknown> = {};
+            if (existsSync(settingsPath)) {
+                settings = JSON.parse(readFileSync(settingsPath, 'utf-8'));
+            }
+            settings.buildMode = mode;
+            const dir = nodePath.dirname(settingsPath);
+            if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+            writeFileSync(settingsPath, JSON.stringify(settings, null, 2));
+            return ctx.json({ buildMode: mode }, 200);
+        } catch {
+            return ctx.json({ buildMode: 'build' }, 500);
+        }
+    });
+
     fullApp.doc('/openapi.json', {
         openapi: '3.0.0',
         info: {

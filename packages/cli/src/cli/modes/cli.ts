@@ -239,6 +239,12 @@ export async function runCliMode(context: MainModeContext): Promise<void> {
                 import('../../analytics/index.js'),
             ]);
 
+            let buildMode: 'build' | 'plan' = 'build';
+            try {
+                const { getBuildModeAsync } = await import('@fius/tui');
+                buildMode = await getBuildModeAsync();
+            } catch {}
+
             setTuiRuntimeServices({
                 registerGracefulShutdown,
                 capture: (event, properties) => {
@@ -306,6 +312,7 @@ export async function runCliMode(context: MainModeContext): Promise<void> {
                     configFilePath: resolvedPath,
                     ...(initialPrompt && { initialPrompt }),
                     bypassPermissions: opts.bypassPermissions,
+                    buildMode,
                 });
 
                 const { wasLogoutRequested } = await import('@fius/tui');

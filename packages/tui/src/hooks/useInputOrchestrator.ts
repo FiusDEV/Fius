@@ -493,12 +493,13 @@ export function useInputOrchestrator({
                 return;
             }
 
-            // Ctrl+B: Toggle background task panel
+            // Ctrl+B: Toggle Build/Plan mode
             if (key.ctrl && inputStr === 'b') {
-                setUi((prev) => ({
-                    ...prev,
-                    backgroundTasksExpanded: !prev.backgroundTasksExpanded,
-                }));
+                const newMode = uiRef.current.buildMode === 'build' ? 'plan' : 'build';
+                setUi((prev) => ({ ...prev, buildMode: newMode }));
+                import('../state/streaming-state.js').then(({ setBuildMode }) => {
+                    setBuildMode(newMode);
+                });
                 return;
             }
 

@@ -42,9 +42,10 @@ interface HeaderProps {
     version?: string | null;
     email?: string | null;
     plan?: string | null;
+    buildMode?: 'build' | 'plan';
 }
 
-export function Header({ modelName, sessionId, hasActiveSession, startupInfo, agent, version, email, plan }: HeaderProps) {
+export function Header({ modelName, sessionId, hasActiveSession, startupInfo, agent, version, email, plan, buildMode }: HeaderProps) {
     const { columns } = useTerminalSize();
     const [mcpCount, setMcpCount] = useState(startupInfo.connectedServers.count);
     const [toolCount, setToolCount] = useState(startupInfo.toolCount);
@@ -110,6 +111,10 @@ export function Header({ modelName, sessionId, hasActiveSession, startupInfo, ag
             <Box flexDirection="row">
                 <Text color="gray">Model: </Text>
                 <Text color={modelName ? 'white' : 'gray'}>{modelName || 'Not configured'}</Text>
+                <Text color="gray"> • </Text>
+                <Text color={buildMode === 'plan' ? 'yellow' : 'green'} bold>
+                    {buildMode === 'plan' ? '◇ Plan' : '▶ Build'}
+                </Text>
             </Box>
 
             {hasActiveSession && sessionId && (

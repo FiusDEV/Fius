@@ -274,9 +274,17 @@ export function enrichAgentConfig(
             },
         };
 
+        const buildModeContributor = {
+            id: 'buildMode',
+            type: 'dynamic' as const,
+            source: 'buildMode' as const,
+            priority: 5,
+            enabled: true,
+        };
+
         if (!config.systemPrompt) {
             enriched.systemPrompt = {
-                contributors: [fileContributor],
+                contributors: [buildModeContributor, fileContributor],
             };
         } else if (typeof config.systemPrompt === 'string') {
             enriched.systemPrompt = {
@@ -288,6 +296,7 @@ export function enrichAgentConfig(
                         priority: 0,
                         enabled: true,
                     },
+                    buildModeContributor,
                     fileContributor,
                 ],
             };
@@ -296,9 +305,26 @@ export function enrichAgentConfig(
             const hasDiscoveredInstructions = existingContributors.some(
                 (c) => c.id === 'discovered-instructions'
             );
+            const hasBuildMode = existingContributors.some(
+                (c) => c.id === 'buildMode'
+            );
+            const extraContributors = [];
+            if (!hasBuildMode) {
+                extraContributors.push({
+                    id: 'buildMode',
+                    type: 'dynamic' as const,
+                    source: 'buildMode' as const,
+                    priority: 5,
+                    enabled: true,
+                });
+            }
             if (!hasDiscoveredInstructions) {
                 enriched.systemPrompt = {
-                    contributors: [...existingContributors, fileContributor],
+                    contributors: [...existingContributors, ...extraContributors, fileContributor],
+                };
+            } else if (extraContributors.length > 0) {
+                enriched.systemPrompt = {
+                    contributors: [...existingContributors, ...extraContributors],
                 };
             }
         }

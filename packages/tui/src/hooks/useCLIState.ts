@@ -5,6 +5,7 @@ import { useStdout } from 'ink';
 import { getModelDisplayName } from '@fius/llm';
 import { loadModelPickerState } from '@fius/agent-management';
 import { isUserMessage, type QueuedMessage } from '@fius/core';
+import { subscribeToBuildMode } from '../state/streaming-state.js';
 import type {
     Message,
     StartupInfo,
@@ -30,6 +31,7 @@ export interface UseCLIStateProps {
     initialSessionId: string | null;
     startupInfo: StartupInfo;
     initialBypassPermissions?: boolean;
+    initialBuildMode?: 'build' | 'plan';
     
     onKeyboardScroll?: (direction: 'up' | 'down') => void;
 }
@@ -88,6 +90,7 @@ export function useCLIState({
     initialSessionId,
     startupInfo,
     initialBypassPermissions = false,
+    initialBuildMode = 'build',
     onKeyboardScroll: _onKeyboardScroll,
 }: UseCLIStateProps): CLIStateReturn {
     // Messages state - finalized messages (rendered in <Static>)
@@ -127,6 +130,7 @@ export function useCLIState({
         promptAddWizard: null,
         autoApproveEdits: false,
         bypassPermissions: initialBypassPermissions,
+        buildMode: initialBuildMode,
         todoExpanded: true, // Default to expanded to show full todo list
         backgroundTasksRunning: 0,
         backgroundTasksExpanded: false,
@@ -135,6 +139,14 @@ export function useCLIState({
         insufficientCredits: null,
         commandOutput: null,
     });
+
+    // Subscribe to buildMode changes from settings.json (synced from WebUI)
+    useEffect(() => {
+        const unsubscribe = subscribeToBuildMode((mode: 'build' | 'plan') => {
+            setUi((prev) => ({ ...prev, buildMode: mode }));
+        });
+        return unsubscribe;
+    }, []);
 
     // Input state
     const [input, setInput] = useState<InputState>({

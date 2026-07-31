@@ -8,6 +8,7 @@ import { DynamicContributor } from './contributors.js';
 import type { Logger } from '../logger/v2/types.js';
 import { FiusLogComponent } from '../logger/v2/types.js';
 import { SystemPromptError } from './errors.js';
+import { getBuildModeInfo } from './in-built-prompts.js';
 
 
 export class SystemPromptManager {
@@ -29,6 +30,11 @@ export class SystemPromptManager {
         const contributors: SystemPromptContributor[] = enabledContributors.map((config) =>
             this.createContributor(config)
         );
+
+        const hasBuildMode = contributors.some((c) => (c as any).id === 'buildMode');
+        if (!hasBuildMode) {
+            contributors.push(new DynamicContributor('buildMode', 5, getBuildModeInfo));
+        }
 
         if (memoriesConfig?.enabled) {
             this.logger.debug(

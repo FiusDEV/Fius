@@ -7,7 +7,8 @@ import { BaseSelector, type BaseSelectorHandle } from '../base/BaseSelector.js';
 
 interface BuildModeSelectorProps {
     isVisible: boolean;
-    onSelect: (mode: 'build') => void;
+    currentMode: 'build' | 'plan';
+    onSelect: (mode: 'build' | 'plan') => void;
     onClose: () => void;
 }
 
@@ -16,14 +17,14 @@ export interface BuildModeSelectorHandle {
 }
 
 interface ModeOption {
-    id: 'build';
+    id: 'build' | 'plan';
     label: string;
     description: string;
     icon: string;
 }
 
 const BuildModeSelector = forwardRef<BuildModeSelectorHandle, BuildModeSelectorProps>(
-    function BuildModeSelector({ isVisible, onSelect, onClose }, ref) {
+    function BuildModeSelector({ isVisible, currentMode, onSelect, onClose }, ref) {
         const baseSelectorRef = useRef<BaseSelectorHandle>(null);
 
         useImperativeHandle(
@@ -49,11 +50,18 @@ const BuildModeSelector = forwardRef<BuildModeSelectorHandle, BuildModeSelectorP
                     description: 'Think and implement immediately',
                     icon: '▶',
                 },
+                {
+                    id: 'plan',
+                    label: 'Plan',
+                    description: 'Think and plan only, no file changes',
+                    icon: '◇',
+                },
             ];
 
             setOptions(optionList);
-            setSelectedIndex(0);
-        }, [isVisible]);
+            const idx = optionList.findIndex((o) => o.id === currentMode);
+            setSelectedIndex(idx >= 0 ? idx : 0);
+        }, [isVisible, currentMode]);
 
         const formatItem = (option: ModeOption, isSelected: boolean) => (
             <>
@@ -62,6 +70,9 @@ const BuildModeSelector = forwardRef<BuildModeSelectorHandle, BuildModeSelectorP
                     {option.label}
                 </Text>
                 <Text color={isSelected ? 'white' : 'gray'}> - {option.description}</Text>
+                {option.id === currentMode && (
+                    <Text color="green"> (active)</Text>
+                )}
             </>
         );
 
@@ -80,7 +91,7 @@ const BuildModeSelector = forwardRef<BuildModeSelectorHandle, BuildModeSelectorP
                 onSelect={handleSelect}
                 onClose={onClose}
                 formatItem={formatItem}
-                title="Build Mode"
+                title="Mode"
                 borderColor="cyan"
                 emptyMessage="No options available"
             />

@@ -1731,21 +1731,32 @@ export const OverlayContainer = forwardRef<OverlayContainerHandle, OverlayContai
 
         // Handle build mode selection
         const handleBuildModeSelect = useCallback(
-            (mode: 'build') => {
+            async (mode: 'build' | 'plan') => {
                 setUi((prev) => ({
                     ...prev,
                     activeOverlay: 'none',
                     mcpWizardServerType: null,
+                    buildMode: mode,
                 }));
                 buffer.setText('');
                 setInput((prev) => ({ ...prev, historyIndex: -1 }));
+
+                try {
+                    const { setBuildMode } = await import('@fius/tui');
+                    await setBuildMode(mode);
+                } catch {}
+
+                const label = mode === 'build' ? '▶ Build Mode' : '◇ Plan Mode';
+                const desc = mode === 'build'
+                    ? 'AI will implement immediately'
+                    : 'AI will plan only, no file changes';
 
                 setMessages((prev) => [
                     ...prev,
                     {
                         id: generateMessageId('system'),
                         role: 'system',
-                        content: '▶ Build Mode - AI will implement immediately',
+                        content: `${label} - ${desc}`,
                         timestamp: new Date(),
                     },
                 ]);
@@ -3194,6 +3205,7 @@ export const OverlayContainer = forwardRef<OverlayContainerHandle, OverlayContai
                         <BuildModeSelector
                             ref={buildModeSelectorRef}
                             isVisible={true}
+                            currentMode={ui.buildMode}
                             onSelect={handleBuildModeSelect}
                             onClose={handleClose}
                         />

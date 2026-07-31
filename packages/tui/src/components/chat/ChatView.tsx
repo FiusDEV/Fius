@@ -12,6 +12,7 @@ interface ChatViewProps {
     sessionId?: string | undefined;
     hasActiveSession: boolean;
     startupInfo: StartupInfo;
+    buildMode?: 'build' | 'plan';
 }
 
 
@@ -21,6 +22,7 @@ export function ChatView({
     sessionId,
     hasActiveSession,
     startupInfo,
+    buildMode,
 }: ChatViewProps) {
     return (
         <Box flexDirection="column" flexGrow={1}>
@@ -29,6 +31,7 @@ export function ChatView({
                 sessionId={sessionId}
                 hasActiveSession={hasActiveSession}
                 startupInfo={startupInfo}
+                buildMode={buildMode}
             />
             <MessageList messages={messages} />
         </Box>

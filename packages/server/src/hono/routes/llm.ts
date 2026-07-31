@@ -111,6 +111,34 @@ function writeStreamingSetting(enabled: boolean): void {
     }
 }
 
+function readBuildModeSetting(): string {
+    try {
+        const settingsPath = getFiusGlobalPath('', 'settings.json');
+        if (!existsSync(settingsPath)) return 'build';
+        const settings = JSON.parse(readFileSync(settingsPath, 'utf-8'));
+        return settings.buildMode === 'plan' ? 'plan' : 'build';
+    } catch {
+        return 'build';
+    }
+}
+
+function writeBuildModeSetting(mode: string): void {
+    try {
+        const settingsPath = getFiusGlobalPath('', 'settings.json');
+        let settings: Record<string, unknown> = {};
+        if (existsSync(settingsPath)) {
+            settings = JSON.parse(readFileSync(settingsPath, 'utf-8'));
+        }
+        settings.buildMode = mode === 'plan' ? 'plan' : 'build';
+        const dir = path.dirname(settingsPath);
+        if (!existsSync(dir)) {
+            mkdirSync(dir, { recursive: true });
+        }
+        writeFileSync(settingsPath, JSON.stringify(settings, null, 2));
+    } catch {
+    }
+}
+
 function readPlatformCache(): PlatformModelsResult | null {
     try {
         const cachePath = getFiusGlobalPath('cache', PLATFORM_CACHE_FILE);

@@ -93,7 +93,7 @@ export function BackgroundTasksPanel({
                 </Text>
                 <Text color="gray" dimColor>
                     {' '}
-                    · ctrl+b to hide bg tasks
+                    · esc to hide bg tasks
                 </Text>
             </Box>
             <Box>

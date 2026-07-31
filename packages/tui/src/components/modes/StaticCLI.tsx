@@ -37,6 +37,7 @@ interface StaticCLIProps {
     startupInfo: StartupInfo;
     configFilePath: string | null;
     initialBypassPermissions?: boolean;
+    initialBuildMode?: 'build' | 'plan';
     
     useStreaming?: boolean;
     headerData?: { version: string | null; email: string; plan: string | null } | null;
@@ -49,6 +50,7 @@ export function StaticCLI({
     startupInfo,
     configFilePath,
     initialBypassPermissions = false,
+    initialBuildMode = 'build',
     useStreaming = true,
     headerData = null,
 }: StaticCLIProps) {
@@ -85,7 +87,7 @@ export function StaticCLI({
         initialSessionId,
         startupInfo,
         initialBypassPermissions,
-        // No keyboard scroll handler - let terminal handle scrollback
+        initialBuildMode,
     });
 
     // Get current git branch name
@@ -187,6 +189,7 @@ export function StaticCLI({
                 version={headerData?.version ?? null}
                 email={headerData?.email ?? ''}
                 plan={headerData?.plan ?? null}
+                buildMode={ui.buildMode}
             />
             {/* Static: header + finalized messages - rendered once to terminal scrollback */}
             {/* Key changes on resize to force full re-render after terminal clear */}

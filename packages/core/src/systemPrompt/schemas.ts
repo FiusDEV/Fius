@@ -134,6 +134,13 @@ export const SystemPromptContributorsSchema = z
                     enabled: true,
                 },
                 {
+                    id: 'buildMode',
+                    type: 'dynamic',
+                    priority: 5,
+                    source: 'buildMode',
+                    enabled: true,
+                },
+                {
                     id: 'resources',
                     type: 'dynamic',
                     priority: 20,

@@ -66,6 +66,8 @@ import {
     DropdownMenuSeparator,
 } from './ui/dropdown-menu';
 import { SettingsPanel } from './settings/SettingsPanel';
+import { usePreferenceStore } from '@/lib/stores/preferenceStore';
+import { getApiUrl } from '@/lib/api-url';
 
 import { Tooltip, TooltipTrigger, TooltipContent } from './ui/tooltip';
 import { serverRegistry } from '@/lib/serverRegistry';
@@ -209,6 +211,36 @@ export default function ChatApp({ sessionId }: ChatAppProps = {}) {
     const [copySuccess, setCopySuccess] = useState(false);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
     const [isMobileMenuOpen, setMobileMenuOpen] = useState(false);
+    const buildMode = usePreferenceStore((s) => s.buildMode);
+    const setBuildMode = usePreferenceStore((s) => s.setBuildMode);
+
+    useEffect(() => {
+        fetch(`${getApiUrl()}/api/llm/build-mode`)
+            .then((r) => r.json())
+            .then((data: { buildMode?: string }) => {
+                if (data.buildMode === 'build' || data.buildMode === 'plan') {
+                    if (data.buildMode !== usePreferenceStore.getState().buildMode) {
+                        setBuildMode(data.buildMode);
+                    }
+                }
+            })
+            .catch(() => {});
+
+        const interval = setInterval(() => {
+            fetch(`${getApiUrl()}/api/llm/build-mode`)
+                .then((r) => r.json())
+                .then((data: { buildMode?: string }) => {
+                    if (data.buildMode === 'build' || data.buildMode === 'plan') {
+                        if (data.buildMode !== usePreferenceStore.getState().buildMode) {
+                            setBuildMode(data.buildMode);
+                        }
+                    }
+                })
+                .catch(() => {});
+        }, 2000);
+
+        return () => clearInterval(interval);
+    }, []);
 
     const [isSendingMessage, setIsSendingMessage] = useState(false);
     const [showShortcuts, setShowShortcuts] = useState(false);
@@ -632,6 +664,11 @@ export default function ChatApp({ sessionId }: ChatAppProps = {}) {
 
     useHotkeys('mod+slash', () => setShowShortcuts(true), { preventDefault: true });
 
+    useHotkeys('mod+b', () => {
+        const current = usePreferenceStore.getState().buildMode;
+        setBuildMode(current === 'build' ? 'plan' : 'build');
+    }, { preventDefault: true });
+
     useHotkeys(
         'escape',
         () => {
@@ -753,6 +790,26 @@ export default function ChatApp({ sessionId }: ChatAppProps = {}) {
                                     </TooltipTrigger>
                                     <TooltipContent>Open Chat History (⌘H)</TooltipContent>
                                 </Tooltip>
+                            </div>
+
+                            {/* Build/Plan Mode Toggle */}
+                            <div className="flex items-center gap-0.5 bg-muted/50 rounded-md p-0.5">
+                                <Button
+                                    variant={buildMode === 'build' ? 'default' : 'ghost'}
+                                    size="sm"
+                                    onClick={() => setBuildMode('build')}
+                                    className="h-7 px-2.5 text-xs font-medium"
+                                >
+                                    ▶ Build
+                                </Button>
+                                <Button
+                                    variant={buildMode === 'plan' ? 'default' : 'ghost'}
+                                    size="sm"
+                                    onClick={() => setBuildMode('plan')}
+                                    className="h-7 px-2.5 text-xs font-medium"
+                                >
+                                    ◇ Plan
+                                </Button>
                             </div>
                         </div>
 
@@ -1306,18 +1363,22 @@ export default function ChatApp({ sessionId }: ChatAppProps = {}) {
                         </DialogHeader>
 
                         <div className="space-y-3">
-                            {[
-                                { key: '⌘H', desc: 'Toggle chat history panel' },
-                                { key: '⌘K', desc: 'Create new chat' },
-                                { key: '⌘J', desc: 'Toggle tools panel' },
-                                { key: '⌘M', desc: 'Toggle memories panel' },
-                                { key: '⌘⇧S', desc: 'Search conversations' },
-                                { key: '⌘L', desc: 'Open MCP Servers' },
-                                { key: '⌘⇧E', desc: 'Export config' },
-                                { key: '⌘/', desc: 'Show shortcuts' },
-                                { key: '⌘⌫', desc: 'Delete current session' },
-                                { key: 'Esc', desc: 'Close panels' },
-                            ].map((shortcut, index) => (
+                            {(() => {
+                                const mod = typeof navigator !== 'undefined' && navigator.platform?.includes('Mac') ? '⌘' : 'Ctrl';
+                                return [
+                                    { key: `${mod}+H`, desc: 'Toggle chat history panel' },
+                                    { key: `${mod}+K`, desc: 'Create new chat' },
+                                    { key: `${mod}+J`, desc: 'Toggle tools panel' },
+                                    { key: `${mod}+M`, desc: 'Toggle memories panel' },
+                                    { key: `${mod}+Shift+S`, desc: 'Search conversations' },
+                                    { key: `${mod}+L`, desc: 'Open MCP Servers' },
+                                    { key: `${mod}+Shift+E`, desc: 'Export config' },
+                                    { key: `${mod}+/`, desc: 'Show shortcuts' },
+                                    { key: `${mod}+B`, desc: 'Toggle Build/Plan mode' },
+                                    { key: `${mod}+⌫`, desc: 'Delete current session' },
+                                    { key: 'Esc', desc: 'Close panels' },
+                                ];
+                            })().map((shortcut, index) => (
                                 <div key={index} className="flex justify-between items-center py-1">
                                     <span className="text-sm text-muted-foreground">
                                         {shortcut.desc}

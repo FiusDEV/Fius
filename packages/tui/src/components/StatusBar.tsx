@@ -73,7 +73,7 @@ export function StatusBar({
     if (hasTodos) {
         metaParts.push(todoExpanded ? 'ctrl+t to hide todos' : 'ctrl+t to show todos');
     }
-    if (backgroundTasksRunning > 0) metaParts.push('ctrl+b to view bg tasks');
+    if (backgroundTasksRunning > 0) metaParts.push('bg tasks running');
     const metaContent = metaParts.join(' • ');
 
     return (
