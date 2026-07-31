@@ -1,0 +1,393 @@
+import React, { useRef, useEffect, useCallback } from 'react';
+import type { SanitizedToolResult } from '@fius/core';
+import { useQueryClient } from '@tanstack/react-query';
+import { useAnalytics } from '@/lib/analytics/index.js';
+import { getApiUrl } from '@/lib/api-url.js';
+import { client } from '@/lib/client.js';
+import { queryKeys } from '@/lib/queryKeys.js';
+import { createMessageStream } from '@fius/client-sdk';
+import type { MessageStreamEvent } from '@fius/client-sdk';
+import { eventBus } from '@/lib/events/EventBus.js';
+import { useChatStore } from '@/lib/stores/chatStore.js';
+import type { Session } from './useSessions.js';
+import type { Attachment } from '../../lib/attachment-types.js';
+import { resolveMessageContent } from '../../lib/attachment-utils.js';
+
+export interface ToolResultError {
+    error: string | Record<string, unknown>;
+}
+
+export type ToolResultContent = SanitizedToolResult;
+
+export type ToolResult = ToolResultError | SanitizedToolResult | string | Record<string, unknown>;
+
+export function isToolResultError(result: unknown): result is ToolResultError {
+    return typeof result === 'object' && result !== null && 'error' in result;
+}
+
+export function isToolResultContent(result: unknown): result is ToolResultContent {
+    return (
+        typeof result === 'object' &&
+        result !== null &&
+        'content' in result &&
+        Array.isArray((result as ToolResultContent).content)
+    );
+}
+
+import type { Message } from '@/lib/stores/chatStore.js';
+
+export type { Message, ErrorMessage } from '@/lib/stores/chatStore.js';
+
+export type UIUserMessage = Message & { role: 'user' };
+export type UIAssistantMessage = Message & { role: 'assistant' };
+export type UIToolMessage = Message & { role: 'tool' };
+export type SessionStreamAttachResult = 'attached' | 'already-attached' | 'session-idle';
+
+export function isUserMessage(msg: Message): msg is UIUserMessage {
+    return msg.role === 'user';
+}
+
+export function isAssistantMessage(msg: Message): msg is UIAssistantMessage {
+    return msg.role === 'assistant';
+}
+
+export function isToolMessage(msg: Message): msg is UIToolMessage {
+    return msg.role === 'tool';
+}
+
+export type StreamStatus = 'idle' | 'connecting' | 'open' | 'closed';
+
+const generateUniqueId = () => `msg-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+
+export function useChat(
+    activeSessionIdRef: React.MutableRefObject<string | null>,
+    abortControllersRef: React.MutableRefObject<Map<string, AbortController>>
+) {
+    const analytics = useAnalytics();
+    const analyticsRef = useRef(analytics);
+    const queryClient = useQueryClient();
+
+    const updateSessionActivity = useCallback(
+        (sessionId: string, incrementMessageCount: boolean = true) => {
+            queryClient.setQueryData<Session[]>(queryKeys.sessions.all, (old = []) => {
+                const exists = old.some((s) => s.id === sessionId);
+                if (exists) {
+                    return old.map((session) =>
+                        session.id === sessionId
+                            ? {
+                                  ...session,
+                                  ...(incrementMessageCount && {
+                                      messageCount: session.messageCount + 1,
+                                  }),
+                                  lastActivity: Date.now(),
+                              }
+                            : session
+                    );
+                } else {
+                    const newSession: Session = {
+                        id: sessionId,
+                        createdAt: Date.now(),
+                        lastActivity: Date.now(),
+                        messageCount: 1,
+                        title: null,
+                    };
+                    return [newSession, ...old];
+                }
+            });
+        },
+        [queryClient]
+    );
+
+    const updateSessionTitle = useCallback(
+        (sessionId: string, title: string) => {
+            queryClient.setQueryData<Session[]>(queryKeys.sessions.all, (old = []) =>
+                old.map((session) => (session.id === sessionId ? { ...session, title } : session))
+            );
+        },
+        [queryClient]
+    );
+
+    const lastMessageIdRef = useRef<string | null>(null);
+
+    useEffect(() => {
+        analyticsRef.current = analytics;
+    }, [analytics]);
+
+    const getAbortController = useCallback(
+        (sessionId: string): AbortController => {
+            const existing = abortControllersRef.current.get(sessionId);
+            if (existing) {
+                return existing;
+            }
+            const controller = new AbortController();
+            abortControllersRef.current.set(sessionId, controller);
+            return controller;
+        },
+        [abortControllersRef]
+    );
+
+    const abortSession = useCallback(
+        (sessionId: string) => {
+            const controller = abortControllersRef.current.get(sessionId);
+            if (controller) {
+                controller.abort();
+                abortControllersRef.current.delete(sessionId);
+            }
+        },
+        [abortControllersRef]
+    );
+
+    const isForActiveSession = useCallback(
+        (sessionId?: string): boolean => {
+            if (!sessionId) return false;
+            const current = activeSessionIdRef.current;
+            return !!current && sessionId === current;
+        },
+        [activeSessionIdRef]
+    );
+
+    const processEvent = useCallback(
+        (event: MessageStreamEvent) => {
+            if (!event.sessionId) {
+                console.error(`Event missing sessionId: ${JSON.stringify(event)}`);
+                return;
+            }
+
+            if (!isForActiveSession(event.sessionId)) {
+                return;
+            }
+
+            eventBus.dispatch(event);
+
+            switch (event.name) {
+                case 'llm:response': {
+                    updateSessionActivity(event.sessionId);
+                    break;
+                }
+
+                case 'llm:tool-call': {
+                    const { toolName, sessionId } = event;
+
+                    if (toolName) {
+                        analyticsRef.current.trackToolCalled({
+                            toolName,
+                            sessionId,
+                        });
+                    }
+                    break;
+                }
+
+                case 'llm:tool-result': {
+                    const { toolName, success } = event;
+
+                    if (toolName) {
+                        analyticsRef.current.trackToolResult({
+                            toolName,
+                            success: success !== false,
+                            sessionId: event.sessionId,
+                        });
+                    }
+                    break;
+                }
+
+                case 'session:title-updated': {
+                    updateSessionTitle(event.sessionId, event.title);
+                    break;
+                }
+
+                case 'message:dequeued': {
+                    updateSessionActivity(event.sessionId);
+
+                    if (event.queue === 'follow-up') {
+                        queryClient.invalidateQueries({
+                            queryKey: queryKeys.followUp.list(event.sessionId),
+                        });
+                    }
+                    break;
+                }
+            }
+        },
+        [isForActiveSession, analyticsRef, updateSessionActivity, updateSessionTitle, queryClient]
+    );
+
+    const consumeSessionEventStream = useCallback(
+        async (
+            sessionId: string,
+            abortController: AbortController,
+            responsePromise: Promise<Response>
+        ) => {
+            try {
+                const iterator = createMessageStream(responsePromise, {
+                    signal: abortController.signal,
+                });
+
+                for await (const event of iterator) {
+                    processEvent(event);
+                }
+            } finally {
+                const current = abortControllersRef.current.get(sessionId);
+                if (current === abortController) {
+                    abortControllersRef.current.delete(sessionId);
+                }
+            }
+        },
+        [abortControllersRef, processEvent]
+    );
+
+    const attachSessionStream = useCallback(
+        async (sessionId: string): Promise<SessionStreamAttachResult> => {
+            if (!sessionId) {
+                return 'session-idle';
+            }
+
+            if (abortControllersRef.current.has(sessionId)) {
+                return 'already-attached';
+            }
+
+            const abortController = new AbortController();
+            abortControllersRef.current.set(sessionId, abortController);
+
+            try {
+                const response = await client.api.sessions[':sessionId'].events.$get({
+                    param: { sessionId },
+                });
+
+                if (!response.ok) {
+                    if (response.status === 409) {
+                        const current = abortControllersRef.current.get(sessionId);
+                        if (current === abortController) {
+                            abortControllersRef.current.delete(sessionId);
+                        }
+                        return 'session-idle';
+                    }
+                    throw new Error(`Failed to attach to session stream: ${response.status}`);
+                }
+
+                void consumeSessionEventStream(
+                    sessionId,
+                    abortController,
+                    Promise.resolve(response)
+                ).catch((error: unknown) => {
+                    if (error instanceof Error && error.name === 'AbortError') {
+                        return;
+                    }
+                    console.error(
+                        `Session stream error: ${
+                            error instanceof Error ? error.message : String(error)
+                        }`
+                    );
+                });
+
+                return 'attached';
+            } catch (error) {
+                const current = abortControllersRef.current.get(sessionId);
+                if (current === abortController) {
+                    abortControllersRef.current.delete(sessionId);
+                }
+                throw error;
+            }
+        },
+        [abortControllersRef, consumeSessionEventStream]
+    );
+
+    const sendMessage = useCallback(
+        async (content: string, attachments?: Attachment[], sessionId?: string) => {
+            if (!sessionId) {
+                return;
+            }
+
+            abortSession(sessionId);
+
+            const abortController = getAbortController(sessionId) || new AbortController();
+
+            useChatStore.getState().setProcessing(sessionId, true);
+
+            const userId = generateUniqueId();
+            lastMessageIdRef.current = userId;
+
+            const messageContent = resolveMessageContent(content, attachments);
+
+            useChatStore.getState().addMessage(sessionId, {
+                id: userId,
+                role: 'user',
+                content: messageContent,
+                createdAt: Date.now(),
+                sessionId,
+            });
+
+            updateSessionActivity(sessionId);
+
+            try {
+                const responsePromise = client.api['message-stream'].$post({
+                    json: {
+                        content: messageContent,
+                        sessionId,
+                    },
+                });
+
+                await consumeSessionEventStream(sessionId, abortController, responsePromise);
+            } catch (error: unknown) {
+                if (error instanceof Error && error.name === 'AbortError') {
+                    useChatStore.getState().setProcessing(sessionId, false);
+                    return;
+                }
+
+                console.error(
+                    `Stream error: ${error instanceof Error ? error.message : String(error)}`
+                );
+                useChatStore.getState().setProcessing(sessionId, false);
+
+                const message = error instanceof Error ? error.message : 'Failed to send message';
+                useChatStore.getState().setError(sessionId, {
+                    id: generateUniqueId(),
+                    message,
+                    timestamp: Date.now(),
+                    context: 'stream',
+                    recoverable: true,
+                    sessionId,
+                    anchorMessageId: lastMessageIdRef.current || undefined,
+                });
+            }
+        },
+        [abortSession, getAbortController, updateSessionActivity, consumeSessionEventStream]
+    );
+
+    const reset = useCallback(async (sessionId?: string) => {
+        if (!sessionId) return;
+
+        try {
+            await client.api.reset.$post({
+                json: { sessionId },
+            });
+        } catch (e) {
+            console.error(`Failed to reset session: ${e instanceof Error ? e.message : String(e)}`);
+        }
+
+        useChatStore.getState().setError(sessionId, null);
+        lastMessageIdRef.current = null;
+        useChatStore.getState().setProcessing(sessionId, false);
+    }, []);
+
+    const cancel = useCallback(async (sessionId?: string, clearQueue: boolean = false) => {
+        if (!sessionId) return;
+
+        abortSession(sessionId);
+
+        try {
+            await client.api.sessions[':sessionId'].cancel.$post({
+                param: { sessionId },
+                json: { clearQueue },
+            });
+        } catch (err) {
+            console.warn('Failed to cancel server-side:', err);
+        }
+        useChatStore.getState().setProcessing(sessionId, false);
+    }, [abortSession]);
+
+    return {
+        attachSessionStream,
+        sendMessage,
+        reset,
+        cancel,
+    };
+}

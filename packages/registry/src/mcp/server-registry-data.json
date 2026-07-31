@@ -1,0 +1,420 @@
+[
+  {
+    "id": "filesystem",
+    "name": "Filesystem",
+    "description": "Secure file operations with configurable access controls for reading and writing files",
+    "category": "productivity",
+    "icon": "📁",
+    "config": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "."],
+      "timeout": 30000
+    },
+    "tags": ["file", "directory", "filesystem", "io"],
+    "isOfficial": true,
+    "isInstalled": false,
+    "author": "Anthropic",
+    "homepage": "https://github.com/modelcontextprotocol/servers",
+    "matchIds": ["filesystem"]
+  },
+  {
+    "id": "meme-mcp",
+    "name": "Meme Generator",
+    "description": "Create memes using Imgflip templates",
+    "category": "creative",
+    "icon": "🖼️",
+    "config": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "meme-mcp"],
+      "env": {
+        "IMGFLIP_USERNAME": "",
+        "IMGFLIP_PASSWORD": ""
+      },
+      "timeout": 30000
+    },
+    "tags": ["meme", "image", "creative"],
+    "isOfficial": false,
+    "isInstalled": false,
+    "requirements": { "platform": "all", "node": ">=18.0.0" },
+    "author": "Community",
+    "homepage": "https://www.npmjs.com/package/meme-mcp",
+    "matchIds": ["meme-mcp"]
+  },
+  {
+    "id": "duckduckgo",
+    "name": "DuckDuckGo Search",
+    "description": "Search the web using DuckDuckGo",
+    "category": "research",
+    "icon": "🦆",
+    "config": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": ["duckduckgo-mcp-server"],
+      "timeout": 30000
+    },
+    "tags": ["search", "web", "research"],
+    "isOfficial": false,
+    "isInstalled": false,
+    "requirements": { "platform": "all", "python": ">=3.10", "dependencies": ["uv"] },
+    "author": "Community",
+    "homepage": "https://github.com/duckduckgo/mcp-server",
+    "matchIds": ["duckduckgo", "ddg"]
+  },
+  {
+    "id": "swiggy-food",
+    "name": "Swiggy Food",
+    "description": "Order food with restaurant search, menus, cart management, and checkout",
+    "category": "productivity",
+    "icon": "🍔",
+    "config": {
+      "type": "http",
+      "url": "https://mcp.swiggy.com/food",
+      "timeout": 30000
+    },
+    "tags": ["swiggy", "food", "delivery", "ordering"],
+    "isOfficial": true,
+    "isInstalled": false,
+    "author": "Swiggy",
+    "homepage": "https://github.com/Swiggy/swiggy-mcp-server-manifest",
+    "matchIds": ["swiggy-food", "swiggy_food"]
+  },
+  {
+    "id": "swiggy-instamart",
+    "name": "Swiggy Instamart",
+    "description": "Shop groceries with product search, cart management, and checkout",
+    "category": "productivity",
+    "icon": "🛒",
+    "config": {
+      "type": "http",
+      "url": "https://mcp.swiggy.com/im",
+      "timeout": 30000
+    },
+    "tags": ["swiggy", "instamart", "groceries", "delivery"],
+    "isOfficial": true,
+    "isInstalled": false,
+    "author": "Swiggy",
+    "homepage": "https://github.com/Swiggy/swiggy-mcp-server-manifest",
+    "matchIds": ["swiggy-instamart", "swiggy_instamart"]
+  },
+  {
+    "id": "swiggy-dineout",
+    "name": "Swiggy Dineout",
+    "description": "Find restaurants, check availability, and book tables",
+    "category": "productivity",
+    "icon": "🍽️",
+    "config": {
+      "type": "http",
+      "url": "https://mcp.swiggy.com/dineout",
+      "timeout": 30000
+    },
+    "tags": ["swiggy", "dineout", "reservations", "restaurants"],
+    "isOfficial": true,
+    "isInstalled": false,
+    "author": "Swiggy",
+    "homepage": "https://github.com/Swiggy/swiggy-mcp-server-manifest",
+    "matchIds": ["swiggy-dineout", "swiggy_dineout"]
+  },
+  {
+    "id": "linear",
+    "name": "Linear",
+    "description": "Manage Linear issues, projects, and workflows",
+    "category": "productivity",
+    "icon": "📋",
+    "config": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "mcp-remote", "https://mcp.linear.app/sse"],
+      "timeout": 30000
+    },
+    "tags": ["linear", "tasks", "projects"],
+    "isOfficial": true,
+    "isInstalled": false,
+    "requirements": { "platform": "all", "node": ">=18.0.0" },
+    "author": "Linear",
+    "homepage": "https://mcp.linear.app",
+    "matchIds": ["linear"]
+  },
+  {
+    "id": "elevenlabs",
+    "name": "ElevenLabs",
+    "description": "Text-to-speech and voice synthesis using ElevenLabs API",
+    "category": "creative",
+    "icon": "🎤",
+    "config": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": ["elevenlabs-mcp"],
+      "env": {
+        "ELEVENLABS_API_KEY": ""
+      },
+      "timeout": 30000
+    },
+    "tags": ["tts", "voice", "audio", "synthesis"],
+    "isOfficial": true,
+    "isInstalled": false,
+    "requirements": { "platform": "all", "python": ">=3.10" },
+    "author": "ElevenLabs",
+    "homepage": "https://github.com/elevenlabs/elevenlabs-mcp",
+    "matchIds": ["elevenlabs"]
+  },
+  {
+    "id": "hf",
+    "name": "Hugging Face",
+    "description": "Access Hugging Face models and datasets",
+    "category": "development",
+    "icon": "🤗",
+    "config": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@llmindset/mcp-hfspace"],
+      "timeout": 30000
+    },
+    "tags": ["huggingface", "models", "ai", "ml"],
+    "isOfficial": false,
+    "isInstalled": false,
+    "requirements": { "platform": "all", "node": ">=18.0.0" },
+    "author": "LLMindset",
+    "homepage": "https://github.com/llmindset/mcp-hfspace",
+    "matchIds": ["hf", "huggingface"]
+  },
+  {
+    "id": "tavily",
+    "name": "Tavily Search",
+    "description": "Web search and research using Tavily AI search engine",
+    "category": "research",
+    "icon": "🔍",
+    "config": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "tavily-mcp@0.1.3"],
+      "env": {
+        "TAVILY_API_KEY": ""
+      },
+      "timeout": 30000
+    },
+    "tags": ["search", "web", "research", "ai"],
+    "isOfficial": false,
+    "isInstalled": false,
+    "requirements": { "platform": "all", "node": ">=18.0.0" },
+    "author": "Tavily AI",
+    "homepage": "https://www.npmjs.com/package/tavily-mcp",
+    "matchIds": ["tavily"]
+  },
+  {
+    "id": "heygen",
+    "name": "HeyGen",
+    "description": "Generate realistic human-like audio using HeyGen",
+    "category": "creative",
+    "icon": "🎤",
+    "config": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": ["heygen-mcp"],
+      "env": {
+        "HEYGEN_API_KEY": ""
+      },
+      "timeout": 30000
+    },
+    "tags": ["audio", "voice", "synthesis", "heygen"],
+    "isOfficial": true,
+    "isInstalled": false,
+    "requirements": { "platform": "all", "python": ">=3.10" },
+    "author": "HeyGen",
+    "homepage": "https://github.com/heygen-com/heygen-mcp",
+    "matchIds": ["heygen"]
+  },
+  {
+    "id": "runway",
+    "name": "Runway",
+    "description": "AI-powered creative suite for video and image generation",
+    "category": "creative",
+    "icon": "🎬",
+    "config": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "mcp-remote",
+        "https://mcp.runway.team",
+        "--header",
+        "Authorization: Bearer ${RUNWAY_API_KEY}"
+      ],
+      "env": {
+        "RUNWAY_API_KEY": ""
+      },
+      "timeout": 60000
+    },
+    "tags": ["runway", "video", "generation", "ai", "creative"],
+    "isOfficial": true,
+    "isInstalled": false,
+    "requirements": { "platform": "all", "node": ">=18.0.0" },
+    "author": "Runway",
+    "homepage": "https://docs.runway.team/api/runway-mcp-server",
+    "matchIds": ["runway"]
+  },
+  {
+    "id": "perplexity",
+    "name": "Perplexity",
+    "description": "AI-powered search engine for real-time web search and research",
+    "category": "research",
+    "icon": "🔍",
+    "config": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@perplexity-ai/mcp-server"],
+      "env": {
+        "PERPLEXITY_API_KEY": "",
+        "PERPLEXITY_TIMEOUT_MS": "600000"
+      },
+      "timeout": 600000
+    },
+    "tags": ["search", "web", "research", "ai"],
+    "isOfficial": true,
+    "isInstalled": false,
+    "requirements": { "platform": "all", "node": ">=18.0.0" },
+    "author": "Perplexity AI",
+    "homepage": "https://github.com/perplexityai/modelcontextprotocol/tree/main",
+    "matchIds": ["perplexity"]
+  },
+  {
+    "id": "chartjs",
+    "name": "ChartJS",
+    "description": "Charting and visualization tool using ChartJS",
+    "category": "data",
+    "icon": "📊",
+    "config": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@ax-crew/chartjs-mcp-server"],
+      "timeout": 30000
+    },
+    "tags": ["chart", "visualization", "data", "chartjs"],
+    "isOfficial": true,
+    "isInstalled": false,
+    "requirements": { "platform": "all", "node": ">=18.0.0" },
+    "author": "ax-crew",
+    "homepage": "https://github.com/ax-crew/chartjs-mcp-server",
+    "matchIds": ["chartjs"]
+  },
+  {
+    "id": "rag-lite-ts",
+    "name": "Rag-lite TS",
+    "description": "A local-first TypeScript retrieval engine for semantic search over static documents.",
+    "category": "data",
+    "icon": "🔍",
+    "config": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "raglite-mcp"],
+      "timeout": 30000
+    },
+    "tags": ["rag", "data", "ai"],
+    "isOfficial": true,
+    "isInstalled": false,
+    "requirements": { "platform": "all", "node": ">=18.0.0" },
+    "author": "FrugalX",
+    "homepage": "https://github.com/raglite/rag-lite-ts",
+    "matchIds": ["rag-lite-ts"]
+  },
+  {
+    "id": "exa",
+    "name": "Exa",
+    "description": "AI-powered web search and research API with semantic search capabilities.",
+    "category": "data",
+    "icon": "🔍",
+    "config": {
+      "type": "http",
+      "url": "https://mcp.exa.ai/mcp",
+      "headers": {}
+    },
+    "tags": ["rag", "data", "ai"],
+    "isOfficial": true,
+    "isInstalled": false,
+    "requirements": { "platform": "all", "node": ">=18.0.0" },
+    "author": "Exa",
+    "homepage": "https://docs.exa.ai/reference/exa-mcp",
+    "matchIds": ["exa"]
+  },
+  {
+    "id": "firecrawl",
+    "name": "Firecrawl",
+    "description": "AI-powered web search and research API that performs semantic search across web sources, aggregates and ranks results for relevance, and returns contextual summaries with citations",
+    "category": "data",
+    "icon": "🔍",
+    "config": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "firecrawl-mcp"],
+      "env": {
+        "FIRECRAWL_API_KEY": ""
+      },
+      "timeout": 30000
+    },
+    "tags": ["search", "web", "research", "ai"],
+    "isOfficial": true,
+    "isInstalled": false,
+    "requirements": { "platform": "all", "node": ">=18.0.0" },
+    "author": "Firecrawl",
+    "homepage": "https://docs.firecrawl.dev/mcp-server",
+    "matchIds": ["firecrawl"]
+  },
+  {
+    "id": "shadcn",
+    "name": "Shadcn",
+    "description": "Shadcn UI components for MCP servers",
+    "category": "development",
+    "icon": "🖌️",
+    "config": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["shadcn@latest", "mcp"],
+      "timeout": 30000
+    },
+    "tags": ["shadcn", "ui", "components", "mcp"],
+    "isOfficial": true,
+    "isInstalled": false,
+    "requirements": { "platform": "all", "node": ">=18.0.0" },
+    "author": "Shadcn",
+    "homepage": "https://ui.shadcn.com/docs/mcp#configuration",
+    "matchIds": ["shadcn"]
+  },
+  {
+    "id": "kite-trade",
+    "name": "Kite",
+    "description": "Zerodha Kite API MCP server",
+    "category": "data",
+    "icon": "💰",
+    "config": {
+      "type": "http",
+      "url": "https://mcp.kite.trade/mcp",
+      "headers": {}
+    },
+    "tags": ["kite", "trade", "data", "ai"],
+    "isOfficial": true,
+    "isInstalled": false,
+    "requirements": { "platform": "all", "node": ">=18.0.0" },
+    "author": "Zerodha",
+    "homepage": "https://github.com/zerodha/kite-mcp-server",
+    "matchIds": ["kite-trade"]
+  },
+  {
+    "id": "coingecko",
+    "name": "CoinGecko",
+    "description": "CoinGecko API MCP server",
+    "category": "data",
+    "icon": "💰",
+    "config": {
+      "type": "http",
+      "url": "https://mcp.api.coingecko.com/mcp",
+      "headers": {}
+    },
+    "tags": ["coingecko", "data", "ai"],
+    "isOfficial": true,
+    "isInstalled": false,
+    "requirements": { "platform": "all", "node": ">=18.0.0" },
+    "author": "CoinGecko",
+    "homepage": "https://docs.coingecko.com/docs/mcp-server",
+    "matchIds": ["coingecko"]
+  }
+]

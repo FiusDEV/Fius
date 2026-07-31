@@ -1,0 +1,107 @@
+import chalk from 'chalk';
+import type { SessionMetadata, InternalMessage, ToolCall } from '@fius/core';
+import { isAssistantMessage } from '@fius/core';
+
+export function formatSessionInfo(
+    sessionId: string,
+    metadata?: SessionMetadata,
+    isCurrent: boolean = false
+): string {
+    const prefix = isCurrent ? chalk.green('в†’') : ' ';
+    const name = isCurrent ? chalk.green.bold(sessionId) : chalk.cyan(sessionId);
+
+    let info = `${prefix} ${name}`;
+
+    if (metadata) {
+        const title = typeof metadata.title === 'string' ? metadata.title.trim() : '';
+        const displayTitle = title.length > 0 ? title : 'Untitled';
+        info += chalk.white(` "${displayTitle}"`);
+
+        const parentSessionId =
+            'parentSessionId' in metadata && typeof metadata.parentSessionId === 'string'
+                ? metadata.parentSessionId
+                : undefined;
+        if (parentSessionId) {
+            info += chalk.magenta(` [forked from ${parentSessionId.slice(0, 8)}]`);
+        }
+
+        const messages = metadata.messageCount || 0;
+        const activity =
+            metadata.lastActivity && metadata.lastActivity > 0
+                ? new Date(metadata.lastActivity).toLocaleString()
+                : 'Never';
+
+        info += chalk.gray(` (${messages} messages, last: ${activity})`);
+
+        if (isCurrent) {
+            info += chalk.rgb(255, 165, 0)(' [ACTIVE]');
+        }
+    }
+
+    return info;
+}
+
+export function formatHistoryMessage(message: InternalMessage, index: number): string {
+    const timestamp = message.timestamp
+        ? new Date(message.timestamp).toLocaleTimeString()
+        : `#${index + 1}`;
+
+    let roleColor = chalk.gray;
+    let displayLabel: string = message.role;
+
+    switch (message.role) {
+        case 'user':
+            roleColor = chalk.blue;
+            displayLabel = 'You';
+            break;
+        case 'assistant':
+            roleColor = chalk.green;
+            displayLabel = 'Assistant';
+            break;
+        case 'system':
+            roleColor = chalk.rgb(255, 165, 0);
+            displayLabel = 'System';
+            break;
+        case 'tool':
+            roleColor = chalk.green;
+            displayLabel = 'Tool';
+            break;
+    }
+
+
+    let content = '';
+    if (typeof message.content === 'string') {
+        content = message.content;
+    } else if (message.content === null) {
+        content = '[No content]';
+    } else if (Array.isArray(message.content)) {
+
+        content = message.content
+            .map((part) => {
+                if (part.type === 'text') return part.text;
+                if (part.type === 'image') return '[Image]';
+                if (part.type === 'file') return `[File: ${part.filename || 'unknown'}]`;
+                if (part.type === 'resource') return `[Resource: ${part.name || part.uri}]`;
+                return '[Unknown content]';
+            })
+            .join(' ');
+    } else {
+        content = '[No content]';
+    }
+
+
+    if (content.length > 200) {
+        content = content.substring(0, 200) + '...';
+    }
+
+
+    let toolInfo = '';
+    if (isAssistantMessage(message) && message.toolCalls && message.toolCalls.length > 0) {
+        const toolNames = message.toolCalls
+            .map((tc: ToolCall) => tc.function?.name || 'unknown')
+            .join(', ');
+        toolInfo = chalk.gray(` [Tools: ${toolNames}]`);
+    }
+
+    return `  ${chalk.gray(timestamp)} ${roleColor.bold(displayLabel)}: ${content}${toolInfo}`;
+}

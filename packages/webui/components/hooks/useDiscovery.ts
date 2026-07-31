@@ -1,0 +1,24 @@
+import { useQuery } from '@tanstack/react-query';
+import { client } from '@/lib/client';
+import { queryKeys } from '@/lib/queryKeys';
+
+/**
+ * Hook to fetch available extension points and capabilities.
+ * Returns storage options, compaction strategy factories, tool factories, and built-in tools.
+ */
+export function useDiscovery(enabled: boolean = true) {
+    return useQuery({
+        queryKey: queryKeys.discovery.all,
+        queryFn: async () => {
+            const res = await client.api.discovery.$get();
+            if (!res.ok) throw new Error('Failed to fetch discovery data');
+            return await res.json();
+        },
+        enabled,
+        staleTime: 5 * 60 * 1000, // 5 minutes - factories don't change often
+    });
+}
+
+export type DiscoveryResponse = NonNullable<ReturnType<typeof useDiscovery>['data']>;
+export type DiscoveredFactory = DiscoveryResponse['storage'][number];
+export type ToolInfo = DiscoveryResponse['builtinTools'][number];

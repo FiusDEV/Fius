@@ -1,0 +1,1365 @@
+import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
+import {
+    FiusRuntimeError,
+    ErrorScope,
+    ErrorType,
+    logger,
+    getAllModelsForProvider,
+    getCuratedModelsForProvider,
+    getCuratedModelRefsForProviders,
+    getSupportedFileTypesForModel,
+    getLocalModelById,
+    LLMUpdatesSchema,
+    getFiusGlobalPath,
+    getModelDisplayName,
+} from '@fius/core';
+import {
+    LLM_REGISTRY,
+    LLM_PROVIDERS,
+    SUPPORTED_FILE_TYPES,
+    getReasoningProfile,
+    supportsBaseURL,
+    type LLMProvider,
+    type ProviderInfo,
+    type SupportedFileType,
+} from '@fius/llm';
+import {
+    getProviderKeyStatus,
+    loadCustomModels,
+    saveCustomModel,
+    deleteCustomModel,
+    loadModelPickerState,
+    saveModelPickerState,
+    recordRecentModel,
+    toggleFavoriteModel,
+    setFavoriteModels,
+    pruneModelPickerState,
+    toModelPickerKey,
+    getAllInstalledModels,
+    CustomModelSchema,
+} from '@fius/agent-management';
+import {
+    BadRequestErrorResponse,
+    ConflictErrorResponse,
+    InternalErrorResponse,
+    ProviderCatalogSchema,
+    ModelFlatSchema,
+    LLMConfigResponseSchema,
+    NotFoundErrorResponse,
+    StandardErrorEnvelopeSchema,
+} from '../schemas/responses.js';
+import type { GetAgentFn, OpenAPIRouteSchema } from '../types.js';
+import { readFileSync, existsSync, writeFileSync, mkdirSync } from 'fs';
+import path from 'path';
+
+const MODEL_PICKER_FEATURED_LIMIT = 8;
+
+interface PlatformModel {
+    name: string;
+    displayName: string;
+    provider: string;
+}
+
+interface PlatformModelsResult {
+    plan: string;
+    models: PlatformModel[];
+}
+
+const PLATFORM_CACHE_FILE = 'platform-models.json';
+const PLATFORM_CACHE_TTL_MS = 0;
+
+interface CachedPlatformModels extends PlatformModelsResult {
+    cached_at: number;
+}
+
+function readFiusApiKey(): string | null {
+    try {
+        const authPath = getFiusGlobalPath('', 'auth.json');
+        if (!existsSync(authPath)) return null;
+        const auth = JSON.parse(readFileSync(authPath, 'utf-8'));
+        return auth.fiusApiKey || null;
+    } catch {
+        return null;
+    }
+}
+
+function readStreamingSetting(): boolean {
+    try {
+        const settingsPath = getFiusGlobalPath('', 'settings.json');
+        if (!existsSync(settingsPath)) return true;
+        const settings = JSON.parse(readFileSync(settingsPath, 'utf-8'));
+        return typeof settings.streaming === 'boolean' ? settings.streaming : true;
+    } catch {
+        return true;
+    }
+}
+
+function writeStreamingSetting(enabled: boolean): void {
+    try {
+        const settingsPath = getFiusGlobalPath('', 'settings.json');
+        let settings: Record<string, unknown> = {};
+        if (existsSync(settingsPath)) {
+            settings = JSON.parse(readFileSync(settingsPath, 'utf-8'));
+        }
+        settings.streaming = enabled;
+        const dir = path.dirname(settingsPath);
+        if (!existsSync(dir)) {
+            mkdirSync(dir, { recursive: true });
+        }
+        writeFileSync(settingsPath, JSON.stringify(settings, null, 2));
+    } catch {
+    }
+}
+
+function readPlatformCache(): PlatformModelsResult | null {
+    try {
+        const cachePath = getFiusGlobalPath('cache', PLATFORM_CACHE_FILE);
+        if (!existsSync(cachePath)) return null;
+        const data = JSON.parse(readFileSync(cachePath, 'utf-8')) as CachedPlatformModels;
+        if (Date.now() - data.cached_at >= PLATFORM_CACHE_TTL_MS) return null;
+        return { plan: data.plan, models: data.models };
+    } catch {
+        return null;
+    }
+}
+
+function writePlatformCache(result: PlatformModelsResult): void {
+    try {
+        const cachePath = getFiusGlobalPath('cache', PLATFORM_CACHE_FILE);
+        const dir = path.dirname(cachePath);
+        if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+        writeFileSync(cachePath, JSON.stringify({ ...result, cached_at: Date.now() }, null, 2), 'utf-8');
+    } catch {
+    }
+}
+
+async function fetchPlatformModels(): Promise<PlatformModelsResult> {
+    const cached = readPlatformCache();
+    if (cached) return cached;
+
+    try {
+        const apiKey = readFiusApiKey();
+        if (!apiKey) return { plan: 'free', models: [] };
+
+        const baseUrl = process.env.FIUS_PLATFORM_URL || process.env.FIUS_API_URL || 'https://fius.dev';
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 5000);
+
+        const resp = await fetch(`${baseUrl}/api/cli/user`, {
+            headers: { Authorization: `Bearer ${apiKey}` },
+            signal: controller.signal,
+        });
+        clearTimeout(timeout);
+
+        if (!resp.ok) return { plan: 'free', models: [] };
+
+        const data = await resp.json();
+        const plan = data.plan || 'free';
+        const allowedModels: string[] = Array.isArray(data.allowed_models) ? data.allowed_models : [];
+        const planModels: string[] = Array.isArray(data.plan_models) ? data.plan_models : [];
+
+        const effectiveModels = allowedModels.length > 0 ? allowedModels : planModels;
+
+        const models: PlatformModel[] = effectiveModels.map((name: string) => ({
+            name,
+            displayName: getModelDisplayName(name),
+            provider: 'fius',
+        }));
+
+        const result = { plan, models };
+        writePlatformCache(result);
+        return result;
+    } catch {
+        return { plan: 'free', models: [] };
+    }
+}
+
+const CurrentQuerySchema = z
+    .object({
+        sessionId: z
+            .string()
+            .optional()
+            .describe('Session identifier to retrieve session-specific LLM configuration'),
+    })
+    .strict()
+    .describe('Query parameters for getting current LLM configuration');
+
+const CatalogQuerySchema = z
+    .object({
+        scope: z
+            .enum(['curated', 'all'])
+            .default('all')
+            .describe(
+                "Catalog scope: 'curated' returns a small, UI-friendly set of models; 'all' returns the full registry (can be large)"
+            ),
+        provider: z
+            .union([z.string(), z.array(z.string())])
+            .optional()
+            .transform((value): string[] | undefined =>
+                Array.isArray(value) ? value : value ? value.split(',') : undefined
+            )
+            .describe('Comma-separated list of LLM providers to filter by'),
+        includeModels: z
+            .union([z.literal('true'), z.literal('false'), z.literal('1'), z.literal('0')])
+            .optional()
+            .transform((raw): boolean | undefined =>
+                raw === 'true' || raw === '1'
+                    ? true
+                    : raw === 'false' || raw === '0'
+                      ? false
+                      : undefined
+            )
+            .describe('Include models list in the response (true or false)'),
+        hasKey: z
+            .union([z.literal('true'), z.literal('false'), z.literal('1'), z.literal('0')])
+            .optional()
+            .transform((raw): boolean | undefined =>
+                raw === 'true' || raw === '1'
+                    ? true
+                    : raw === 'false' || raw === '0'
+                      ? false
+                      : undefined
+            )
+            .describe('Filter by API key presence (true or false)'),
+        fileType: z
+            .enum(SUPPORTED_FILE_TYPES)
+            .optional()
+            .describe('Filter by supported file type (audio, pdf, image, video, or document)'),
+        defaultOnly: z
+            .union([z.literal('true'), z.literal('false'), z.literal('1'), z.literal('0')])
+            .optional()
+            .transform((raw): boolean | undefined =>
+                raw === 'true' || raw === '1'
+                    ? true
+                    : raw === 'false' || raw === '0'
+                      ? false
+                      : undefined
+            )
+            .describe('Include only default models (true or false)'),
+        mode: z
+            .enum(['grouped', 'flat'])
+            .default('grouped')
+            .describe('Response format mode (grouped by provider or flat list)'),
+    })
+    .strict()
+    .describe('Query parameters for filtering and formatting the LLM catalog');
+
+const SwitchLLMBodySchema = LLMUpdatesSchema.and(
+    z.object({
+        sessionId: z
+            .string()
+            .optional()
+            .describe('Session identifier for session-specific LLM configuration'),
+    })
+).describe('LLM switch request body with optional session ID and LLM fields');
+
+const ModelPickerModelRefSchema = z
+    .object({
+        provider: z.string().trim().min(1).describe('LLM provider'),
+        model: z.string().trim().min(1).describe('Model ID'),
+        baseURL: z.string().trim().url().optional().describe('Variant-specific base URL'),
+    })
+    .strict()
+    .describe('Provider/model pair for model picker state operations');
+
+const ModelPickerEntrySchema = z
+    .object({
+        provider: z.string().trim().min(1).describe('LLM provider'),
+        model: z.string().describe('Model ID'),
+        baseURL: z.string().url().optional().describe('Variant-specific base URL'),
+        displayName: z.string().optional().describe('Human-readable model name'),
+        supportedFileTypes: z
+            .array(z.enum(SUPPORTED_FILE_TYPES))
+            .describe('File types supported by this model'),
+        source: z
+            .enum(['catalog', 'custom', 'local-installed'])
+            .describe('Where this model comes from'),
+    })
+    .strict()
+    .describe('Hydrated model picker entry');
+
+const ModelPickerErrorSchema = StandardErrorEnvelopeSchema.describe(
+    'Standard error response for model picker endpoints'
+);
+
+const ModelPickerErrorResponses = {
+    400: {
+        description: 'Validation or request error',
+        content: {
+            'application/json': {
+                schema: ModelPickerErrorSchema,
+            },
+        },
+    },
+    404: {
+        description: 'Resource not found',
+        content: {
+            'application/json': {
+                schema: ModelPickerErrorSchema,
+            },
+        },
+    },
+    500: {
+        description: 'Internal server error',
+        content: {
+            'application/json': {
+                schema: ModelPickerErrorSchema,
+            },
+        },
+    },
+} as const;
+
+const CapabilitiesQuerySchema = z
+    .object({
+        provider: z.string().min(1).describe('LLM provider name'),
+        model: z
+            .string()
+            .min(1)
+            .describe('Model name (supports both native and OpenRouter format)'),
+    })
+    .strict()
+    .describe('Query parameters for model capability lookup');
+
+const SetFavoritesBodySchema = z
+    .object({
+        favorites: z
+            .array(ModelPickerModelRefSchema)
+            .describe('Complete list of favorite model references'),
+    })
+    .strict()
+    .describe('Request body for setting favorite models');
+
+const currentRoute = createRoute({
+    method: 'get',
+    path: '/llm/current',
+    summary: 'Get Current LLM Config',
+    description: 'Retrieves the current LLM configuration for the agent or a specific session',
+    tags: ['llm'],
+    request: { query: CurrentQuerySchema },
+    responses: {
+        200: {
+            description: 'Current LLM config',
+            content: {
+                'application/json': {
+                    schema: z
+                        .object({
+                            config: LLMConfigResponseSchema.partial({
+                                maxIterations: true,
+                            }).extend({
+                                displayName: z
+                                    .string()
+                                    .optional()
+                                    .describe('Human-readable model display name'),
+                            }),
+                            routing: z
+                                .object({
+                                    viaFius: z
+                                        .boolean()
+                                        .describe('Whether requests route through Fius gateway'),
+                                })
+                                .describe('Routing information for the current LLM configuration'),
+                        })
+                        .describe('Response containing current LLM configuration'),
+                },
+            },
+        },
+        400: BadRequestErrorResponse,
+        404: NotFoundErrorResponse,
+        500: InternalErrorResponse,
+    },
+});
+
+const catalogRoute = createRoute({
+    method: 'get',
+    path: '/llm/catalog',
+    summary: 'LLM Catalog',
+    description: 'Providers, models, capabilities, and API key status',
+    tags: ['llm'],
+    request: { query: CatalogQuerySchema },
+    responses: {
+        200: {
+            description: 'LLM catalog',
+            content: {
+                'application/json': {
+                    schema: z
+                        .union([
+                            z
+                                .object({
+                                    providers: z
+                                        .partialRecord(z.enum(LLM_PROVIDERS), ProviderCatalogSchema)
+                                        .describe(
+                                            'Providers grouped by ID with their models and capabilities'
+                                        ),
+                                })
+                                .strict()
+                                .describe('Grouped catalog response (mode=grouped)'),
+                            z
+                                .object({
+                                    models: z
+                                        .array(ModelFlatSchema)
+                                        .describe(
+                                            'Flat list of all models with provider information'
+                                        ),
+                                })
+                                .strict()
+                                .describe('Flat catalog response (mode=flat)'),
+                        ])
+                        .describe(
+                            'LLM catalog in grouped or flat format based on mode query parameter'
+                        ),
+                },
+            },
+        },
+        400: BadRequestErrorResponse,
+        404: NotFoundErrorResponse,
+        500: InternalErrorResponse,
+    },
+});
+
+const switchRoute = createRoute({
+    method: 'post',
+    path: '/llm/switch',
+    summary: 'Switch LLM',
+    description: 'Switches the LLM configuration for the agent or a specific session',
+    tags: ['llm'],
+    request: {
+        body: {
+            content: {
+                'application/json': {
+                    schema: SwitchLLMBodySchema,
+                },
+            },
+        },
+    },
+    responses: {
+        200: {
+            description: 'LLM switch result',
+            content: {
+                'application/json': {
+                    schema: z
+                        .object({
+                            config: LLMConfigResponseSchema.describe(
+                                'New LLM configuration with all defaults applied (apiKey omitted)'
+                            ),
+                            sessionId: z
+                                .string()
+                                .optional()
+                                .describe('Session ID if session-specific switch'),
+                        })
+                        .describe('LLM switch result'),
+                },
+            },
+        },
+        400: BadRequestErrorResponse,
+        404: NotFoundErrorResponse,
+        409: ConflictErrorResponse,
+        500: InternalErrorResponse,
+    },
+});
+
+const listCustomModelsRoute = createRoute({
+    method: 'get',
+    path: '/llm/custom-models',
+    summary: 'List Custom Models',
+    description: 'Returns all saved custom model configurations',
+    tags: ['llm'],
+    responses: {
+        200: {
+            description: 'List of custom models',
+            content: {
+                'application/json': {
+                    schema: z.object({
+                        models: z.array(CustomModelSchema).describe('List of custom models'),
+                    }),
+                },
+            },
+        },
+        400: BadRequestErrorResponse,
+        404: NotFoundErrorResponse,
+        500: InternalErrorResponse,
+    },
+});
+
+const createCustomModelRoute = createRoute({
+    method: 'post',
+    path: '/llm/custom-models',
+    summary: 'Create Custom Model',
+    description: 'Saves a new custom model configuration',
+    tags: ['llm'],
+    request: {
+        body: { content: { 'application/json': { schema: CustomModelSchema } } },
+    },
+    responses: {
+        200: {
+            description: 'Custom model saved',
+            content: {
+                'application/json': {
+                    schema: z.object({
+                        ok: z.literal(true).describe('Success indicator'),
+                        model: CustomModelSchema,
+                    }),
+                },
+            },
+        },
+        400: BadRequestErrorResponse,
+        404: NotFoundErrorResponse,
+        409: ConflictErrorResponse,
+        500: InternalErrorResponse,
+    },
+});
+
+const deleteCustomModelRoute = createRoute({
+    method: 'delete',
+    path: '/llm/custom-models/{name}',
+    summary: 'Delete Custom Model',
+    description: 'Deletes a custom model by name',
+    tags: ['llm'],
+    request: {
+        params: z.object({
+            name: z.string().min(1).describe('Model name to delete'),
+        }),
+    },
+    responses: {
+        200: {
+            description: 'Custom model deleted',
+            content: {
+                'application/json': {
+                    schema: z.object({
+                        ok: z.literal(true).describe('Success indicator'),
+                        deleted: z.string().describe('Name of the deleted model'),
+                    }),
+                },
+            },
+        },
+        400: BadRequestErrorResponse,
+        404: NotFoundErrorResponse,
+        500: InternalErrorResponse,
+    },
+});
+
+const capabilitiesRoute = createRoute({
+    method: 'get',
+    path: '/llm/capabilities',
+    summary: 'Get Model Capabilities',
+    description:
+        'Returns the capabilities (supported file types) for a specific provider/model combination. ' +
+        'Handles gateway providers (openrouter) by resolving to the underlying model capabilities.',
+    tags: ['llm'],
+    request: {
+        query: CapabilitiesQuerySchema,
+    },
+    responses: {
+        200: {
+            description: 'Model capabilities',
+            content: {
+                'application/json': {
+                    schema: z.object({
+                        provider: z.string().describe('Provider name'),
+                        model: z.string().describe('Model name as provided'),
+                        supportedFileTypes: z
+                            .array(z.enum(SUPPORTED_FILE_TYPES))
+                            .describe('File types supported by this model'),
+                        reasoning: z
+                            .object({
+                                capable: z
+                                    .boolean()
+                                    .describe(
+                                        'Whether Fius considers this provider/model reasoning-capable (derived from registry metadata plus explicit provider/model rules)'
+                                    ),
+                                paradigm: z
+                                    .enum([
+                                        'effort',
+                                        'adaptive-effort',
+                                        'thinking-level',
+                                        'budget',
+                                        'none',
+                                    ])
+                                    .describe('Reasoning control paradigm for this model'),
+                                variants: z
+                                    .array(
+                                        z
+                                            .object({
+                                                id: z
+                                                    .string()
+                                                    .describe(
+                                                        'Native reasoning variant identifier'
+                                                    ),
+                                                label: z
+                                                    .string()
+                                                    .describe(
+                                                        'Display label for the native reasoning variant'
+                                                    ),
+                                            })
+                                            .strict()
+                                    )
+                                    .describe('Native reasoning variants exposed to users'),
+                                supportedVariants: z
+                                    .array(z.string())
+                                    .describe(
+                                        'Native reasoning variant IDs supported for this model/provider'
+                                    ),
+                                defaultVariant: z
+                                    .string()
+                                    .optional()
+                                    .describe(
+                                        'Default reasoning variant used when no explicit override is set'
+                                    ),
+                                supportsBudgetTokens: z
+                                    .boolean()
+                                    .describe(
+                                        'Whether this provider/model supports a budgetTokens-style escape hatch'
+                                    ),
+                            })
+                            .strict()
+                            .describe(
+                                'Reasoning tuning capabilities derived from registry metadata and explicit provider/model rules'
+                            ),
+                    }),
+                },
+            },
+        },
+        400: BadRequestErrorResponse,
+        404: NotFoundErrorResponse,
+        500: InternalErrorResponse,
+    },
+});
+
+const modelPickerStateRoute = createRoute({
+    method: 'get',
+    path: '/llm/model-picker-state',
+    summary: 'Model Picker State',
+    description:
+        'Returns hydrated Featured, Recents, Favorites, and Custom sections for the model picker.',
+    tags: ['llm'],
+    responses: {
+        200: {
+            description: 'Hydrated model picker sections',
+            content: {
+                'application/json': {
+                    schema: z
+                        .object({
+                            featured: z
+                                .array(ModelPickerEntrySchema)
+                                .describe('Curated featured models'),
+                            recents: z
+                                .array(ModelPickerEntrySchema)
+                                .describe('Most recently used models'),
+                            favorites: z
+                                .array(ModelPickerEntrySchema)
+                                .describe('User favorited models'),
+                            custom: z
+                                .array(ModelPickerEntrySchema)
+                                .describe('User-defined custom models'),
+                        })
+                        .strict(),
+                },
+            },
+        },
+        400: ModelPickerErrorResponses[400],
+        404: ModelPickerErrorResponses[404],
+        500: ModelPickerErrorResponses[500],
+    },
+});
+
+const recordRecentModelRoute = createRoute({
+    method: 'post',
+    path: '/llm/model-picker-state/recents',
+    summary: 'Record Recent Model',
+    description: 'Records a model selection in recents.',
+    tags: ['llm'],
+    request: {
+        body: {
+            required: true,
+            content: {
+                'application/json': {
+                    schema: ModelPickerModelRefSchema,
+                },
+            },
+        },
+    },
+    responses: {
+        200: {
+            description: 'Recent model recorded',
+            content: {
+                'application/json': {
+                    schema: z
+                        .object({
+                            ok: z.literal(true).describe('Success indicator'),
+                        })
+                        .strict(),
+                },
+            },
+        },
+        400: ModelPickerErrorResponses[400],
+        404: ModelPickerErrorResponses[404],
+        500: ModelPickerErrorResponses[500],
+    },
+});
+
+const toggleFavoriteModelRoute = createRoute({
+    method: 'post',
+    path: '/llm/model-picker-state/favorites/toggle',
+    summary: 'Toggle Favorite Model',
+    description: 'Adds or removes a model from favorites.',
+    tags: ['llm'],
+    request: {
+        body: {
+            required: true,
+            content: {
+                'application/json': {
+                    schema: ModelPickerModelRefSchema,
+                },
+            },
+        },
+    },
+    responses: {
+        200: {
+            description: 'Favorite toggled',
+            content: {
+                'application/json': {
+                    schema: z
+                        .object({
+                            ok: z.literal(true).describe('Success indicator'),
+                            isFavorite: z.boolean().describe('Whether the model is now favorited'),
+                        })
+                        .strict(),
+                },
+            },
+        },
+        400: ModelPickerErrorResponses[400],
+        404: ModelPickerErrorResponses[404],
+        500: ModelPickerErrorResponses[500],
+    },
+});
+
+const setFavoritesRoute = createRoute({
+    method: 'put',
+    path: '/llm/model-picker-state/favorites',
+    summary: 'Set Favorite Models',
+    description: 'Replaces favorite models list. Used by migration or bulk updates.',
+    tags: ['llm'],
+    request: {
+        body: {
+            required: true,
+            content: {
+                'application/json': {
+                    schema: SetFavoritesBodySchema,
+                },
+            },
+        },
+    },
+    responses: {
+        200: {
+            description: 'Favorites updated',
+            content: {
+                'application/json': {
+                    schema: z
+                        .object({
+                            ok: z.literal(true).describe('Success indicator'),
+                            count: z
+                                .number()
+                                .int()
+                                .nonnegative()
+                                .describe('Number of favorites persisted'),
+                        })
+                        .strict(),
+                },
+            },
+        },
+        400: ModelPickerErrorResponses[400],
+        404: ModelPickerErrorResponses[404],
+        500: ModelPickerErrorResponses[500],
+    },
+});
+
+export function createLlmRouter(getAgent: GetAgentFn) {
+    const app = new OpenAPIHono();
+
+    const isProviderEnabled = (provider: LLMProvider): boolean =>
+        true;
+
+    const dedupeEntries = (entries: Array<z.output<typeof ModelPickerEntrySchema>>) => {
+        const seen = new Set<string>();
+        const deduped: Array<z.output<typeof ModelPickerEntrySchema>> = [];
+
+        for (const entry of entries) {
+            const key = toModelPickerKey(entry);
+            if (seen.has(key)) {
+                continue;
+            }
+            seen.add(key);
+            deduped.push(entry);
+        }
+
+        return deduped;
+    };
+
+    const buildModelPickerSections = async () => {
+        const byKey = new Map<string, z.output<typeof ModelPickerEntrySchema>>();
+        const customSection: Array<z.output<typeof ModelPickerEntrySchema>> = [];
+        const hydrateStateEntry = (
+            entry: z.output<typeof ModelPickerModelRefSchema>
+        ): z.output<typeof ModelPickerEntrySchema> => {
+            const providerInfo = LLM_REGISTRY[entry.provider];
+            if (!providerInfo) {
+                return {
+                    provider: entry.provider,
+                    model: entry.model,
+                    ...(entry.baseURL ? { baseURL: entry.baseURL } : {}),
+                    displayName: getModelDisplayName(entry.model),
+                    supportedFileTypes: ['pdf', 'image'],
+                    source: 'catalog',
+                };
+            }
+            const modelInfo = providerInfo.models.find((model) => model.name === entry.model);
+            const supportedFileTypes =
+                Array.isArray(modelInfo?.supportedFileTypes) &&
+                modelInfo.supportedFileTypes.length > 0
+                    ? modelInfo.supportedFileTypes
+                    : providerInfo.supportedFileTypes;
+            const source: z.output<typeof ModelPickerEntrySchema>['source'] =
+                entry.provider === 'local'
+                    ? 'local-installed'
+                    : entry.baseURL
+                      ? 'custom'
+                      : 'catalog';
+
+            return {
+                provider: entry.provider,
+                model: entry.model,
+                ...(entry.baseURL ? { baseURL: entry.baseURL } : {}),
+                displayName: modelInfo?.displayName || getModelDisplayName(entry.model),
+                supportedFileTypes,
+                source,
+            };
+        };
+
+        for (const provider of LLM_PROVIDERS) {
+            if (!isProviderEnabled(provider)) {
+                continue;
+            }
+
+            const providerInfo = LLM_REGISTRY[provider];
+            for (const model of getAllModelsForProvider(provider)) {
+                const supportedFileTypes =
+                    Array.isArray(model.supportedFileTypes) && model.supportedFileTypes.length > 0
+                        ? model.supportedFileTypes
+                        : providerInfo?.supportedFileTypes ?? ['pdf', 'image'];
+
+                const entry: z.output<typeof ModelPickerEntrySchema> = {
+                    provider,
+                    model: model.name,
+                    displayName: model.displayName || model.name,
+                    supportedFileTypes,
+                    source: 'catalog',
+                };
+
+                const key = toModelPickerKey(entry);
+                if (!byKey.has(key)) {
+                    byKey.set(key, entry);
+                }
+            }
+        }
+
+        const customModels = await loadCustomModels();
+        for (const customModel of customModels) {
+            const provider = (customModel.provider ?? 'fius') as LLMProvider;
+            if (!isProviderEnabled(provider)) {
+                continue;
+            }
+
+            const providerInfo = LLM_REGISTRY[provider];
+            const entry: z.output<typeof ModelPickerEntrySchema> = {
+                provider,
+                model: customModel.name,
+                ...(customModel.baseURL ? { baseURL: customModel.baseURL } : {}),
+                displayName: customModel.displayName || customModel.name,
+                supportedFileTypes: providerInfo?.supportedFileTypes ?? [],
+                source: 'custom',
+            };
+
+            byKey.set(toModelPickerKey(entry), entry);
+            customSection.push(entry);
+        }
+
+        const localProviderInfo = LLM_REGISTRY.local;
+        const localProviderSupportedFileTypes = localProviderInfo?.supportedFileTypes ?? ['pdf', 'image'];
+        const installedLocalModels = await getAllInstalledModels();
+        for (const installedModel of installedLocalModels) {
+            const modelInfo = getLocalModelById(installedModel.id);
+            const entry: z.output<typeof ModelPickerEntrySchema> = {
+                provider: 'local',
+                model: installedModel.id,
+                displayName: modelInfo?.name || installedModel.id,
+                supportedFileTypes: localProviderSupportedFileTypes,
+                source: 'local-installed',
+            };
+            byKey.set(toModelPickerKey(entry), entry);
+        }
+
+        const featuredProviders = LLM_PROVIDERS.filter((provider) => isProviderEnabled(provider));
+        const featured = getCuratedModelRefsForProviders({
+            providers: featuredProviders,
+            max: MODEL_PICKER_FEATURED_LIMIT,
+        })
+            .map((ref) => byKey.get(toModelPickerKey(ref)))
+            .filter((entry): entry is z.output<typeof ModelPickerEntrySchema> => Boolean(entry));
+
+        const state = await loadModelPickerState();
+        for (const entry of [...state.recents, ...state.favorites]) {
+            if (!isProviderEnabled(entry.provider)) {
+                continue;
+            }
+            const key = toModelPickerKey(entry);
+            if (!byKey.has(key)) {
+                byKey.set(key, hydrateStateEntry(entry));
+            }
+        }
+        const pruned = pruneModelPickerState({
+            state,
+            allowedKeys: new Set(byKey.keys()),
+        });
+
+        const shouldPersistPrunedState =
+            state.recents.length !== pruned.recents.length ||
+            state.favorites.length !== pruned.favorites.length;
+
+        if (shouldPersistPrunedState) {
+            void saveModelPickerState(pruned).catch((error) => {
+                logger.warn(
+                    `Failed to persist pruned model picker state: ${
+                        error instanceof Error ? error.message : String(error)
+                    }`
+                );
+            });
+        }
+
+        const recents = pruned.recents
+            .map((entry) => byKey.get(toModelPickerKey(entry)))
+            .filter((entry): entry is z.output<typeof ModelPickerEntrySchema> => Boolean(entry));
+
+        const favorites = pruned.favorites
+            .map((entry) => byKey.get(toModelPickerKey(entry)))
+            .filter((entry): entry is z.output<typeof ModelPickerEntrySchema> => Boolean(entry));
+
+        logger.debug(`[ModelPicker] pruned.favorites: ${JSON.stringify(pruned.favorites.map(e => ({ provider: e.provider, model: e.model })))}`);
+        logger.debug(`[ModelPicker] favorites after map: ${JSON.stringify(favorites.map(e => ({ provider: e.provider, model: e.model })))}`);
+
+        return {
+            featured: dedupeEntries(featured),
+            recents,
+            favorites,
+            custom: dedupeEntries(customSection),
+        };
+    };
+
+    return app
+        .openapi(currentRoute, async (ctx: any) => {
+            const agent = await getAgent(ctx);
+            const { sessionId } = ctx.req.valid('query');
+
+            let currentConfig = sessionId
+                ? agent.getEffectiveConfig(sessionId).llm
+                : agent.getCurrentLLMConfig();
+
+            if (!currentConfig.model) {
+                try {
+                    const pickerState = await loadModelPickerState();
+                    const last = pickerState.recents[0];
+                    if (last) {
+                        currentConfig = {
+                            ...currentConfig,
+                            provider: last.provider || currentConfig.provider,
+                            model: last.model || currentConfig.model,
+                            ...(last.baseURL ? { baseURL: last.baseURL } : {}),
+                        };
+                    }
+                } catch {
+                }
+            }
+
+            let displayName: string | undefined;
+                try {
+                const model = LLM_REGISTRY[currentConfig.provider]?.models.find(
+                    (m) => m.name.toLowerCase() === String(currentConfig.model).toLowerCase()
+                );
+                displayName = model?.displayName || undefined;
+
+                if (!displayName) {
+                    const customModels = await loadCustomModels();
+                    const customModel = customModels.find(
+                        (cm) => cm.name.toLowerCase() === String(currentConfig.model).toLowerCase()
+                    );
+                    displayName = customModel?.displayName || undefined;
+                }
+
+                if (!displayName && currentConfig.provider === 'fius') {
+                    const platformData = await fetchPlatformModels();
+                    const platformModel = platformData.models.find(
+                        (pm) => pm.name.toLowerCase() === String(currentConfig.model).toLowerCase()
+                    );
+                    displayName = platformModel?.displayName || undefined;
+                }
+
+                if (!displayName) {
+                    displayName = getModelDisplayName(String(currentConfig.model));
+                }
+            } catch {
+            }
+
+            const { apiKey, ...configWithoutKey } = currentConfig;
+
+            const viaFius = false;
+
+            const resolvedDisplayName = displayName || getModelDisplayName(String(currentConfig.model || '')) || currentConfig.model || undefined;
+
+            return ctx.json(
+                {
+                    config: {
+                        ...configWithoutKey,
+                        hasApiKey: !!apiKey,
+                        displayName: resolvedDisplayName || null,
+                        streaming: readStreamingSetting(),
+                    },
+                    routing: {
+                        viaFius,
+                    },
+                },
+                200
+            );
+        })
+        .openapi(catalogRoute, async (ctx: any) => {
+            type ProviderCatalog = Pick<ProviderInfo, 'models' | 'supportedFileTypes'> & {
+                name: string;
+                hasApiKey: boolean;
+                primaryEnvVar: string;
+                supportsBaseURL: boolean;
+            };
+
+            type ModelFlat = ProviderCatalog['models'][number] & { provider: LLMProvider };
+
+            const queryParams = ctx.req.valid('query');
+            const includeModels = queryParams.includeModels ?? true;
+            const scope = queryParams.scope ?? 'all';
+
+            const providers: Partial<Record<LLMProvider, ProviderCatalog>> = {};
+
+            for (const provider of LLM_PROVIDERS) {
+                const info = LLM_REGISTRY[provider];
+                const displayName = provider.charAt(0).toUpperCase() + provider.slice(1);
+                const keyStatus = getProviderKeyStatus(provider);
+
+                const models = (() => {
+                    if (!includeModels) return [];
+                    if (scope === 'all') {
+                        return getAllModelsForProvider(provider);
+                    }
+
+                    return getCuratedModelsForProvider(provider);
+                })();
+
+                providers[provider] = {
+                    name: displayName,
+                    hasApiKey: keyStatus.hasApiKey,
+                    primaryEnvVar: keyStatus.envVar,
+                    supportsBaseURL: supportsBaseURL(provider),
+                    models,
+                    supportedFileTypes: info?.supportedFileTypes ?? ['pdf', 'image'],
+                };
+            }
+
+            if (includeModels && providers.fius) {
+                try {
+                    const platformData = await fetchPlatformModels();
+                    if (platformData.models.length > 0) {
+                        providers.fius.models = platformData.models.map((m) => ({
+                            name: m.name,
+                            displayName: getModelDisplayName(m.name),
+                        }));
+                        providers.fius.hasApiKey = true;
+                    }
+                } catch (err) {
+                    logger.debug(`Failed to fetch platform models: ${err}`);
+                }
+            }
+
+            if (includeModels) {
+                try {
+                    const customModels = await loadCustomModels();
+                    if (customModels.length > 0) {
+                        const customProviderModels = customModels.map((m) => ({
+                            name: m.name,
+                            displayName: m.displayName || m.name,
+                            maxInputTokens: m.maxInputTokens ?? 128000,
+                            supportedFileTypes: (m.supportedFileTypes as ('image' | 'audio' | 'video' | 'pdf' | 'document')[]) ?? ['pdf', 'image'],
+                        }));
+
+                        const byProvider = new Map<string, typeof customProviderModels>();
+                        for (const m of customProviderModels) {
+                            const customModel = customModels.find((cm) => cm.name === m.name);
+                            const displayProvider = customModel?.displayProvider || customModel?.provider || 'custom';
+                            if (!byProvider.has(displayProvider)) byProvider.set(displayProvider, []);
+                            byProvider.get(displayProvider)!.push(m);
+                        }
+
+                        for (const [displayProvider, models] of byProvider) {
+                            const key = displayProvider as LLMProvider;
+                            if (!providers[key]) {
+                                providers[key] = {
+                                    name: displayProvider,
+                                    hasApiKey: true,
+                                    primaryEnvVar: '',
+                                    supportsBaseURL: true,
+                                    models,
+                                    supportedFileTypes: ['pdf', 'image'],
+                                };
+                            } else {
+                                providers[key].models = [...providers[key].models, ...models];
+                            }
+                        }
+                    }
+                } catch (err) {
+                    logger.debug(`Failed to load custom models: ${err}`);
+                }
+            }
+
+            let filtered: Partial<Record<LLMProvider, ProviderCatalog>> = { ...providers };
+
+            if (queryParams.provider && queryParams.provider.length > 0) {
+                const allowed = new Set(
+                    queryParams.provider.filter((p: string) =>
+                        (LLM_PROVIDERS as readonly string[]).includes(p)
+                    )
+                );
+                const filteredByProvider: Partial<Record<LLMProvider, ProviderCatalog>> = {};
+                for (const [id, catalog] of Object.entries(filtered)) {
+                    if (allowed.has(id)) {
+                        filteredByProvider[id as LLMProvider] = catalog;
+                    }
+                }
+                filtered = filteredByProvider;
+            }
+
+            if (typeof queryParams.hasKey === 'boolean') {
+                const byKey: Partial<Record<LLMProvider, ProviderCatalog>> = {};
+                for (const [id, catalog] of Object.entries(filtered)) {
+                    if (catalog && catalog.hasApiKey === queryParams.hasKey) {
+                        byKey[id as LLMProvider] = catalog;
+                    }
+                }
+                filtered = byKey;
+            }
+
+            if (queryParams.fileType) {
+                const byFileType: Partial<Record<LLMProvider, ProviderCatalog>> = {};
+                for (const [id, catalog] of Object.entries(filtered)) {
+                    if (!catalog) continue;
+                    const models = catalog.models.filter((model) => {
+                        const modelTypes =
+                            Array.isArray(model.supportedFileTypes) &&
+                            model.supportedFileTypes.length > 0
+                                ? model.supportedFileTypes
+                                : catalog.supportedFileTypes || [];
+                        return modelTypes.includes(queryParams.fileType!);
+                    });
+                    if (models.length > 0) {
+                        byFileType[id as LLMProvider] = { ...catalog, models };
+                    }
+                }
+                filtered = byFileType;
+            }
+
+            if (queryParams.defaultOnly) {
+                const byDefault: Partial<Record<LLMProvider, ProviderCatalog>> = {};
+                for (const [id, catalog] of Object.entries(filtered)) {
+                    if (!catalog) continue;
+                    const models = catalog.models.filter((model) => model.default === true);
+                    if (models.length > 0) {
+                        byDefault[id as LLMProvider] = { ...catalog, models };
+                    }
+                }
+                filtered = byDefault;
+            }
+
+            if (queryParams.mode === 'flat') {
+                const flat: ModelFlat[] = [];
+                for (const [id, catalog] of Object.entries(filtered)) {
+                    if (!catalog) continue;
+                    for (const model of catalog.models) {
+                        flat.push({ provider: id as LLMProvider, ...model });
+                    }
+                }
+                return ctx.json({ models: flat }, 200);
+            }
+
+            return ctx.json({ providers: filtered }, 200);
+        })
+        .openapi(switchRoute, async (ctx) => {
+            const agent = await getAgent(ctx);
+            const raw = ctx.req.valid('json');
+            const { sessionId, ...llmUpdates } = raw;
+
+            const config = await agent.switchLLM(llmUpdates, sessionId);
+
+            try {
+                await recordRecentModel({
+                    provider: config.provider,
+                    model: config.model,
+                    ...(config.baseURL ? { baseURL: config.baseURL } : {}),
+                });
+            } catch {
+            }
+
+            const { apiKey, ...configWithoutKey } = config;
+            return ctx.json(
+                {
+                    config: {
+                        ...configWithoutKey,
+                        hasApiKey: !!apiKey,
+                    },
+                    sessionId,
+                },
+                200
+            );
+        })
+        .openapi(listCustomModelsRoute, async (ctx) => {
+            const models = await loadCustomModels();
+            return ctx.json({ models }, 200);
+        })
+        .openapi(createCustomModelRoute, async (ctx) => {
+            const model = ctx.req.valid('json');
+            await saveCustomModel(model);
+            return ctx.json({ ok: true as const, model }, 200);
+        })
+        .openapi(deleteCustomModelRoute, async (ctx) => {
+            const { name: encodedName } = ctx.req.valid('param');
+            const name = decodeURIComponent(encodedName);
+            const deleted = await deleteCustomModel(name);
+            if (!deleted) {
+                throw new FiusRuntimeError(
+                    'custom_model_not_found',
+                    ErrorScope.LLM,
+                    ErrorType.NOT_FOUND,
+                    `Custom model '${name}' not found`,
+                    { modelName: name }
+                );
+            }
+            return ctx.json({ ok: true as const, deleted: name } as const, 200);
+        })
+        .openapi(modelPickerStateRoute, async (ctx) => {
+            const sections = await buildModelPickerSections();
+            return ctx.json(sections, 200);
+        })
+        .openapi(recordRecentModelRoute, async (ctx) => {
+            const modelRef = ctx.req.valid('json');
+            await recordRecentModel(modelRef);
+            return ctx.json({ ok: true as const }, 200);
+        })
+        .openapi(toggleFavoriteModelRoute, async (ctx) => {
+            const modelRef = ctx.req.valid('json');
+            const result = await toggleFavoriteModel(modelRef);
+            return ctx.json(
+                {
+                    ok: true as const,
+                    isFavorite: result.isFavorite,
+                },
+                200
+            );
+        })
+        .openapi(setFavoritesRoute, async (ctx) => {
+            const payload = ctx.req.valid('json');
+            const state = await setFavoriteModels({
+                favorites: payload.favorites,
+            });
+            return ctx.json(
+                {
+                    ok: true as const,
+                    count: state.favorites.length,
+                },
+                200
+            );
+        })
+        .openapi(capabilitiesRoute, async (ctx) => {
+            const { provider, model } = ctx.req.valid('query');
+
+            let supportedFileTypes: SupportedFileType[];
+
+            try {
+                const customModels = await loadCustomModels();
+                const customModel = customModels.find(
+                    (cm) => cm.name === model && (cm.provider === provider || cm.displayProvider === provider)
+                );
+                if (customModel?.supportedFileTypes && customModel.supportedFileTypes.length > 0) {
+                    supportedFileTypes = customModel.supportedFileTypes as SupportedFileType[];
+                } else {
+                    supportedFileTypes = getSupportedFileTypesForModel(provider, model);
+                }
+            } catch {
+                supportedFileTypes = getSupportedFileTypesForModel(provider, model);
+            }
+
+            const reasoning = getReasoningProfile(provider, model);
+
+            return ctx.json(
+                {
+                    provider,
+                    model,
+                    supportedFileTypes,
+                    reasoning,
+                },
+                200
+            );
+        });
+}
+
+type CurrentRouteSchema = OpenAPIRouteSchema<
+    typeof currentRoute,
+    { query: z.input<typeof CurrentQuerySchema> }
+>;
+type CatalogRouteSchema = OpenAPIRouteSchema<
+    typeof catalogRoute,
+    { query: z.input<typeof CatalogQuerySchema> }
+>;
+type SwitchRouteSchema = OpenAPIRouteSchema<
+    typeof switchRoute,
+    { json: z.input<typeof SwitchLLMBodySchema> }
+>;
+type ListCustomModelsRouteSchema = OpenAPIRouteSchema<typeof listCustomModelsRoute, {}>;
+type CreateCustomModelRouteSchema = OpenAPIRouteSchema<
+    typeof createCustomModelRoute,
+    { json: z.input<typeof CustomModelSchema> }
+>;
+type DeleteCustomModelRouteSchema = OpenAPIRouteSchema<
+    typeof deleteCustomModelRoute,
+    { param: { name: string } }
+>;
+type CapabilitiesRouteSchema = OpenAPIRouteSchema<
+    typeof capabilitiesRoute,
+    { query: z.input<typeof CapabilitiesQuerySchema> }
+>;
+type ModelPickerStateRouteSchema = OpenAPIRouteSchema<typeof modelPickerStateRoute, {}>;
+type RecordRecentModelRouteSchema = OpenAPIRouteSchema<
+    typeof recordRecentModelRoute,
+    { json: z.input<typeof ModelPickerModelRefSchema> }
+>;
+type ToggleFavoriteModelRouteSchema = OpenAPIRouteSchema<
+    typeof toggleFavoriteModelRoute,
+    { json: z.input<typeof ModelPickerModelRefSchema> }
+>;
+type SetFavoritesRouteSchema = OpenAPIRouteSchema<
+    typeof setFavoritesRoute,
+    { json: z.input<typeof SetFavoritesBodySchema> }
+>;
+
+export type LlmRouterSchema =
+    | CurrentRouteSchema
+    | CatalogRouteSchema
+    | SwitchRouteSchema
+    | ListCustomModelsRouteSchema
+    | CreateCustomModelRouteSchema
+    | DeleteCustomModelRouteSchema
+    | CapabilitiesRouteSchema
+    | ModelPickerStateRouteSchema
+    | RecordRecentModelRouteSchema
+    | ToggleFavoriteModelRouteSchema
+    | SetFavoritesRouteSchema;

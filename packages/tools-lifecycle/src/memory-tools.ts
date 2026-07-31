@@ -1,0 +1,228 @@
+import { z } from 'zod';
+import {
+    ToolError,
+    createLocalToolCallHeader,
+    defineTool,
+    truncateForHeader,
+} from '@fius/core/tools';
+import type { ListMemoriesOptions, MemorySource } from '@fius/core/memory';
+import type { Tool, ToolExecutionContext } from '@fius/core/tools';
+
+const MemorySourceSchema = z.enum(['user', 'system']);
+
+const MemoryListInputSchema = z
+    .object({
+        tags: z.array(z.string()).optional().describe('Optional: filter by tags'),
+        source: MemorySourceSchema.optional().describe('Optional: filter by source'),
+        pinned: z.boolean().optional().describe('Optional: filter by pinned status'),
+        limit: z
+            .number()
+            .int()
+            .positive()
+            .optional()
+            .default(50)
+            .describe('Optional: limit results'),
+        offset: z
+            .number()
+            .int()
+            .nonnegative()
+            .optional()
+            .default(0)
+            .describe('Optional: pagination offset'),
+    })
+    .strict();
+
+export function createMemoryListTool(): Tool<typeof MemoryListInputSchema> {
+    return defineTool({
+        id: 'memory_list',
+        description: 'List stored memories for this agent, with optional filtering.',
+        inputSchema: MemoryListInputSchema,
+        presentation: {
+            describeHeader: (input) => {
+                const filterParts: string[] = [];
+                if (input.tags && input.tags.length > 0) {
+                    filterParts.push(`tags=${input.tags.join(',')}`);
+                }
+                if (input.source) {
+                    filterParts.push(`source=${input.source}`);
+                }
+                if (input.pinned !== undefined) {
+                    filterParts.push(`pinned=${String(input.pinned)}`);
+                }
+                filterParts.push(`limit=${input.limit}`);
+                filterParts.push(`offset=${input.offset}`);
+
+                return createLocalToolCallHeader({
+                    title: 'List Memories',
+                    argsText: truncateForHeader(filterParts.join(' '), 140),
+                });
+            },
+        },
+        async execute(input, context: ToolExecutionContext) {
+            const agent = context.agent;
+            if (!agent) {
+                throw ToolError.configInvalid('memory_list requires ToolExecutionContext.agent');
+            }
+
+            const { tags, source, pinned, limit, offset } = input;
+
+            const options: ListMemoriesOptions = {
+                limit,
+                offset,
+                ...(tags !== undefined && { tags }),
+                ...(source !== undefined && { source }),
+                ...(pinned !== undefined && { pinned }),
+            };
+
+            return await agent.memoryManager.list(options);
+        },
+    });
+}
+
+const MemoryGetInputSchema = z.object({ id: z.string().describe('Memory ID') }).strict();
+
+export function createMemoryGetTool(): Tool<typeof MemoryGetInputSchema> {
+    return defineTool({
+        id: 'memory_get',
+        description: 'Get a memory by ID.',
+        inputSchema: MemoryGetInputSchema,
+        presentation: {
+            describeHeader: (input) =>
+                createLocalToolCallHeader({
+                    title: 'Get Memory',
+                    argsText: truncateForHeader(input.id, 140),
+                }),
+        },
+        async execute(input, context: ToolExecutionContext) {
+            const agent = context.agent;
+            if (!agent) {
+                throw ToolError.configInvalid('memory_get requires ToolExecutionContext.agent');
+            }
+
+            const { id } = input;
+            return await agent.memoryManager.get(id);
+        },
+    });
+}
+
+const MemoryCreateInputSchema = z
+    .object({
+        content: z.string().min(1).describe('Memory content'),
+        tags: z.array(z.string()).optional().describe('Optional: tags for categorization'),
+        source: MemorySourceSchema.optional()
+            .default('system')
+            .describe('Memory source (default: system)'),
+        pinned: z.boolean().optional().default(false).describe('Whether this memory is pinned'),
+    })
+    .strict();
+
+export function createMemoryCreateTool(): Tool<typeof MemoryCreateInputSchema> {
+    return defineTool({
+        id: 'memory_create',
+        description: 'Create a new memory.',
+        inputSchema: MemoryCreateInputSchema,
+        presentation: {
+            describeHeader: (input) =>
+                createLocalToolCallHeader({
+                    title: 'Create Memory',
+                    argsText: truncateForHeader(input.content, 140),
+                }),
+        },
+        async execute(input, context: ToolExecutionContext) {
+            const agent = context.agent;
+            if (!agent) {
+                throw ToolError.configInvalid('memory_create requires ToolExecutionContext.agent');
+            }
+
+            const { content, tags, source, pinned } = input;
+            const metadata: { source: MemorySource; pinned: boolean } = { source, pinned };
+
+            return await agent.memoryManager.create({
+                content,
+                ...(tags !== undefined && { tags }),
+                metadata,
+            });
+        },
+    });
+}
+
+const MemoryUpdateInputSchema = z
+    .object({
+        id: z.string().describe('Memory ID'),
+        content: z.string().optional().describe('Updated memory content (optional)'),
+        tags: z.array(z.string()).optional().describe('Updated tags (optional, replaces existing)'),
+        source: MemorySourceSchema.optional().describe('Updated source (optional)'),
+        pinned: z.boolean().optional().describe('Updated pinned status (optional)'),
+    })
+    .strict();
+
+export function createMemoryUpdateTool(): Tool<typeof MemoryUpdateInputSchema> {
+    return defineTool({
+        id: 'memory_update',
+        description: 'Update an existing memory.',
+        inputSchema: MemoryUpdateInputSchema,
+        presentation: {
+            describeHeader: (input) => {
+                const updateParts: string[] = [];
+                if (input.content !== undefined) updateParts.push('content');
+                if (input.tags !== undefined) updateParts.push('tags');
+                if (input.source !== undefined) updateParts.push('source');
+                if (input.pinned !== undefined) updateParts.push('pinned');
+
+                const argsText =
+                    updateParts.length > 0
+                        ? truncateForHeader(`${input.id} ${updateParts.join(',')}`, 140)
+                        : truncateForHeader(input.id, 140);
+
+                return createLocalToolCallHeader({
+                    title: 'Update Memory',
+                    argsText,
+                });
+            },
+        },
+        async execute(input, context: ToolExecutionContext) {
+            const agent = context.agent;
+            if (!agent) {
+                throw ToolError.configInvalid('memory_update requires ToolExecutionContext.agent');
+            }
+
+            const { id, content, tags, source, pinned } = input;
+            const metadataUpdate: { source?: MemorySource; pinned?: boolean } = {};
+            if (source !== undefined) metadataUpdate.source = source;
+            if (pinned !== undefined) metadataUpdate.pinned = pinned;
+
+            return await agent.memoryManager.update(id, {
+                ...(content !== undefined && { content }),
+                ...(tags !== undefined && { tags }),
+                ...(Object.keys(metadataUpdate).length > 0 && { metadata: metadataUpdate }),
+            });
+        },
+    });
+}
+
+const MemoryDeleteInputSchema = z.object({ id: z.string().describe('Memory ID') }).strict();
+
+export function createMemoryDeleteTool(): Tool<typeof MemoryDeleteInputSchema> {
+    return defineTool({
+        id: 'memory_delete',
+        description: 'Delete a memory by ID.',
+        inputSchema: MemoryDeleteInputSchema,
+        presentation: {
+            describeHeader: (input) =>
+                createLocalToolCallHeader({
+                    title: 'Delete Memory',
+                    argsText: truncateForHeader(input.id, 140),
+                }),
+        },
+        async execute(input, context: ToolExecutionContext) {
+            const agent = context.agent;
+            if (!agent) {
+                throw ToolError.configInvalid('memory_delete requires ToolExecutionContext.agent');
+            }
+
+            const { id } = input;
+            await agent.memoryManager.delete(id);
+            return { ok: true };
+        },
+    });
+}

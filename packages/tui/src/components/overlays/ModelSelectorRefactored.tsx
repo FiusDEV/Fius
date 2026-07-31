@@ -1,0 +1,1957 @@
+
+
+import {
+    useState,
+    useEffect,
+    forwardRef,
+    useRef,
+    useImperativeHandle,
+    useMemo,
+    useCallback,
+} from 'react';
+import { Box, Text } from 'ink';
+import type { Key } from '../../hooks/useInputOrchestrator.js';
+import { useTerminalSize } from '../../hooks/useTerminalSize.js';
+import type { CodexModelInfo } from '@fius/core';
+import { fetchPlatformModels } from '../../utils/platform-models.js';
+import type { LLMProvider, ReasoningVariant } from '@fius/llm';
+import { getModelDisplayName, getReasoningProfile } from '@fius/llm';
+import {
+    CodexAppServerClient,
+    createCodexBaseURL,
+    listOllamaModels,
+    DEFAULT_OLLAMA_URL,
+    getLocalModelById,
+    getCuratedModelRefsForProviders,
+    parseCodexBaseURL,
+} from '@fius/core';
+import {
+    loadCustomModels,
+    deleteCustomModel,
+    getAllInstalledModels,
+    loadGlobalPreferences,
+    loadModelPickerState,
+    toggleFavoriteModel,
+    toModelPickerKey,
+    type CustomModel,
+    type ModelPickerState,
+} from '@fius/agent-management';
+import { getLLMProviderDisplayName } from '../../utils/llm-provider-display.js';
+import { getMaxVisibleItemsForTerminalRows } from '../../utils/overlaySizing.js';
+import { compareModelsLatestFirst, isDeprecatedModelStatus } from '../../utils/modelOrdering.js';
+import {
+    getCachedStringWidth,
+    stripUnsafeCharacters,
+    toCodePoints,
+} from '../../utils/textUtils.js';
+import { HintBar } from '../shared/HintBar.js';
+import type { TuiAgentBackend } from '../../agent-backend.js';
+
+type ModelSelectorTab = string;
+
+const BASE_TABS: ReadonlyArray<{ id: string; label: string }> = [
+    { id: 'all-models', label: 'All' },
+];
+
+const PROVIDER_COLLATOR = new Intl.Collator('en', { sensitivity: 'base' });
+const PROVIDER_TOKEN_PATTERN = /[^a-z0-9]/g;
+const CODEX_CHATGPT_BASE_URL = createCodexBaseURL('chatgpt');
+const CHATGPT_CODEX_MODEL_LIST_TIMEOUT_MS = 5_000;
+
+function normalizeProviderToken(value: string): string {
+    return value.toLowerCase().replace(PROVIDER_TOKEN_PATTERN, '');
+}
+
+function isChatGPTCodexBaseURL(baseURL?: string): boolean {
+    return parseCodexBaseURL(baseURL)?.authMode === 'chatgpt';
+}
+
+function isChatGPTCodexConfig(provider: LLMProvider, baseURL?: string): boolean {
+    return provider === 'openai-compatible' && isChatGPTCodexBaseURL(baseURL);
+}
+
+function canonicalizeModelBaseURL(baseURL?: string): string | undefined {
+    const parsed = parseCodexBaseURL(baseURL);
+    return parsed ? createCodexBaseURL(parsed.authMode) : baseURL;
+}
+
+function toCanonicalModelPickerKey(input: {
+    provider: LLMProvider;
+    model: string;
+    baseURL?: string | undefined;
+}): string {
+    const baseURL = canonicalizeModelBaseURL(input.baseURL);
+    return toModelPickerKey({
+        provider: input.provider,
+        model: input.model,
+        ...(baseURL ? { baseURL } : {}),
+    });
+}
+
+function createModelIdentity(input: {
+    provider: LLMProvider;
+    name: string;
+    baseURL?: string | undefined;
+}): Pick<ModelOption, 'provider' | 'name' | 'baseURL'> {
+    return {
+        provider: input.provider,
+        name: input.name,
+        ...(input.baseURL ? { baseURL: input.baseURL } : {}),
+    };
+}
+
+async function raceWithTimeout<T>(
+    promise: Promise<T>,
+    options: {
+        timeoutMs: number;
+        errorMessage: string;
+        onTimeout?: () => void;
+    }
+): Promise<T> {
+    return await new Promise<T>((resolve, reject) => {
+        const timer = setTimeout(() => {
+            options.onTimeout?.();
+            reject(new Error(options.errorMessage));
+        }, options.timeoutMs);
+
+        promise.then(
+            (value) => {
+                clearTimeout(timer);
+                resolve(value);
+            },
+            (error) => {
+                clearTimeout(timer);
+                reject(error);
+            }
+        );
+    });
+}
+
+function matchesConfiguredModel(
+    candidate: Pick<ModelOption, 'provider' | 'name' | 'baseURL'>,
+    configured: { provider: LLMProvider; model: string; baseURL?: string }
+): boolean {
+    if (candidate.provider !== configured.provider || candidate.name !== configured.model) {
+        return false;
+    }
+
+    const candidateBaseURL = candidate.baseURL ?? '';
+    const configuredBaseURL = configured.baseURL ?? '';
+    if (candidateBaseURL === configuredBaseURL) {
+        return true;
+    }
+
+    const candidateCodex = parseCodexBaseURL(candidate.baseURL);
+    const configuredCodex = parseCodexBaseURL(configured.baseURL);
+
+    return candidateCodex?.authMode === configuredCodex?.authMode;
+}
+
+async function loadChatGPTCodexModels(agent: TuiAgentBackend): Promise<CodexModelInfo[]> {
+    let client: CodexAppServerClient | null = null;
+
+    try {
+        const createPromise = CodexAppServerClient.create({
+            requestTimeoutMs: CHATGPT_CODEX_MODEL_LIST_TIMEOUT_MS,
+        });
+        client = await raceWithTimeout(createPromise, {
+            timeoutMs: CHATGPT_CODEX_MODEL_LIST_TIMEOUT_MS,
+            errorMessage: `Timed out starting ChatGPT Codex model listing after ${CHATGPT_CODEX_MODEL_LIST_TIMEOUT_MS}ms`,
+            onTimeout: () => {
+                void createPromise
+                    .then((lateClient) => lateClient.close().catch(() => undefined))
+                    .catch(() => undefined);
+            },
+        });
+
+        const account = await raceWithTimeout(client.readAccount(false), {
+            timeoutMs: CHATGPT_CODEX_MODEL_LIST_TIMEOUT_MS,
+            errorMessage: `Timed out reading ChatGPT Codex account state after ${CHATGPT_CODEX_MODEL_LIST_TIMEOUT_MS}ms`,
+        });
+        if (account.account?.type !== 'chatgpt') {
+            return [];
+        }
+
+        return await raceWithTimeout(client.listModels(), {
+            timeoutMs: CHATGPT_CODEX_MODEL_LIST_TIMEOUT_MS,
+            errorMessage: `Timed out listing ChatGPT Codex models after ${CHATGPT_CODEX_MODEL_LIST_TIMEOUT_MS}ms`,
+        });
+    } catch (error) {
+        agent.logger.debug(
+            `ChatGPT Codex model list unavailable: ${error instanceof Error ? error.message : String(error)}`
+        );
+        return [];
+    } finally {
+        if (client) {
+            await client.close().catch(() => undefined);
+        }
+    }
+}
+
+function toReleaseDateLookupKey(provider: LLMProvider, modelName: string): string {
+    return `${provider}::${modelName.toLowerCase()}`;
+}
+
+function splitGatewayModelName(
+    modelName: string
+): { providerPrefix: string; unprefixedName: string } | null {
+    const slashIndex = modelName.indexOf('/');
+    if (slashIndex <= 0 || slashIndex >= modelName.length - 1) {
+        return null;
+    }
+
+    return {
+        providerPrefix: modelName.slice(0, slashIndex),
+        unprefixedName: modelName.slice(slashIndex + 1),
+    };
+}
+
+function createReleaseDateResolver({
+    allModels,
+    providers,
+}: {
+    allModels: Record<LLMProvider, Array<{ name: string; releaseDate?: string }>>;
+    providers: readonly LLMProvider[];
+}): (provider: LLMProvider, modelName: string, explicitReleaseDate?: string) => string | undefined {
+    const releaseDateByProviderAndName = new Map<string, string>();
+    const releaseDateCandidatesByName = new Map<
+        string,
+        Array<{ provider: LLMProvider; releaseDate: string }>
+    >();
+    const latestReleaseDateByName = new Map<string, string>();
+    const providerByToken = new Map<string, LLMProvider>();
+
+    for (const provider of providers) {
+        const token = normalizeProviderToken(provider);
+        if (token && !providerByToken.has(token)) {
+            providerByToken.set(token, provider);
+        }
+
+        const modelsForProvider = allModels[provider];
+        if (!modelsForProvider || modelsForProvider.length === 0) {
+            continue;
+        }
+
+        for (const model of modelsForProvider) {
+            const releaseDate = model.releaseDate;
+            if (!releaseDate) {
+                continue;
+            }
+
+            const lowerName = model.name.toLowerCase();
+            releaseDateByProviderAndName.set(
+                toReleaseDateLookupKey(provider, lowerName),
+                releaseDate
+            );
+
+            const existingLatest = latestReleaseDateByName.get(lowerName);
+            if (!existingLatest || releaseDate > existingLatest) {
+                latestReleaseDateByName.set(lowerName, releaseDate);
+            }
+
+            const candidates = releaseDateCandidatesByName.get(lowerName) ?? [];
+            candidates.push({ provider, releaseDate });
+            releaseDateCandidatesByName.set(lowerName, candidates);
+        }
+    }
+
+    return (
+        provider: LLMProvider,
+        modelName: string,
+        explicitReleaseDate?: string
+    ): string | undefined => {
+        if (explicitReleaseDate) {
+            return explicitReleaseDate;
+        }
+
+        const lowerName = modelName.toLowerCase();
+        const sameProviderDate = releaseDateByProviderAndName.get(
+            toReleaseDateLookupKey(provider, lowerName)
+        );
+        if (sameProviderDate) {
+            return sameProviderDate;
+        }
+
+        const openRouterDate = releaseDateByProviderAndName.get(
+            toReleaseDateLookupKey('openrouter', lowerName)
+        );
+        if (openRouterDate) {
+            return openRouterDate;
+        }
+
+        const parsedGatewayModel = splitGatewayModelName(modelName);
+        if (!parsedGatewayModel) {
+            return undefined;
+        }
+
+        const unprefixedName = parsedGatewayModel.unprefixedName.toLowerCase();
+        const preferredProvider = providerByToken.get(
+            normalizeProviderToken(parsedGatewayModel.providerPrefix)
+        );
+
+        if (preferredProvider) {
+            const providerDate = releaseDateByProviderAndName.get(
+                toReleaseDateLookupKey(preferredProvider, unprefixedName)
+            );
+            if (providerDate) {
+                return providerDate;
+            }
+        }
+
+        const candidates = releaseDateCandidatesByName.get(unprefixedName);
+        if (candidates && preferredProvider) {
+            const preferredProviderCandidate = candidates.find(
+                (candidate) => candidate.provider === preferredProvider
+            );
+            if (preferredProviderCandidate) {
+                return preferredProviderCandidate.releaseDate;
+            }
+        }
+
+        return latestReleaseDateByName.get(unprefixedName);
+    };
+}
+
+function getNextModelSelectorTab(current: ModelSelectorTab, tabs: ReadonlyArray<{ id: string }>): ModelSelectorTab {
+    const currentIndex = tabs.findIndex((tab) => tab.id === current);
+    const nextIndex = currentIndex < 0 ? 0 : (currentIndex + 1) % tabs.length;
+    return tabs[nextIndex]?.id ?? 'all-models';
+}
+
+function getPreviousModelSelectorTab(current: ModelSelectorTab, tabs: ReadonlyArray<{ id: string }>): ModelSelectorTab {
+    const currentIndex = tabs.findIndex((tab) => tab.id === current);
+    const previousIndex =
+        currentIndex < 0
+            ? 0
+            : (currentIndex - 1 + tabs.length) % tabs.length;
+    return tabs[previousIndex]?.id ?? 'all-models';
+}
+
+function compareModelOptionsForDisplay(left: ModelOption, right: ModelOption): number {
+    const byRecency = compareModelsLatestFirst(left, right);
+    if (byRecency !== 0) {
+        return byRecency;
+    }
+
+    const byProvider = PROVIDER_COLLATOR.compare(left.provider, right.provider);
+    if (byProvider !== 0) {
+        return byProvider;
+    }
+
+    return 0;
+}
+interface ModelSelectorProps {
+    isVisible: boolean;
+    title?: string;
+    onSelectModel: (
+        provider: LLMProvider,
+        model: string,
+        displayName?: string,
+        baseURL?: string,
+        reasoningVariant?: ReasoningVariant,
+        apiKey?: string
+    ) => void;
+    onSetDefaultModel: (
+        provider: LLMProvider,
+        model: string,
+        displayName?: string,
+        baseURL?: string,
+        reasoningVariant?: ReasoningVariant,
+        apiKey?: string
+    ) => Promise<void>;
+    onClose: () => void;
+    onAddCustomModel: () => void;
+    onEditCustomModel: (model: CustomModel) => void;
+    agent: TuiAgentBackend;
+}
+
+export interface ModelSelectorHandle {
+    handleInput: (input: string, key: Key) => boolean;
+}
+
+interface ModelOption {
+    provider: LLMProvider;
+    name: string;
+    displayName: string | undefined;
+    maxInputTokens?: number | undefined;
+    releaseDate?: string | undefined;
+    status?: string;
+    isDefault: boolean;
+    isCurrent: boolean;
+    isCustom: boolean;
+    baseURL?: string;
+    apiKey?: string;
+    reasoningVariant?: ReasoningVariant;
+    
+    originalProvider?: LLMProvider;
+}
+
+// Special option for adding custom model
+interface AddCustomOption {
+    type: 'add-custom';
+}
+
+type SelectorItem = ModelOption | AddCustomOption;
+
+function toModelIdentityKey(model: Pick<ModelOption, 'provider' | 'name' | 'baseURL'>): string {
+    return toCanonicalModelPickerKey({
+        provider: model.provider,
+        model: model.name,
+        ...(model.baseURL ? { baseURL: model.baseURL } : {}),
+    });
+}
+
+function normalizeLineText(value: string): string {
+    return stripUnsafeCharacters(value).replace(/\r?\n/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+function formatLineToWidth(value: string, width: number): string {
+    if (width <= 0) return '';
+
+    const normalized = normalizeLineText(value);
+    if (!normalized) {
+        return ' '.repeat(width);
+    }
+
+    const normalizedWidth = getCachedStringWidth(normalized);
+    if (normalizedWidth <= width) {
+        return normalized + ' '.repeat(width - normalizedWidth);
+    }
+
+    if (width === 1) {
+        return '…';
+    }
+
+    const ellipsis = '…';
+    const targetWidth = width - getCachedStringWidth(ellipsis);
+    let truncated = '';
+
+    for (const char of toCodePoints(normalized)) {
+        const candidate = `${truncated}${char}`;
+        if (getCachedStringWidth(candidate) > targetWidth) {
+            break;
+        }
+        truncated = candidate;
+    }
+
+    const withEllipsis = `${truncated}${ellipsis}`;
+    const finalWidth = getCachedStringWidth(withEllipsis);
+    if (finalWidth >= width) {
+        return withEllipsis;
+    }
+
+    return withEllipsis + ' '.repeat(width - finalWidth);
+}
+
+function isAddCustomOption(item: SelectorItem): item is AddCustomOption {
+    return 'type' in item && item.type === 'add-custom';
+}
+
+function isModelOption(item: SelectorItem): item is ModelOption {
+    return !('type' in item);
+}
+
+function getRowPrefix({
+    isSelected,
+    isDefault,
+    isCurrent,
+    isFavorite,
+}: {
+    isSelected: boolean;
+    isDefault: boolean;
+    isCurrent: boolean;
+    isFavorite: boolean;
+}): string {
+    const icon = isSelected ? '►' : isFavorite ? '★' : '◇';
+    return ` ${isDefault ? '✓' : ' '} ${isCurrent ? '●' : ' '} ${icon} `;
+}
+
+type ReasoningOption = {
+    value: ReasoningVariant;
+    label: string;
+    description: string;
+};
+
+const REASONING_VARIANT_DESCRIPTIONS: Readonly<Record<string, string>> = {
+    disabled: 'Disable reasoning (fastest)',
+    none: 'Disable reasoning (fastest)',
+    enabled: 'Enable provider default reasoning',
+    minimal: 'Minimal reasoning',
+    low: 'Light reasoning, faster responses',
+    medium: 'Balanced reasoning',
+    high: 'Thorough reasoning',
+    max: 'Maximum reasoning within provider limits',
+    xhigh: 'Extra high reasoning',
+};
+
+function buildReasoningVariantOptions(
+    support: ReturnType<typeof getReasoningProfile>
+): ReasoningOption[] {
+    return support.variants.map((variant) => ({
+        value: variant.id,
+        label:
+            variant.id === support.defaultVariant
+                ? `${variant.label} (Recommended)`
+                : variant.label,
+        description:
+            REASONING_VARIANT_DESCRIPTIONS[variant.id] ?? 'Model/provider-native reasoning variant',
+    }));
+}
+
+function getInitialVariantIndex(
+    savedVariant: ReasoningVariant | undefined,
+    options: ReasoningOption[],
+    defaultVariant: string | undefined
+): number {
+    const preferredVariant = savedVariant ?? defaultVariant;
+    if (!preferredVariant) return 0;
+    const idx = options.findIndex((option) => option.value === preferredVariant);
+    return idx >= 0 ? idx : 0;
+}
+
+
+const ModelSelector = forwardRef<ModelSelectorHandle, ModelSelectorProps>(function ModelSelector(
+    {
+        isVisible,
+        title,
+        onSelectModel,
+        onSetDefaultModel,
+        onClose,
+        onAddCustomModel,
+        onEditCustomModel,
+        agent,
+    },
+    ref
+) {
+    const { rows: terminalRows, columns: terminalColumns } = useTerminalSize();
+    const overlayWidth = useMemo(() => Math.max(20, terminalColumns - 2), [terminalColumns]);
+    const maxVisibleItems = useMemo(() => {
+        return getMaxVisibleItemsForTerminalRows({
+            rows: terminalRows,
+            hardCap: 8,
+            reservedRows: 14,
+        });
+    }, [terminalRows]);
+    const [models, setModels] = useState<ModelOption[]>([]);
+    const [customModels, setCustomModels] = useState<CustomModel[]>([]);
+    const [modelPickerState, setModelPickerState] = useState<ModelPickerState | null>(null);
+    const [activeTab, setActiveTab] = useState<ModelSelectorTab>('all-models');
+    const [tabs, setTabs] = useState<ReadonlyArray<{ id: string; label: string }>>(BASE_TABS);
+    const [isLoading, setIsLoading] = useState(false);
+    const [selection, setSelection] = useState({ index: 0, offset: 0 });
+    const [searchQuery, setSearchQuery] = useState('');
+    const [customModelAction, setCustomModelAction] = useState<
+        'favorite' | 'default' | 'edit' | 'delete' | null
+    >(null);
+    const [pendingDeleteConfirm, setPendingDeleteConfirm] = useState(false);
+    const selectedIndexRef = useRef(0);
+    const deleteTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const maxVisibleItemsRef = useRef(maxVisibleItems);
+
+    // Reasoning variant sub-step state
+    const [pendingReasoningModel, setPendingReasoningModel] = useState<ModelOption | null>(null);
+    const [reasoningVariantIndex, setReasoningVariantIndex] = useState(0);
+    const [isSettingDefault, setIsSettingDefault] = useState(false); // Track if setting as default vs normal selection
+    const [refreshVersion, setRefreshVersion] = useState(0);
+
+    const reasoningVariantOptions = useMemo(() => {
+        if (!pendingReasoningModel) return [];
+        const support = getReasoningProfile(
+            pendingReasoningModel.provider,
+            pendingReasoningModel.name
+        );
+        return buildReasoningVariantOptions(support);
+    }, [pendingReasoningModel]);
+
+    // Keep ref in sync
+    selectedIndexRef.current = selection.index;
+    maxVisibleItemsRef.current = maxVisibleItems;
+    const modelsViewportItems = Math.max(1, maxVisibleItems - 1);
+
+    // Clear delete confirmation timeout on unmount
+    useEffect(() => {
+        return () => {
+            if (deleteTimeoutRef.current) {
+                clearTimeout(deleteTimeoutRef.current);
+            }
+        };
+    }, []);
+
+    // Fetch models from agent and load custom models
+    useEffect(() => {
+        if (!isVisible) return;
+
+        let cancelled = false;
+        setIsLoading(true);
+        setModels([]);
+        setCustomModels([]);
+        setSearchQuery('');
+        setSelection({ index: 0, offset: 0 });
+        setCustomModelAction(null);
+        setPendingDeleteConfirm(false);
+        setPendingReasoningModel(null);
+        setIsSettingDefault(false);
+        setReasoningVariantIndex(0);
+        setActiveTab('all-models');
+        setModelPickerState(null);
+        if (deleteTimeoutRef.current) {
+            clearTimeout(deleteTimeoutRef.current);
+            deleteTimeoutRef.current = null;
+        }
+
+        const fetchModels = async () => {
+            try {
+
+                const [
+                    allModels,
+                    providers,
+                    currentConfig,
+                    loadedCustomModels,
+                    preferences,
+                    codexModels,
+                    platformData,
+                ] = await Promise.all([
+                    Promise.resolve(agent.getSupportedModels()),
+                    Promise.resolve(agent.getSupportedProviders()),
+                    Promise.resolve(agent.getCurrentLLMConfig()),
+                    loadCustomModels(),
+                    loadGlobalPreferences().catch(() => null),
+                    loadChatGPTCodexModels(agent),
+                    fetchPlatformModels(),
+                ]);
+                const pickerState = await loadModelPickerState().catch(() => null);
+
+                const modelList: ModelOption[] = [];
+                const defaultProvider = preferences?.llm.provider;
+                const defaultModel = preferences?.llm.model;
+                const defaultBaseURL = preferences?.llm.baseURL;
+                const defaultReasoningVariant = preferences?.llm.reasoning?.variant;
+                const resolveReleaseDate = createReleaseDateResolver({ allModels, providers });
+                const defaultConfig =
+                    defaultProvider && defaultModel
+                        ? {
+                              provider: defaultProvider,
+                              model: defaultModel,
+                              ...(defaultBaseURL ? { baseURL: defaultBaseURL } : {}),
+                          }
+                        : null;
+                const currentModelConfig = {
+                    provider: currentConfig.provider,
+                    model: currentConfig.model,
+                    ...(currentConfig.baseURL ? { baseURL: currentConfig.baseURL } : {}),
+                };
+                const getMatchState = (
+                    candidate: Pick<ModelOption, 'provider' | 'name' | 'baseURL'>
+                ) => ({
+                    isDefault: defaultConfig
+                        ? matchesConfiguredModel(candidate, defaultConfig)
+                        : false,
+                    isCurrent: matchesConfiguredModel(candidate, currentModelConfig),
+                });
+
+                const addChatGPTCodexModel = (input: {
+                    model: string;
+                    displayName?: string;
+                    releaseDate?: string;
+                    isDefault: boolean;
+                    isCurrent: boolean;
+                    reasoningVariant?: ReasoningVariant;
+                }) => {
+                    const existing = modelList.find(
+                        (candidate) =>
+                            candidate.provider === 'openai-compatible' &&
+                            candidate.name === input.model &&
+                            candidate.baseURL === CODEX_CHATGPT_BASE_URL
+                    );
+
+                    if (existing) {
+                        existing.isDefault = existing.isDefault || input.isDefault;
+                        existing.isCurrent = existing.isCurrent || input.isCurrent;
+                        if (existing.displayName === undefined && input.displayName !== undefined) {
+                            existing.displayName = input.displayName;
+                        }
+                        if (existing.releaseDate === undefined && input.releaseDate !== undefined) {
+                            existing.releaseDate = input.releaseDate;
+                        }
+                        if (
+                            existing.reasoningVariant === undefined &&
+                            input.reasoningVariant !== undefined
+                        ) {
+                            existing.reasoningVariant = input.reasoningVariant;
+                        }
+                        return;
+                    }
+
+                    modelList.push({
+                        provider: 'openai-compatible',
+                        name: input.model,
+                        displayName: input.displayName,
+                        maxInputTokens: 128000,
+                        isDefault: input.isDefault,
+                        isCurrent: input.isCurrent,
+                        isCustom: false,
+                        baseURL: CODEX_CHATGPT_BASE_URL,
+                        ...(input.releaseDate !== undefined
+                            ? { releaseDate: input.releaseDate }
+                            : {}),
+                        ...(input.reasoningVariant !== undefined
+                            ? { reasoningVariant: input.reasoningVariant }
+                            : {}),
+                    });
+                };
+
+                // Fetch dynamic models for local providers
+                let ollamaModels: Array<{ name: string; size?: number }> = [];
+                let localModels: Array<{ id: string; filePath: string; sizeBytes: number }> = [];
+
+                try {
+                    ollamaModels = await listOllamaModels(DEFAULT_OLLAMA_URL);
+                } catch (error) {
+                    // Ollama not available, skip
+                    agent.logger.debug('Ollama not available for model listing');
+                }
+
+                try {
+                    localModels = await getAllInstalledModels();
+                } catch (error) {
+                    // Local models not available, skip
+                    agent.logger.debug('Local models not available for listing');
+                }
+
+                // Add custom models first
+                for (const custom of loadedCustomModels) {
+                    // Use displayProvider for tab grouping (the real provider name)
+                    // Falls back to provider field for backwards compatibility
+                    const customProvider: LLMProvider = (custom.displayProvider || custom.provider) as LLMProvider;
+                    const candidate = createModelIdentity({
+                        provider: custom.provider as LLMProvider,
+                        name: custom.name,
+                        baseURL: custom.baseURL,
+                    });
+                    const { isDefault, isCurrent } = getMatchState(candidate);
+                    const modelOption: ModelOption = {
+                        provider: custom.provider as LLMProvider,
+                        name: custom.name,
+                        displayName: custom.displayName || custom.name,
+                        maxInputTokens: custom.maxInputTokens ?? 128000,
+                        isDefault,
+                        isCurrent,
+                        isCustom: true,
+                        originalProvider: customProvider,
+                    };
+                    if (custom.baseURL) {
+                        modelOption.baseURL = custom.baseURL;
+                    }
+                    if (custom.apiKey) {
+                        modelOption.apiKey = custom.apiKey;
+                    }
+                    if (custom.reasoningPreset) {
+                        modelOption.reasoningVariant = custom.reasoningPreset;
+                    }
+                    modelList.push(modelOption);
+                }
+
+                // Add registry models
+                for (const provider of providers) {
+                    // Skip custom-only providers that don't have a static model list
+                    // These are only accessible via the "Add custom model" wizard
+                    if (
+                        provider === 'openai-compatible' ||
+                        provider === 'litellm' ||
+                        provider === 'glama' ||
+                        provider === 'bedrock'
+                    )
+                        continue;
+
+                    // Skip ollama, local, and vertex - they'll be added dynamically below
+                    if (provider === 'ollama' || provider === 'local' || provider === 'vertex') {
+                        continue;
+                    }
+
+                    const providerModels = [...(allModels[provider] ?? [])].sort(compareModelsLatestFirst);
+                    for (const model of providerModels) {
+                        if (isDeprecatedModelStatus(model.status)) {
+                            continue;
+                        }
+                        const releaseDate = resolveReleaseDate(
+                            provider,
+                            model.name,
+                            model.releaseDate
+                        );
+
+                        // For gateway providers, models have originalProvider field
+                        // showing which provider the model originally came from
+                        const originalProvider =
+                            'originalProvider' in model ? model.originalProvider : undefined;
+                        const candidate = createModelIdentity({
+                            provider,
+                            name: model.name,
+                        });
+                        const { isDefault, isCurrent } = getMatchState(candidate);
+
+                        modelList.push({
+                            provider,
+                            name: model.name,
+                            displayName: model.displayName,
+                            maxInputTokens: model.maxInputTokens,
+                            isDefault,
+                            isCurrent,
+                            isCustom: false,
+                            ...(releaseDate !== undefined ? { releaseDate } : {}),
+                            ...(model.status !== undefined ? { status: model.status } : {}),
+                            ...(defaultReasoningVariant && isDefault
+                                ? { reasoningVariant: defaultReasoningVariant }
+                                : {}),
+                            // Store original provider for display purposes
+                            ...(originalProvider && { originalProvider }),
+                        });
+                    }
+                }
+
+                // Add ChatGPT-backed Codex models dynamically when available.
+                for (const codexModel of codexModels) {
+                    const candidate = {
+                        provider: 'openai-compatible' as const,
+                        name: codexModel.model,
+                        baseURL: CODEX_CHATGPT_BASE_URL,
+                    };
+                    const isDefault = defaultConfig
+                        ? matchesConfiguredModel(candidate, defaultConfig)
+                        : false;
+                    const releaseDate =
+                        resolveReleaseDate('openai', codexModel.model) ??
+                        resolveReleaseDate('openrouter', codexModel.model);
+
+                    addChatGPTCodexModel({
+                        model: codexModel.model,
+                        displayName: codexModel.displayName,
+                        isDefault,
+                        isCurrent: matchesConfiguredModel(candidate, currentModelConfig),
+                        ...(releaseDate !== undefined ? { releaseDate } : {}),
+                        ...(isDefault && defaultReasoningVariant
+                            ? { reasoningVariant: defaultReasoningVariant }
+                            : {}),
+                    });
+                }
+
+                const addMissingConfiguredCodexModel = (
+                    configured: {
+                        provider: LLMProvider;
+                        model: string;
+                        baseURL?: string;
+                    } | null
+                ) => {
+                    if (
+                        !configured ||
+                        !isChatGPTCodexConfig(configured.provider, configured.baseURL)
+                    ) {
+                        return;
+                    }
+
+                    const releaseDate =
+                        resolveReleaseDate('openai', configured.model) ??
+                        resolveReleaseDate('openrouter', configured.model);
+
+                    addChatGPTCodexModel({
+                        model: configured.model,
+                        displayName: getModelDisplayName(configured.model, 'openai'),
+                        isDefault: defaultConfig
+                            ? matchesConfiguredModel(
+                                  {
+                                      provider: 'openai-compatible',
+                                      name: configured.model,
+                                      baseURL: CODEX_CHATGPT_BASE_URL,
+                                  },
+                                  defaultConfig
+                              )
+                            : false,
+                        isCurrent: matchesConfiguredModel(
+                            {
+                                provider: 'openai-compatible',
+                                name: configured.model,
+                                baseURL: CODEX_CHATGPT_BASE_URL,
+                            },
+                            currentModelConfig
+                        ),
+                        ...(releaseDate !== undefined ? { releaseDate } : {}),
+                        ...(defaultConfig &&
+                        defaultReasoningVariant &&
+                        matchesConfiguredModel(
+                            {
+                                provider: 'openai-compatible',
+                                name: configured.model,
+                                baseURL: CODEX_CHATGPT_BASE_URL,
+                            },
+                            defaultConfig
+                        )
+                            ? { reasoningVariant: defaultReasoningVariant }
+                            : {}),
+                    });
+                };
+
+                addMissingConfiguredCodexModel(defaultConfig);
+                addMissingConfiguredCodexModel(currentModelConfig);
+
+                // Add Ollama models dynamically
+                for (const ollamaModel of ollamaModels) {
+                    const candidate = createModelIdentity({
+                        provider: 'ollama',
+                        name: ollamaModel.name,
+                    });
+                    const { isDefault, isCurrent } = getMatchState(candidate);
+                    modelList.push({
+                        provider: 'ollama',
+                        name: ollamaModel.name,
+                        displayName: ollamaModel.name,
+                        maxInputTokens: 128000, // Default, actual varies by model
+                        isDefault,
+                        isCurrent,
+                        isCustom: false,
+                    });
+                }
+
+                // Add local models dynamically
+                for (const localModel of localModels) {
+                    // Get display name from registry if available
+                    const modelInfo = getLocalModelById(localModel.id);
+                    const displayName = modelInfo?.name || localModel.id;
+                    const maxInputTokens = modelInfo?.contextLength || 128000;
+                    const candidate = createModelIdentity({
+                        provider: 'local',
+                        name: localModel.id,
+                    });
+                    const { isDefault, isCurrent } = getMatchState(candidate);
+
+                    modelList.push({
+                        provider: 'local',
+                        name: localModel.id,
+                        displayName,
+                        maxInputTokens,
+                        isDefault,
+                        isCurrent,
+                        isCustom: false,
+                    });
+                }
+
+                // Add Vertex AI models from registry
+                const vertexModels = allModels['vertex'];
+                if (vertexModels) {
+                    for (const model of [...vertexModels].sort(compareModelsLatestFirst)) {
+                        if (isDeprecatedModelStatus(model.status)) {
+                            continue;
+                        }
+                        const releaseDate = resolveReleaseDate(
+                            'vertex',
+                            model.name,
+                            model.releaseDate
+                        );
+                        const candidate = createModelIdentity({
+                            provider: 'vertex',
+                            name: model.name,
+                        });
+                        const { isDefault, isCurrent } = getMatchState(candidate);
+
+                        modelList.push({
+                            provider: 'vertex',
+                            name: model.name,
+                            displayName: model.displayName,
+                            maxInputTokens: model.maxInputTokens,
+                            isDefault,
+                            isCurrent,
+                            isCustom: false,
+                            ...(releaseDate !== undefined ? { releaseDate } : {}),
+                            ...(model.status !== undefined ? { status: model.status } : {}),
+                            ...(defaultReasoningVariant && isDefault
+                                ? { reasoningVariant: defaultReasoningVariant }
+                                : {}),
+                        });
+                    }
+                }
+
+                // Add Fius platform models from user's plan
+                if (platformData.models.length > 0) {
+                    for (const pm of platformData.models) {
+                        const candidate = createModelIdentity({
+                            provider: 'fius',
+                            name: pm.name,
+                        });
+                        const { isDefault, isCurrent } = getMatchState(candidate);
+                        modelList.push({
+                            provider: 'fius',
+                            name: pm.name,
+                            displayName: pm.displayName || pm.name,
+                            maxInputTokens: 128000,
+                            isDefault,
+                            isCurrent,
+                            isCustom: false,
+                        });
+                    }
+                }
+
+                if (!cancelled) {
+                    const dedupedByKey = new Map<string, ModelOption>();
+                    const dedupeOrder: string[] = [];
+
+                    for (const model of modelList) {
+                        const key = toModelIdentityKey(model);
+                        const existing = dedupedByKey.get(key);
+
+                        if (!existing) {
+                            dedupedByKey.set(key, model);
+                            dedupeOrder.push(key);
+                            continue;
+                        }
+
+                        const preferred = model.isCustom && !existing.isCustom ? model : existing;
+                        const secondary = preferred === existing ? model : existing;
+                        const mergedBaseURL = preferred.baseURL ?? secondary.baseURL;
+                        const mergedReasoningVariant =
+                            preferred.reasoningVariant ?? secondary.reasoningVariant;
+                        const mergedOriginalProvider =
+                            preferred.originalProvider ?? secondary.originalProvider;
+                        const mergedReleaseDate = preferred.releaseDate ?? secondary.releaseDate;
+                        const mergedStatus = preferred.status ?? secondary.status;
+                        const mergedModel: ModelOption = {
+                            ...preferred,
+                            isDefault: preferred.isDefault || secondary.isDefault,
+                            isCurrent: preferred.isCurrent || secondary.isCurrent,
+                            displayName: preferred.displayName ?? secondary.displayName,
+                            maxInputTokens: Math.max(
+                                preferred.maxInputTokens ?? 0,
+                                secondary.maxInputTokens ?? 0
+                            ),
+                        };
+                        if (mergedBaseURL !== undefined) {
+                            mergedModel.baseURL = mergedBaseURL;
+                        }
+                        if (mergedReasoningVariant !== undefined) {
+                            mergedModel.reasoningVariant = mergedReasoningVariant;
+                        }
+                        if (mergedOriginalProvider !== undefined) {
+                            mergedModel.originalProvider = mergedOriginalProvider;
+                        }
+                        if (mergedReleaseDate !== undefined) {
+                            mergedModel.releaseDate = mergedReleaseDate;
+                        }
+                        if (mergedStatus !== undefined) {
+                            mergedModel.status = mergedStatus;
+                        }
+                        dedupedByKey.set(key, mergedModel);
+                    }
+
+                    const dedupedModelList = dedupeOrder
+                        .map((key) => dedupedByKey.get(key))
+                        .filter((model): model is ModelOption => model !== undefined);
+
+                    // Filter by allowed models from platform (if any)
+                    // Custom models are always allowed (not restricted by platform plan)
+                    const allowedNames = platformData.models.map((m) => m.name);
+                    const allowedSet = allowedNames.length > 0 ? new Set(allowedNames) : null;
+                    const filteredModelList = allowedSet
+                        ? dedupedModelList.filter(
+                              (m) => m.isCustom || allowedSet.has(m.name) || m.isCurrent,
+                          )
+                        : dedupedModelList;
+
+                    setModels(filteredModelList);
+                    setCustomModels(loadedCustomModels);
+                    setModelPickerState(pickerState);
+                    setIsLoading(false);
+
+                    // Build dynamic tabs: All + Fius + other providers + custom provider tabs
+                    const providerSet = new Set<string>();
+                    const customProviderNames = new Set<string>();
+                    for (const m of filteredModelList) {
+                        providerSet.add(m.provider);
+                        // Custom models use originalProvider for tab grouping
+                        if (m.isCustom && m.originalProvider) {
+                            customProviderNames.add(m.originalProvider);
+                        }
+                    }
+                    const dynamicTabs: Array<{ id: string; label: string }> = [
+                        { id: 'all-models', label: 'All' },
+                    ];
+                    if (platformData.models.length > 0) {
+                        dynamicTabs.push({ id: 'fius', label: 'Fius' });
+                    }
+                    for (const p of Array.from(providerSet).sort()) {
+                        if (p === 'fius' || p === 'openai-compatible') continue;
+                        // Skip providers that will be added as custom tabs (use original casing)
+                        if (customProviderNames.has(p)) continue;
+                        dynamicTabs.push({ id: `provider-${p}`, label: p });
+                    }
+                    // Add tabs for custom providers (displayProvider names)
+                    for (const cp of Array.from(customProviderNames).sort()) {
+                        const tabId = `custom-${cp.toLowerCase().replace(/[^a-z0-9]/g, '-')}`;
+                        if (!dynamicTabs.some((t) => t.id === tabId)) {
+                            dynamicTabs.push({ id: tabId, label: cp });
+                        }
+                    }
+                    setTabs(dynamicTabs);
+
+                    // Set initial selection to current model
+                    const currentIndex = filteredModelList.findIndex((m) => m.isCurrent);
+                    if (currentIndex >= 0) {
+                        const nextIndex = currentIndex;
+                        const nextMaxVisibleItems = maxVisibleItemsRef.current;
+                        const maxOffset = Math.max(
+                            0,
+                            filteredModelList.length - nextMaxVisibleItems
+                        );
+                        const nextOffset = Math.min(
+                            maxOffset,
+                            Math.max(0, currentIndex - nextMaxVisibleItems + 1)
+                        );
+
+                        selectedIndexRef.current = nextIndex;
+                        setSelection({ index: nextIndex, offset: nextOffset });
+                    }
+                }
+            } catch (error) {
+                if (!cancelled) {
+                    agent.logger.error(
+                        `Failed to fetch models: ${error instanceof Error ? error.message : 'Unknown error'}`
+                    );
+                    setModels([]);
+                    setModelPickerState(null);
+                    setIsLoading(false);
+                }
+            }
+        };
+
+        void fetchModels();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [isVisible, agent, refreshVersion]);
+
+    const favoriteKeySet = useMemo(
+        () =>
+            new Set(
+                (modelPickerState?.favorites ?? []).map((entry) => toCanonicalModelPickerKey(entry))
+            ),
+        [modelPickerState]
+    );
+
+    const matchesSearch = useCallback(
+        (model: ModelOption): boolean => {
+            if (!searchQuery.trim()) {
+                return true;
+            }
+
+            const query = searchQuery.toLowerCase().replace(/[\s-]+/g, '');
+            const name = model.name.toLowerCase().replace(/[\s-]+/g, '');
+            const displayName = (model.displayName || '').toLowerCase().replace(/[\s-]+/g, '');
+            const provider = model.provider.toLowerCase().replace(/[\s-]+/g, '');
+            const providerDisplay = getLLMProviderDisplayName(model.provider, model.baseURL)
+                .toLowerCase()
+                .replace(/[\s-]+/g, '');
+            return (
+                name.includes(query) ||
+                displayName.includes(query) ||
+                provider.includes(query) ||
+                providerDisplay.includes(query)
+            );
+        },
+        [searchQuery]
+    );
+
+    // Filter models based on active view and search query.
+    const filteredItems = useMemo((): SelectorItem[] => {
+        const addCustomOption: AddCustomOption = { type: 'add-custom' };
+        const hasSearchQuery = searchQuery.trim().length > 0;
+        const allCandidates = [...models].sort(compareModelOptionsForDisplay);
+        const modelsByKey = new Map<string, ModelOption>(
+            allCandidates.map((model) => [toModelIdentityKey(model), model])
+        );
+        const toUniqueMatchingModels = (
+            candidates: Array<ModelOption | undefined>,
+            limit?: number
+        ): ModelOption[] => {
+            const deduped: ModelOption[] = [];
+            const seen = new Set<string>();
+
+            for (const candidate of candidates) {
+                if (!candidate || !matchesSearch(candidate)) {
+                    continue;
+                }
+                const key = toModelIdentityKey(candidate);
+                if (seen.has(key)) {
+                    continue;
+                }
+                seen.add(key);
+                deduped.push(candidate);
+                if (limit !== undefined && deduped.length >= limit) {
+                    break;
+                }
+            }
+
+            return deduped;
+        };
+
+        const providersInModels = Array.from(
+            new Set(models.map((model) => model.provider))
+        ) as LLMProvider[];
+
+        const fiusModelNames = new Set(
+            (modelPickerState?.favorites ?? []).length > 0
+                ? []
+                : [] // Will be populated from platformData
+        );
+
+        const tabModels = hasSearchQuery
+            ? toUniqueMatchingModels(allCandidates)
+            : activeTab === 'all-models'
+              ? toUniqueMatchingModels(allCandidates)
+              : activeTab === 'fius'
+                ? toUniqueMatchingModels(
+                      allCandidates.filter((m) => m.provider === 'fius' || fiusModelNames.has(m.name))
+                  )
+                : activeTab.startsWith('provider-')
+                  ? toUniqueMatchingModels(
+                        allCandidates.filter((m) => m.provider === activeTab.slice('provider-'.length))
+                    )
+                  : activeTab.startsWith('custom-')
+                    ? toUniqueMatchingModels(
+                          allCandidates.filter((m) => {
+                              if (!m.isCustom || !m.originalProvider) return false;
+                              const tabId = `custom-${m.originalProvider.toLowerCase().replace(/[^a-z0-9]/g, '-')}`;
+                              return tabId === activeTab;
+                          })
+                      )
+                    : toUniqueMatchingModels(allCandidates);
+
+        return tabModels;
+    }, [activeTab, matchesSearch, modelPickerState, models, searchQuery]);
+    const hasAddCustomOption = false;
+    const modelStartIndex = 0;
+    const listViewportItems = maxVisibleItems;
+
+    // Keep selection valid and visible when filtering or terminal height changes.
+    useEffect(() => {
+        setSelection((prev) => {
+            const maxIndex = Math.max(0, filteredItems.length - 1);
+            const nextIndex = Math.min(prev.index, maxIndex);
+
+            let nextOffset = prev.offset;
+            const nextModelsLength = Math.max(0, filteredItems.length - modelStartIndex);
+
+            if (nextIndex >= modelStartIndex) {
+                const modelIndex = nextIndex - modelStartIndex;
+                if (modelIndex < nextOffset) {
+                    nextOffset = modelIndex;
+                } else if (modelIndex >= nextOffset + listViewportItems) {
+                    nextOffset = Math.max(0, modelIndex - listViewportItems + 1);
+                }
+            } else {
+                nextOffset = 0;
+            }
+
+            const maxOffset = Math.max(0, nextModelsLength - listViewportItems);
+            nextOffset = Math.min(maxOffset, Math.max(0, nextOffset));
+
+            if (nextIndex === prev.index && nextOffset === prev.offset) {
+                return prev;
+            }
+
+            selectedIndexRef.current = nextIndex;
+            return { index: nextIndex, offset: nextOffset };
+        });
+    }, [filteredItems.length, listViewportItems, modelStartIndex]);
+
+    // Handle delete custom model
+    const handleDeleteCustomModel = useCallback(
+        async (model: ModelOption) => {
+            if (!model.isCustom) return;
+
+            try {
+                await deleteCustomModel(model.name);
+                // Refresh the list
+                const updated = await loadCustomModels();
+                setCustomModels(updated);
+                // Update models list
+                setModels((prev) => prev.filter((m) => !(m.isCustom && m.name === model.name)));
+            } catch (error) {
+                agent.logger.error(
+                    `Failed to delete custom model: ${error instanceof Error ? error.message : 'Unknown error'}`
+                );
+            }
+        },
+        [agent]
+    );
+
+    const handleToggleFavoriteModel = useCallback(
+        async (model: ModelOption) => {
+            try {
+                const baseURL = canonicalizeModelBaseURL(model.baseURL);
+                await toggleFavoriteModel({
+                    provider: model.provider,
+                    model: model.name,
+                    ...(baseURL ? { baseURL } : {}),
+                });
+                const nextState = await loadModelPickerState();
+                setModelPickerState(nextState);
+            } catch (error) {
+                agent.logger.error(
+                    `Failed to toggle favorite model: ${error instanceof Error ? error.message : 'Unknown error'}`
+                );
+            }
+        },
+        [agent]
+    );
+
+    // Helper to clear action state
+    const clearActionState = () => {
+        setCustomModelAction(null);
+        setPendingDeleteConfirm(false);
+        if (deleteTimeoutRef.current) {
+            clearTimeout(deleteTimeoutRef.current);
+            deleteTimeoutRef.current = null;
+        }
+    };
+
+    const beginReasoningVariantSelection = (
+        item: ModelOption,
+        settingDefault: boolean
+    ): boolean => {
+        const support = getReasoningProfile(item.provider, item.name);
+        if (!support.capable) {
+            return false;
+        }
+
+        const options = buildReasoningVariantOptions(support);
+
+        setPendingReasoningModel(item);
+        setIsSettingDefault(settingDefault);
+        setReasoningVariantIndex(
+            getInitialVariantIndex(item.reasoningVariant, options, support.defaultVariant)
+        );
+        return true;
+    };
+
+    // Expose handleInput method via ref
+    useImperativeHandle(
+        ref,
+        () => ({
+            handleInput: (input: string, key: Key): boolean => {
+                if (!isVisible) return false;
+
+                // While loading, allow closing but ignore all other input.
+                if (isLoading) {
+                    if (key.escape) {
+                        onClose();
+                    }
+                    return true;
+                }
+
+                // Handle reasoning variant sub-step
+                if (pendingReasoningModel) {
+                    if (key.escape) {
+                        // Go back to model selection
+                        setPendingReasoningModel(null);
+                        setIsSettingDefault(false);
+                        return true;
+                    }
+                    if (key.upArrow) {
+                        if (reasoningVariantOptions.length === 0) return true;
+                        setReasoningVariantIndex((prev) =>
+                            prev > 0 ? prev - 1 : reasoningVariantOptions.length - 1
+                        );
+                        return true;
+                    }
+                    if (key.downArrow) {
+                        if (reasoningVariantOptions.length === 0) return true;
+                        setReasoningVariantIndex((prev) =>
+                            prev < reasoningVariantOptions.length - 1 ? prev + 1 : 0
+                        );
+                        return true;
+                    }
+                    if (key.return) {
+                        const selectedOption =
+                            reasoningVariantOptions[reasoningVariantIndex] ??
+                            reasoningVariantOptions[0];
+                        const reasoningVariant = selectedOption?.value;
+                        if (!reasoningVariant) {
+                            setPendingReasoningModel(null);
+                            setIsSettingDefault(false);
+                            return true;
+                        }
+
+                        if (isSettingDefault) {
+                            // Setting as default model
+                            clearActionState();
+                            void (async () => {
+                                await onSetDefaultModel(
+                                    pendingReasoningModel.provider,
+                                    pendingReasoningModel.name,
+                                    pendingReasoningModel.displayName,
+                                    pendingReasoningModel.baseURL,
+                                    reasoningVariant,
+                                    pendingReasoningModel.apiKey
+                                );
+                                setRefreshVersion((prev) => prev + 1);
+                                onClose(); // Close overlay after setting default
+                            })();
+                        } else {
+                            // Normal model selection
+                            onSelectModel(
+                                pendingReasoningModel.provider,
+                                pendingReasoningModel.name,
+                                pendingReasoningModel.displayName,
+                                pendingReasoningModel.baseURL,
+                                reasoningVariant,
+                                pendingReasoningModel.apiKey
+                            );
+                        }
+                        setPendingReasoningModel(null);
+                        setIsSettingDefault(false);
+                        return true;
+                    }
+                    return true; // Consume all input in reasoning variant mode
+                }
+
+                // Escape always works
+                if (key.escape) {
+                    // If in action mode, just clear it first
+                    if (customModelAction) {
+                        clearActionState();
+                        return true;
+                    }
+                    onClose();
+                    return true;
+                }
+
+                const itemsLength = filteredItems.length;
+                const currentItem = filteredItems[selectedIndexRef.current];
+                const selectedModel =
+                    currentItem && isModelOption(currentItem) ? currentItem : null;
+                const isCustomActionItem = selectedModel?.isCustom ?? false;
+                const isSelectableItem = selectedModel !== null;
+
+                if (key.tab) {
+                    clearActionState();
+                    setActiveTab((prev) => getNextModelSelectorTab(prev, tabs));
+                    selectedIndexRef.current = 0;
+                    setSelection({ index: 0, offset: 0 });
+                    return true;
+                }
+
+                if (key.ctrl && input === 'f' && isSelectableItem) {
+                    const item = selectedModel;
+                    if (!item) return true;
+                    clearActionState();
+                    void handleToggleFavoriteModel(item);
+                    return true;
+                }
+
+                // Ctrl+Right arrow - enter/advance action mode for custom or selectable models
+                if (key.ctrl && key.rightArrow) {
+                    if (!isSelectableItem) return false;
+
+                    if (customModelAction === null) {
+                        setCustomModelAction('favorite');
+                        return true;
+                    }
+
+                    if (customModelAction === 'favorite') {
+                        setCustomModelAction('default');
+                        return true;
+                    }
+
+                    if (customModelAction === 'default') {
+                        if (isCustomActionItem) {
+                            setCustomModelAction('edit');
+                            return true;
+                        }
+                        return true;
+                    }
+
+                    if (customModelAction === 'edit') {
+                        if (isCustomActionItem) {
+                            setCustomModelAction('delete');
+                            setPendingDeleteConfirm(false);
+                        }
+                        return true;
+                    }
+
+                    if (customModelAction === 'delete') {
+                        // Use Enter for delete confirmation/execution to avoid accidental deletes.
+                        return true;
+                    }
+                }
+
+                // Ctrl+Left arrow - go back in action mode
+                if (key.ctrl && key.leftArrow) {
+                    if (customModelAction === 'delete') {
+                        setCustomModelAction('edit');
+                        setPendingDeleteConfirm(false);
+                        if (deleteTimeoutRef.current) {
+                            clearTimeout(deleteTimeoutRef.current);
+                            deleteTimeoutRef.current = null;
+                        }
+                        return true;
+                    }
+
+                    if (customModelAction === 'default') {
+                        setCustomModelAction('favorite');
+                        return true;
+                    }
+
+                    if (customModelAction === 'edit') {
+                        setCustomModelAction('default');
+                        return true;
+                    }
+
+                    if (customModelAction === 'favorite') {
+                        setCustomModelAction(null);
+                        return true;
+                    }
+
+                    return false;
+                }
+
+                // Right arrow - switch tabs (and clear action mode if active)
+                if (key.rightArrow) {
+                    clearActionState();
+                    setActiveTab((prev) => getNextModelSelectorTab(prev, tabs));
+                    selectedIndexRef.current = 0;
+                    setSelection({ index: 0, offset: 0 });
+                    return true;
+                }
+
+                // Left arrow - switch tabs backwards (and clear action mode if active)
+                if (key.leftArrow) {
+                    clearActionState();
+                    setActiveTab((prev) => getPreviousModelSelectorTab(prev, tabs));
+                    selectedIndexRef.current = 0;
+                    setSelection({ index: 0, offset: 0 });
+                    return true;
+                }
+
+                // Handle character input for search
+                if (input && !key.return && !key.upArrow && !key.downArrow && !key.tab) {
+                    // Any character input clears action state and adds to search
+                    if (customModelAction) {
+                        clearActionState();
+                    }
+
+                    // Backspace
+                    if (key.backspace || key.delete) {
+                        setSearchQuery((prev) => prev.slice(0, -1));
+                        return true;
+                    }
+
+                    // Regular character - add to search
+                    if (input.length === 1 && input.charCodeAt(0) >= 32) {
+                        setSearchQuery((prev) => prev + input);
+                        selectedIndexRef.current = 0;
+                        setSelection({ index: 0, offset: 0 });
+                        return true;
+                    }
+                }
+
+                // Backspace when no other input
+                if (key.backspace || key.delete) {
+                    setSearchQuery((prev) => prev.slice(0, -1));
+                    return true;
+                }
+
+                if (itemsLength === 0) return false;
+
+                if (key.upArrow) {
+                    // Clear action state on vertical navigation
+                    if (customModelAction) {
+                        clearActionState();
+                    }
+                    const nextIndex = (selectedIndexRef.current - 1 + itemsLength) % itemsLength;
+                    selectedIndexRef.current = nextIndex;
+                    setSelection((prev) => {
+                        let nextOffset = prev.offset;
+                        const nextModelsLength = Math.max(0, itemsLength - modelStartIndex);
+
+                        if (nextIndex >= modelStartIndex) {
+                            const modelIndex = nextIndex - modelStartIndex;
+                            if (modelIndex < prev.offset) {
+                                nextOffset = modelIndex;
+                            } else if (modelIndex >= prev.offset + listViewportItems) {
+                                nextOffset = Math.max(0, modelIndex - listViewportItems + 1);
+                            }
+                        } else {
+                            nextOffset = 0;
+                        }
+                        const maxOffset = Math.max(0, nextModelsLength - listViewportItems);
+                        nextOffset = Math.min(maxOffset, Math.max(0, nextOffset));
+                        return { index: nextIndex, offset: nextOffset };
+                    });
+                    return true;
+                }
+
+                if (key.downArrow) {
+                    // Clear action state on vertical navigation
+                    if (customModelAction) {
+                        clearActionState();
+                    }
+                    const nextIndex = (selectedIndexRef.current + 1) % itemsLength;
+                    selectedIndexRef.current = nextIndex;
+                    setSelection((prev) => {
+                        let nextOffset = prev.offset;
+                        const nextModelsLength = Math.max(0, itemsLength - modelStartIndex);
+
+                        if (nextIndex >= modelStartIndex) {
+                            const modelIndex = nextIndex - modelStartIndex;
+                            if (modelIndex < prev.offset) {
+                                nextOffset = modelIndex;
+                            } else if (modelIndex >= prev.offset + listViewportItems) {
+                                nextOffset = Math.max(0, modelIndex - listViewportItems + 1);
+                            }
+                        } else {
+                            nextOffset = 0;
+                        }
+                        const maxOffset = Math.max(0, nextModelsLength - listViewportItems);
+                        nextOffset = Math.min(maxOffset, Math.max(0, nextOffset));
+                        return { index: nextIndex, offset: nextOffset };
+                    });
+                    return true;
+                }
+
+                if (key.return && itemsLength > 0) {
+                    const item = filteredItems[selectedIndexRef.current];
+                    if (item) {
+                        if (isAddCustomOption(item)) {
+                            onAddCustomModel();
+                            return true;
+                        }
+
+                        // Handle action mode confirmations
+                        if (customModelAction === 'favorite') {
+                            void handleToggleFavoriteModel(item);
+                            return true;
+                        }
+
+                        if (customModelAction === 'edit' && item.isCustom) {
+                            // Find the full custom model data
+                            const customModel = customModels.find(
+                                (cm) =>
+                                    cm.name === item.name &&
+                                    (cm.provider ?? 'openai-compatible') === item.provider
+                            );
+                            if (customModel) {
+                                onEditCustomModel(customModel);
+                            }
+                            return true;
+                        }
+
+                        if (customModelAction === 'default') {
+                            if (beginReasoningVariantSelection(item, true)) {
+                                return true;
+                            }
+
+                            clearActionState();
+                            void (async () => {
+                                await onSetDefaultModel(
+                                    item.provider,
+                                    item.name,
+                                    item.displayName,
+                                    item.baseURL,
+                                    item.reasoningVariant,
+                                    item.apiKey
+                                );
+                                setRefreshVersion((prev) => prev + 1);
+                                onClose(); // Close overlay after setting default
+                            })();
+                            return true;
+                        }
+
+                        if (customModelAction === 'delete' && item.isCustom) {
+                            if (pendingDeleteConfirm) {
+                                // Already confirmed, delete
+                                clearActionState();
+                                void handleDeleteCustomModel(item);
+                            } else {
+                                // Set pending confirmation
+                                setPendingDeleteConfirm(true);
+                                if (deleteTimeoutRef.current) {
+                                    clearTimeout(deleteTimeoutRef.current);
+                                }
+                                deleteTimeoutRef.current = setTimeout(() => {
+                                    setPendingDeleteConfirm(false);
+                                    deleteTimeoutRef.current = null;
+                                }, 3000);
+                            }
+                            return true;
+                        }
+
+                        // Normal selection - check if reasoning-capable
+                        if (beginReasoningVariantSelection(item, false)) {
+                            return true;
+                        }
+                        onSelectModel(item.provider, item.name, item.displayName, item.baseURL, undefined, item.apiKey);
+                        return true;
+                    }
+                }
+
+                return false;
+            },
+        }),
+        [
+            isVisible,
+            isLoading,
+            filteredItems,
+            maxVisibleItems,
+            listViewportItems,
+            modelStartIndex,
+            onClose,
+            onSelectModel,
+            onSetDefaultModel,
+            onAddCustomModel,
+            onEditCustomModel,
+            customModelAction,
+            pendingDeleteConfirm,
+            customModels,
+            handleDeleteCustomModel,
+            handleToggleFavoriteModel,
+            pendingReasoningModel,
+            reasoningVariantIndex,
+            reasoningVariantOptions,
+            isSettingDefault,
+            activeTab,
+            agent,
+            beginReasoningVariantSelection,
+        ]
+    );
+
+    if (!isVisible) return null;
+
+    const blankLine = ' '.repeat(overlayWidth);
+
+    if (pendingReasoningModel) {
+        const totalOptions = reasoningVariantOptions.length;
+        const reasoningVisibleItems = Math.min(maxVisibleItems, totalOptions);
+        const reasoningOffset = Math.min(
+            Math.max(0, reasoningVariantIndex - reasoningVisibleItems + 1),
+            Math.max(0, totalOptions - reasoningVisibleItems)
+        );
+        const visibleReasoningOptions = reasoningVariantOptions.slice(
+            reasoningOffset,
+            reasoningOffset + reasoningVisibleItems
+        );
+        const selectedReasoningOption =
+            reasoningVariantOptions[reasoningVariantIndex] ?? reasoningVariantOptions[0];
+
+        return (
+            <Box flexDirection="column" width={overlayWidth}>
+                <Box paddingX={0} paddingY={0} width={overlayWidth}>
+                    <Text color="cyan" bold>
+                        Reasoning Variant
+                        {isSettingDefault ? <Text color="gray"> (default)</Text> : null}
+                    </Text>
+                </Box>
+                <Box paddingX={0} paddingY={0} width={overlayWidth}>
+                    <Text color="gray">
+                        {formatLineToWidth(
+                            pendingReasoningModel.displayName || pendingReasoningModel.name,
+                            overlayWidth
+                        )}
+                    </Text>
+                </Box>
+                <Box
+                    flexDirection="column"
+                    height={maxVisibleItems}
+                    marginTop={1}
+                    width={overlayWidth}
+                >
+                    {Array.from({ length: maxVisibleItems }, (_, rowIndex) => {
+                        const option = visibleReasoningOptions[rowIndex];
+                        if (!option) {
+                            return (
+                                <Box
+                                    key={`reasoning-empty-${rowIndex}`}
+                                    paddingX={0}
+                                    paddingY={0}
+                                    width={overlayWidth}
+                                >
+                                    <Text>{blankLine}</Text>
+                                </Box>
+                            );
+                        }
+
+                        const actualIndex = reasoningOffset + rowIndex;
+                        const isSelected = actualIndex === reasoningVariantIndex;
+                        return (
+                            <Box key={option.value} paddingX={0} paddingY={0} width={overlayWidth}>
+                                <Text color={isSelected ? 'cyan' : 'gray'} bold={isSelected}>
+                                    {formatLineToWidth(
+                                        `${isSelected ? '›' : ' '} ${option.label}`,
+                                        overlayWidth
+                                    )}
+                                </Text>
+                            </Box>
+                        );
+                    })}
+                </Box>
+                <Box paddingX={0} paddingY={0} marginTop={1} width={overlayWidth}>
+                    <Text color="gray">
+                        {formatLineToWidth(
+                            selectedReasoningOption?.description ?? '',
+                            overlayWidth
+                        )}
+                    </Text>
+                </Box>
+                <Box paddingX={0} paddingY={0} width={overlayWidth}>
+                    <HintBar hints={['↑↓ navigate', 'Enter select', 'Esc back']} />
+                </Box>
+            </Box>
+        );
+    }
+
+    const selectedIndex = selection.index;
+    const scrollOffset = selection.offset;
+    const listItems = filteredItems.filter((item): item is ModelOption => !isAddCustomOption(item));
+    const visibleItems = listItems.slice(scrollOffset, scrollOffset + listViewportItems);
+    const selectedItem = filteredItems[selectedIndex];
+    const hasActionableItems = Boolean(selectedItem && isModelOption(selectedItem));
+
+    const searchLine = formatLineToWidth(
+        `Search: ${searchQuery || 'Type to filter models…'}`,
+        overlayWidth
+    );
+    const addCustomLine = hasAddCustomOption
+        ? formatLineToWidth(
+              `${getRowPrefix({
+                  isSelected: selectedIndex === 0,
+                  isDefault: false,
+                  isCurrent: false,
+                  isFavorite: false,
+              })}Add custom model…`,
+              overlayWidth
+          )
+        : '';
+
+    return (
+        <Box flexDirection="column" width={overlayWidth}>
+            {/* Header */}
+            <Box paddingX={0} paddingY={0} width={overlayWidth}>
+                <Text color="cyan" bold>
+                    {title || 'Models'}
+                </Text>
+            </Box>
+            <Box paddingX={0} paddingY={0} width={overlayWidth} flexDirection="row">
+                {tabs.map((tab) => {
+                    const isActive = activeTab === tab.id;
+                    const color = isActive ? 'cyan' : 'gray';
+                    const label = tab.label;
+                    return (
+                        <Box key={tab.id} marginRight={1} flexDirection="column">
+                            <Text color={color}>{`+${'-'.repeat(label.length + 2)}+`}</Text>
+                            <Text color={color} bold={isActive}>{`| ${label} |`}</Text>
+                            <Text color={color}>{`+${'-'.repeat(label.length + 2)}+`}</Text>
+                        </Box>
+                    );
+                })}
+            </Box>
+
+            {/* Search input */}
+            <Box paddingX={0} paddingY={0} width={overlayWidth}>
+                <Text color={searchQuery ? 'white' : 'gray'}>{searchLine}</Text>
+            </Box>
+
+            {/* Items */}
+            <Box flexDirection="column" marginTop={1} width={overlayWidth}>
+                {hasAddCustomOption && (
+                    <Box paddingX={0} paddingY={0} width={overlayWidth}>
+                        <Text
+                            color={selectedIndex === 0 ? 'green' : 'gray'}
+                            bold={selectedIndex === 0}
+                        >
+                            {addCustomLine}
+                        </Text>
+                    </Box>
+                )}
+                <Box flexDirection="column" height={listViewportItems} width={overlayWidth}>
+                    {isLoading || listItems.length === 0
+                        ? Array.from({ length: listViewportItems }, (_, index) => (
+                              <Box
+                                  key={`model-empty-${index}`}
+                                  paddingX={0}
+                                  paddingY={0}
+                                  width={overlayWidth}
+                              >
+                                  <Text>{blankLine}</Text>
+                              </Box>
+                          ))
+                        : Array.from({ length: listViewportItems }, (_, rowIndex) => {
+                              const item = visibleItems[rowIndex];
+                              if (!item) {
+                                  return (
+                                      <Box
+                                          key={`model-empty-${rowIndex}`}
+                                          paddingX={0}
+                                          paddingY={0}
+                                          width={overlayWidth}
+                                      >
+                                          <Text>{blankLine}</Text>
+                                      </Box>
+                                  );
+                              }
+
+                              const actualIndex = modelStartIndex + scrollOffset + rowIndex;
+                              const isSelected = actualIndex === selectedIndex;
+
+                              const providerDisplay = item.isCustom && item.originalProvider
+                                  ? item.originalProvider
+                                  : getLLMProviderDisplayName(
+                                        item.provider,
+                                        item.baseURL
+                                    );
+                              const name = item.displayName || item.name;
+                              const isFavorite = favoriteKeySet.has(
+                                  toCanonicalModelPickerKey({
+                                      provider: item.provider,
+                                      model: item.name,
+                                      ...(item.baseURL ? { baseURL: item.baseURL } : {}),
+                                  })
+                              );
+                              const prefix = getRowPrefix({
+                                  isSelected,
+                                  isDefault: item.isDefault,
+                                  isCurrent: item.isCurrent,
+                                  isFavorite,
+                              });
+
+                              return (
+                                  <Box
+                                      key={`model-${activeTab}-${actualIndex}-${toModelIdentityKey(item)}`}
+                                      flexDirection="row"
+                                      paddingX={0}
+                                      paddingY={0}
+                                      width={overlayWidth}
+                                  >
+                                      <Text color={isSelected ? 'cyan' : 'gray'} bold={isSelected}>
+                                          {formatLineToWidth(
+                                              `${prefix}${name} (${providerDisplay})`,
+                                              overlayWidth
+                                          )}
+                                      </Text>
+                                  </Box>
+                              );
+                          })}
+                </Box>
+            </Box>
+
+            <Box paddingX={0} paddingY={0} marginTop={1} width={overlayWidth}>
+                <HintBar
+                    hints={[
+                        '↑↓ navigate',
+                        'Enter select/apply',
+                        'Esc close',
+                        '←→ switch tab',
+                        hasActionableItems ? 'Ctrl+F quick favorite' : '',
+                    ]}
+                />
+            </Box>
+        </Box>
+    );
+});
+
+export default ModelSelector;

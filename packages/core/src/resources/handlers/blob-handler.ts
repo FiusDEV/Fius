@@ -1,0 +1,236 @@
+import type { Logger } from '../../logger/v2/types.js';
+import { FiusLogComponent } from '../../logger/v2/types.js';
+import { ResourceError } from '../errors.js';
+import type { ResourceMetadata } from '../types.js';
+import type { ReadResourceResult } from '@modelcontextprotocol/sdk/types.js';
+import type { ArtifactStore, StoredArtifactMetadata } from '../../storage/artifacts/types.js';
+import type { ValidatedBlobResourceConfig } from '../schemas.js';
+import type { InternalResourceHandler, InternalResourceServices } from './types.js';
+
+export class BlobResourceHandler implements InternalResourceHandler {
+    private config: ValidatedBlobResourceConfig;
+    private artifactStore: ArtifactStore;
+    private logger: Logger;
+
+    constructor(config: ValidatedBlobResourceConfig, artifactStore: ArtifactStore, logger: Logger) {
+        this.config = config;
+        this.artifactStore = artifactStore;
+        this.logger = logger.createChild(FiusLogComponent.RESOURCE);
+    }
+
+    getType(): string {
+        return 'blob';
+    }
+
+    async initialize(_services: InternalResourceServices): Promise<void> {
+        this.logger.debug('BlobResourceHandler initialized with ArtifactStore');
+    }
+
+    async listResources(): Promise<ResourceMetadata[]> {
+        this.logger.debug('🔍 BlobResourceHandler.listResources() called');
+
+        try {
+            const stats = await this.artifactStore.getStats();
+            this.logger.debug(
+                `📊 BlobStore stats: ${stats.count} blobs, backend: ${stats.backendType}`
+            );
+            const resources: ResourceMetadata[] = [];
+
+            try {
+                const blobs = await this.artifactStore.listArtifacts();
+                this.logger.debug(`📄 Found ${blobs.length} individual blobs`);
+
+                for (const blob of blobs) {
+                    if (blob.metadata.source === 'system') {
+                        continue;
+                    }
+
+                    const displayName = this.generateBlobDisplayName(blob.metadata, blob.id);
+                    const friendlyType = this.getFriendlyType(blob.metadata.mimeType);
+
+                    resources.push({
+                        uri: blob.uri,
+                        name: displayName,
+                        description: `${friendlyType} (${this.formatSize(blob.metadata.size)})${blob.metadata.source ? ` • ${blob.metadata.source}` : ''}`,
+                        source: 'internal',
+                        size: blob.metadata.size,
+                        mimeType: blob.metadata.mimeType,
+                        lastModified: new Date(blob.metadata.createdAt),
+                        metadata: {
+                            type: 'blob',
+                            source: blob.metadata.source,
+                            hash: blob.metadata.hash,
+                            createdAt: blob.metadata.createdAt,
+                            originalName: blob.metadata.originalName,
+                        },
+                    });
+                }
+            } catch (error) {
+                this.logger.warn(`Failed to list individual blobs: ${String(error)}`);
+            }
+
+            this.logger.debug(`✅ BlobResourceHandler returning ${resources.length} resources`);
+            return resources;
+        } catch (error) {
+            this.logger.warn(`Failed to list blob resources: ${String(error)}`);
+            return [];
+        }
+    }
+
+    canHandle(uri: string): boolean {
+        return uri.startsWith('blob:');
+    }
+
+    async readResource(uri: string): Promise<ReadResourceResult> {
+        if (!this.canHandle(uri)) {
+            throw ResourceError.noSuitableProvider(uri);
+        }
+
+        try {
+            const blobId = uri.substring(5);
+
+            if (!blobId) {
+                throw ResourceError.readFailed(uri, new Error('Invalid blob URI: missing blob ID'));
+            }
+
+            if (blobId === 'store') {
+                const stats = await this.artifactStore.getStats();
+                return {
+                    contents: [
+                        {
+                            uri,
+                            mimeType: 'application/json',
+                            text: JSON.stringify(stats, null, 2),
+                        },
+                    ],
+                };
+            }
+
+            const result = await this.artifactStore.retrieve({
+                reference: blobId,
+                format: 'base64',
+            });
+
+            return {
+                contents: [
+                    {
+                        uri,
+                        mimeType: result.metadata.mimeType || 'application/octet-stream',
+                        blob: result.data as string,
+                    },
+                ],
+                _meta: {
+                    size: result.metadata.size,
+                    createdAt: result.metadata.createdAt,
+                    originalName: result.metadata.originalName,
+                    source: result.metadata.source,
+                },
+            };
+        } catch (error) {
+            if (error instanceof ResourceError) {
+                throw error;
+            }
+            throw ResourceError.readFailed(uri, error);
+        }
+    }
+
+    async refresh(): Promise<void> {
+        try {
+            await this.artifactStore.cleanup();
+            this.logger.debug('Blob store cleanup completed');
+        } catch (error) {
+            this.logger.warn(`Blob store cleanup failed: ${String(error)}`);
+        }
+    }
+
+    getArtifactStore(): ArtifactStore {
+        return this.artifactStore;
+    }
+
+    
+    private generateBlobDisplayName(metadata: StoredArtifactMetadata, _blobId: string): string {
+        if (metadata.originalName && metadata.originalName.includes('.')) {
+            return metadata.originalName;
+        }
+
+        let baseName =
+            metadata.originalName || this.generateNameFromType(metadata.mimeType, metadata.source);
+        const extension = this.getExtensionFromMimeType(metadata.mimeType);
+
+        if (extension && !baseName.toLowerCase().endsWith(extension)) {
+            baseName += extension;
+        }
+
+        return baseName;
+    }
+
+    
+    private generateNameFromType(mimeType: string, source?: string): string {
+        if (mimeType.startsWith('image/')) {
+            if (source === 'user') return 'uploaded-image';
+            if (source === 'tool') return 'generated-image';
+            return 'image';
+        }
+        if (mimeType.startsWith('text/')) {
+            if (source === 'tool') return 'tool-output';
+            return 'text-file';
+        }
+        if (mimeType.startsWith('application/pdf')) {
+            return 'document';
+        }
+        if (mimeType.startsWith('audio/')) {
+            return 'audio-file';
+        }
+        if (mimeType.startsWith('video/')) {
+            return 'video-file';
+        }
+
+        if (source === 'user') return 'user-upload';
+        if (source === 'tool') return 'tool-result';
+        return 'file';
+    }
+
+    
+    private getExtensionFromMimeType(mimeType: string): string {
+        const mimeToExt: Record<string, string> = {
+            'image/jpeg': '.jpg',
+            'image/png': '.png',
+            'image/gif': '.gif',
+            'image/webp': '.webp',
+            'image/svg+xml': '.svg',
+            'text/plain': '.txt',
+            'text/markdown': '.md',
+            'text/html': '.html',
+            'text/css': '.css',
+            'application/json': '.json',
+            'application/pdf': '.pdf',
+            'application/xml': '.xml',
+            'audio/mpeg': '.mp3',
+            'audio/wav': '.wav',
+            'video/mp4': '.mp4',
+            'video/webm': '.webm',
+        };
+
+        return mimeToExt[mimeType] || '';
+    }
+
+    
+    private getFriendlyType(mimeType: string): string {
+        if (mimeType.startsWith('image/')) return 'Image';
+        if (mimeType.startsWith('text/')) return 'Text File';
+        if (mimeType.startsWith('audio/')) return 'Audio File';
+        if (mimeType.startsWith('video/')) return 'Video File';
+        if (mimeType === 'application/pdf') return 'PDF Document';
+        if (mimeType === 'application/json') return 'JSON Data';
+        return 'File';
+    }
+
+    
+    private formatSize(bytes: number): string {
+        if (bytes === 0) return '0 B';
+        const k = 1024;
+        const sizes = ['B', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+    }
+}

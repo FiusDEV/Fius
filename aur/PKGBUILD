@@ -1,0 +1,22 @@
+# Maintainer: Fius Team <hello@fius.dev>
+pkgname=fius
+pkgver=1.0.0
+pkgrel=1
+pkgdesc="Your command center for controlling computers and services with natural language"
+arch=('x86_64' 'aarch64')
+url="https://fius.dev"
+license=('Elastic-2.0')
+depends=('nodejs>=20' 'npm')
+makedepends=()
+options=(!emptydirs)
+source=("https://registry.npmjs.org/fius/-/fius-${pkgver}.tgz")
+sha256sums=('SKIP')
+
+package() {
+    cd "$srcdir"
+    
+    npm install -g --user root --prefix "$pkgdir/usr" "fius@${pkgver}"
+    
+    # Remove unnecessary files
+    rm -rf "$pkgdir/usr/lib/node_modules/fius/node_modules/.package-lock.json"
+}

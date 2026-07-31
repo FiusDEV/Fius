@@ -1,0 +1,43 @@
+{
+  "name": "@fius/agent-config",
+  "version": "1.0.0",
+  "private": false,
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "@fius/core": "workspace:*",
+    "@fius/storage": "workspace:*",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.5",
+    "yaml": "^2.8.3"
+  },
+  "peerDependencies": {
+    "zod": "^4.3.6"
+  },
+  "scripts": {
+    "build": "cross-env NODE_OPTIONS=--max-old-space-size=4096 tsup && node ../../scripts/clean-tsbuildinfo.mjs && cross-env NODE_OPTIONS=--max-old-space-size=4096 tsc -b tsconfig.json --emitDeclarationOnly && node scripts/fix-dist-aliases.mjs",
+    "dev": "tsup --watch",
+    "typecheck": "tsc -p tsconfig.typecheck.json --noEmit",
+    "lint": "eslint . --ext .ts"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "sideEffects": false
+}

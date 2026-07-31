@@ -1,0 +1,99 @@
+import type { FiusImage, HookFactory } from '@fius/agent-config';
+import { getFiusPackageRoot } from '@fius/agent-management';
+import imageLocal from '@fius/image-local';
+import { z } from 'zod';
+import { existsSync, readFileSync } from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { RequestLoggerHook } from './hooks/request-logger.js';
+
+function readPackageJson(packageJsonPath: string): { name?: string; version?: string } | null {
+    if (!existsSync(packageJsonPath)) {
+        return null;
+    }
+
+    try {
+        return JSON.parse(readFileSync(packageJsonPath, 'utf-8')) as {
+            name?: string;
+            version?: string;
+        };
+    } catch {
+        return null;
+    }
+}
+
+function resolveModuleDir(): string | undefined {
+    const importMetaUrl = typeof import.meta !== 'undefined' ? import.meta.url : undefined;
+    if (importMetaUrl) {
+        return path.dirname(fileURLToPath(importMetaUrl));
+    }
+
+    const filenameFromGlobal = (globalThis as { __filename?: unknown }).__filename;
+    if (typeof filenameFromGlobal === 'string' && filenameFromGlobal.length > 0) {
+        return path.dirname(filenameFromGlobal);
+    }
+
+    return undefined;
+}
+
+function resolveImageMetadata(defaultName: string): { name: string; version: string } {
+    const moduleDir = resolveModuleDir();
+    if (moduleDir) {
+        const localPackageJson = readPackageJson(path.resolve(moduleDir, '..', 'package.json'));
+        if (localPackageJson) {
+            return {
+                name: localPackageJson.name ?? defaultName,
+                version: localPackageJson.version ?? '0.0.0',
+            };
+        }
+    }
+
+    const packageRoot = getFiusPackageRoot();
+    if (packageRoot) {
+        const bundledPackageJson = readPackageJson(path.join(packageRoot, 'package.json'));
+        if (bundledPackageJson) {
+            return {
+                name: defaultName,
+                version: bundledPackageJson.version ?? '0.0.0',
+            };
+        }
+    }
+
+    return {
+        name: defaultName,
+        version: process.env.FIUS_CLI_VERSION || '0.0.0',
+    };
+}
+
+const imageMetadata = resolveImageMetadata('@fius/image-logger-agent');
+
+const requestLoggerConfigSchema = z
+    .object({
+        type: z.literal('request-logger'),
+        logDir: z.string().optional(),
+        logFileName: z.string().optional(),
+    })
+    .strict();
+
+const requestLoggerFactory: HookFactory<z.output<typeof requestLoggerConfigSchema>> = {
+    configSchema: requestLoggerConfigSchema,
+    create: (_config) => new RequestLoggerHook(),
+};
+
+const imageLoggerAgent: FiusImage = {
+    ...imageLocal,
+    metadata: {
+        name: imageMetadata.name,
+        version: imageMetadata.version,
+        description:
+            'Example image for the Logger Agent (adds request-logger hook which logs requests)',
+        target: 'local-development',
+        constraints: ['filesystem-required'],
+    },
+    hooks: {
+        ...imageLocal.hooks,
+        'request-logger': requestLoggerFactory,
+    },
+};
+
+export default imageLoggerAgent;

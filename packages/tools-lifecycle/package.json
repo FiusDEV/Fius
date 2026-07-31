@@ -1,0 +1,40 @@
+{
+    "name": "@fius/tools-lifecycle",
+    "version": "1.0.0",
+    "description": "Lifecycle and self-observation tools for Fius agents",
+    "type": "module",
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.js"
+        }
+    },
+    "scripts": {
+        "build": "tsup && node ../../scripts/clean-tsbuildinfo.mjs && tsc -b tsconfig.json --emitDeclarationOnly",
+        "typecheck": "tsc --noEmit",
+        "clean": "rm -rf dist"
+    },
+    "keywords": [
+        "fius",
+        "tools",
+        "lifecycle",
+        "logs",
+        "memories"
+    ],
+    "dependencies": {
+        "@fius/agent-config": "workspace:*",
+        "@fius/core": "workspace:*",
+        "zod": "^4.3.6"
+    },
+    "devDependencies": {
+        "tsup": "^8.0.0",
+        "typescript": "^5.3.3",
+        "vitest": "^2.1.8"
+    },
+    "files": [
+        "dist",
+        "README.md"
+    ]
+}

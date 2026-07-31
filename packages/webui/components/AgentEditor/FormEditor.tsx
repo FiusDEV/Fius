@@ -1,0 +1,262 @@
+import React, { useState, useEffect } from 'react';
+import { LLMConfigSection } from './form-sections/LLMConfigSection';
+import { SystemPromptSection } from './form-sections/SystemPromptSection';
+import { McpServersSection } from './form-sections/McpServersSection';
+import { StorageSection } from './form-sections/StorageSection';
+import { PermissionsSection } from './form-sections/PermissionsSection';
+import { Collapsible } from '../ui/collapsible';
+import { Input } from '../ui/input';
+import { LabelWithTooltip } from '../ui/label-with-tooltip';
+import { AlertCircle } from 'lucide-react';
+import type { AgentConfig } from '@fius/agent-config';
+import type { ContributorConfig } from '@fius/core';
+
+interface FormEditorProps {
+    config: AgentConfig;
+    onChange: (config: AgentConfig) => void;
+    errors?: Record<string, string>;
+}
+
+type SectionKey = 'basic' | 'llm' | 'systemPrompt' | 'mcpServers' | 'storage' | 'permissions';
+
+export default function FormEditor({ config, onChange, errors = {} }: FormEditorProps) {
+    const systemPromptValue = (() => {
+        if (!config.systemPrompt) {
+            return { contributors: [] };
+        }
+        if (typeof config.systemPrompt === 'string') {
+            return {
+                contributors: [
+                    {
+                        id: 'primary',
+                        type: 'static' as const,
+                        priority: 0,
+                        enabled: true,
+                        content: config.systemPrompt,
+                    },
+                ],
+            };
+        }
+        return {
+            contributors: config.systemPrompt.contributors || [],
+        };
+    })();
+
+    const [openSections, setOpenSections] = useState<Record<SectionKey, boolean>>({
+        basic: true,
+        llm: false,
+        systemPrompt: false,
+        mcpServers: false,
+        storage: false,
+        permissions: false,
+    });
+
+    const sectionErrors = mapErrorsToSections(errors);
+
+    useEffect(() => {
+        const derivedSectionErrors = mapErrorsToSections(errors);
+        const sectionsWithErrors = Object.keys(derivedSectionErrors).filter(
+            (section) => derivedSectionErrors[section as SectionKey].length > 0
+        ) as SectionKey[];
+
+        if (sectionsWithErrors.length > 0) {
+            setOpenSections((prev) => {
+                const updated = { ...prev };
+                sectionsWithErrors.forEach((section) => {
+                    updated[section] = true;
+                });
+                return updated;
+            });
+        }
+    }, [errors]);
+
+    const toggleSection = (section: SectionKey) => {
+        setOpenSections((prev) => ({
+            ...prev,
+            [section]: !prev[section],
+        }));
+    };
+
+    const updateLLM = (llm: AgentConfig['llm']) => {
+        onChange({ ...config, llm });
+    };
+
+    const updateSystemPrompt = (value: { contributors: ContributorConfig[] }) => {
+        onChange({ ...config, systemPrompt: value });
+    };
+
+    const updateMcpServers = (mcpServers: AgentConfig['mcpServers']) => {
+        onChange({ ...config, mcpServers });
+    };
+
+    const updateStorage = (storage: AgentConfig['storage']) => {
+        onChange({ ...config, storage });
+    };
+
+    const updatePermissions = (permissions: AgentConfig['permissions']) => {
+        onChange({ ...config, permissions });
+    };
+
+    const hasAdvancedFeatures = checkForAdvancedFeatures(config);
+
+    return (
+        <div className="flex flex-col h-full overflow-auto">
+            {/* Advanced Features Warning */}
+            {hasAdvancedFeatures && (
+                <div className="mx-4 mt-4 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+                    <div className="flex items-start gap-2">
+                        <AlertCircle className="h-4 w-4 text-yellow-600 dark:text-yellow-500 mt-0.5 flex-shrink-0" />
+                        <div className="text-sm">
+                            <p className="font-medium text-yellow-600 dark:text-yellow-500">
+                                Advanced Configuration Detected
+                            </p>
+                            <p className="text-xs text-yellow-600/80 dark:text-yellow-500/80 mt-1">
+                                Some advanced features may not be editable in form mode. Switch to
+                                YAML editor for full control.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Form Sections */}
+            <div className="flex-1 p-4 space-y-4">
+                {/* Basic Info Section */}
+                <Collapsible
+                    title="Basic Information"
+                    open={openSections.basic}
+                    onOpenChange={() => toggleSection('basic')}
+                    errorCount={sectionErrors.basic.length}
+                    sectionErrors={sectionErrors.basic}
+                >
+                    <div className="space-y-2">
+                        <LabelWithTooltip
+                            htmlFor="agent-greeting"
+                            tooltip="The initial message shown to users when they start a conversation"
+                        >
+                            Greeting Message
+                        </LabelWithTooltip>
+                        <Input
+                            id="agent-greeting"
+                            value={config.greeting || ''}
+                            onChange={(e) => onChange({ ...config, greeting: e.target.value })}
+                            placeholder="Hello! How can I help you today?"
+                            aria-invalid={!!errors.greeting}
+                        />
+                        {errors.greeting && (
+                            <p className="text-xs text-destructive mt-1">{errors.greeting}</p>
+                        )}
+                    </div>
+                </Collapsible>
+
+                {/* LLM Configuration */}
+                <LLMConfigSection
+                    value={config.llm}
+                    onChange={updateLLM}
+                    errors={errors}
+                    open={openSections.llm}
+                    onOpenChange={() => toggleSection('llm')}
+                    errorCount={sectionErrors.llm.length}
+                    sectionErrors={sectionErrors.llm}
+                />
+
+                {/* System Prompt */}
+                <SystemPromptSection
+                    value={systemPromptValue}
+                    onChange={updateSystemPrompt}
+                    errors={errors}
+                    open={openSections.systemPrompt}
+                    onOpenChange={() => toggleSection('systemPrompt')}
+                    errorCount={sectionErrors.systemPrompt.length}
+                    sectionErrors={sectionErrors.systemPrompt}
+                />
+
+                {/* MCP Servers */}
+                <McpServersSection
+                    value={config.mcpServers || {}}
+                    onChange={updateMcpServers}
+                    errors={errors}
+                    open={openSections.mcpServers}
+                    onOpenChange={() => toggleSection('mcpServers')}
+                    errorCount={sectionErrors.mcpServers.length}
+                    sectionErrors={sectionErrors.mcpServers}
+                />
+
+                {/* Storage Configuration */}
+                <StorageSection
+                    value={
+                        config.storage || {
+                            cache: { type: 'in-memory' },
+                            database: { type: 'in-memory' },
+                            blob: { type: 'local', storePath: '/tmp/fius-blobs' },
+                        }
+                    }
+                    onChange={updateStorage}
+                    errors={errors}
+                    open={openSections.storage}
+                    onOpenChange={() => toggleSection('storage')}
+                    errorCount={sectionErrors.storage.length}
+                    sectionErrors={sectionErrors.storage}
+                />
+
+                {/* Permissions */}
+                <PermissionsSection
+                    value={config.permissions || {}}
+                    onChange={updatePermissions}
+                    errors={errors}
+                    open={openSections.permissions}
+                    onOpenChange={() => toggleSection('permissions')}
+                    errorCount={sectionErrors.permissions.length}
+                    sectionErrors={sectionErrors.permissions}
+                />
+            </div>
+        </div>
+    );
+}
+
+/**
+ * Check if config has advanced features that aren't well-supported in form mode
+ */
+function checkForAdvancedFeatures(config: AgentConfig): boolean {
+    if (config.sessions && Object.keys(config.sessions).length > 0) {
+        return true;
+    }
+
+    if (config.tools && config.tools.length > 0) {
+        return true;
+    }
+
+    return false;
+}
+
+/**
+ * Map error paths to form sections
+ */
+function mapErrorsToSections(errors: Record<string, string>): Record<SectionKey, string[]> {
+    const sectionErrors: Record<SectionKey, string[]> = {
+        basic: [],
+        llm: [],
+        systemPrompt: [],
+        mcpServers: [],
+        storage: [],
+        permissions: [],
+    };
+
+    Object.entries(errors).forEach(([path, message]) => {
+        if (path === 'greeting') {
+            sectionErrors.basic.push(message);
+        } else if (path.startsWith('llm.')) {
+            sectionErrors.llm.push(message);
+        } else if (path.startsWith('systemPrompt')) {
+            sectionErrors.systemPrompt.push(message);
+        } else if (path.startsWith('mcpServers')) {
+            sectionErrors.mcpServers.push(message);
+        } else if (path.startsWith('storage.')) {
+            sectionErrors.storage.push(message);
+        } else if (path.startsWith('permissions.')) {
+            sectionErrors.permissions.push(message);
+        }
+    });
+
+    return sectionErrors;
+}

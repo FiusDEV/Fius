@@ -1,0 +1,1090 @@
+import { z } from '@hono/zod-openapi';
+import {
+    LLMConfigBaseSchema as CoreLLMConfigBaseSchema,
+    type ContentPart as CoreContentPart,
+    type InternalMessage as CoreInternalMessage,
+} from '@fius/core';
+import { LLM_PRICING_STATUSES, LLM_PROVIDERS, SUPPORTED_FILE_TYPES } from '@fius/llm';
+
+type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue };
+
+const JsonValueOpenApiPlaceholder = {
+    type: 'object' as const,
+    additionalProperties: true,
+    description: 'Any JSON-serializable value',
+};
+
+export const JsonValueSchema: z.ZodType<JsonValue> = z
+    .lazy(() =>
+        z.union([
+            z.string(),
+            z.number(),
+            z.boolean(),
+            z.null(),
+            z.array(JsonValueSchema),
+            z.record(z.string(), JsonValueSchema),
+        ])
+    )
+    .openapi('JsonValue', JsonValueOpenApiPlaceholder)
+    .describe('Any JSON-serializable value');
+
+export const JsonObjectSchema: z.ZodType<{ [key: string]: JsonValue }> = z
+    .record(z.string(), JsonValueSchema)
+    .openapi('JsonObject', {
+        type: 'object',
+        additionalProperties: true,
+    })
+    .describe('JSON object with arbitrary serializable values');
+
+const JsonSchemaPrimitiveTypeSchema = z
+    .enum(['string', 'number', 'integer', 'boolean', 'object', 'array'])
+    .describe('JSON Schema primitive type');
+
+const JsonSchemaEnumValueSchema = z
+    .union([z.string(), z.number(), z.boolean(), z.null()])
+    .describe('Allowed JSON Schema enum value');
+
+export const JsonSchemaPropertySchema = z
+    .object({
+        type: JsonSchemaPrimitiveTypeSchema.optional().describe('Property type'),
+        description: z.string().optional().describe('Property description'),
+        enum: z.array(JsonSchemaEnumValueSchema).optional().describe('Enum values'),
+        default: JsonValueSchema.optional().describe('Default value'),
+        format: z.string().optional().describe('JSON Schema format hint'),
+    })
+    .passthrough()
+    .describe('JSON Schema property definition');
+
+export const ToolInputSchema = z
+    .object({
+        type: z.literal('object').optional().describe('Schema type, always "object" when present'),
+        properties: z
+            .record(z.string(), JsonSchemaPropertySchema)
+            .optional()
+            .describe('Property definitions'),
+        required: z.array(z.string()).optional().describe('Required property names'),
+    })
+    .passthrough()
+    .describe('JSON Schema for tool input parameters');
+
+export const IssueSchema = z
+    .object({
+        code: z.string().describe('Machine-readable issue code'),
+        message: z.string().describe('Human-readable issue message'),
+        scope: z.string().describe('Domain that produced the issue'),
+        type: z.string().describe('Error type used for HTTP status mapping'),
+        severity: z.enum(['error', 'warning']).describe('Issue severity'),
+        path: z
+            .array(z.union([z.string(), z.number()]))
+            .optional()
+            .describe('Optional location for the issue'),
+        context: JsonValueSchema.optional().describe('Optional structured issue context'),
+    })
+    .strict()
+    .describe('Structured validation or runtime issue');
+
+export const ApiErrorResponseSchema = z
+    .object({
+        name: z.string().optional().describe('Optional error class name'),
+        message: z.string().describe('Human-readable error message'),
+        code: z.string().optional().describe('Machine-readable error code'),
+        scope: z.string().optional().describe('Domain that produced the error'),
+        type: z.string().optional().describe('Error type used for HTTP status mapping'),
+        severity: z
+            .enum(['error', 'warning'])
+            .optional()
+            .describe('Optional error severity for lightweight failures'),
+        endpoint: z.string().describe('Request path that failed'),
+        method: z.string().describe('HTTP method for the failed request'),
+        traceId: z.string().optional().describe('Optional trace identifier'),
+        recovery: z
+            .union([z.string(), z.array(z.string())])
+            .optional()
+            .describe('Optional recovery guidance'),
+        context: JsonValueSchema.optional().describe('Optional structured error context'),
+        issues: z.array(IssueSchema).optional().describe('Validation issues when present'),
+        errorCount: z.number().int().nonnegative().optional().describe('Number of errors'),
+        warningCount: z.number().int().nonnegative().optional().describe('Number of warnings'),
+        stack: z.string().optional().describe('Development-only stack trace'),
+    })
+    .strict()
+    .describe('Standard API error response');
+
+export const BadRequestErrorResponse = {
+    description: 'Validation or request error',
+    content: {
+        'application/json': {
+            schema: ApiErrorResponseSchema,
+        },
+    },
+} as const;
+
+export const PaymentRequiredErrorResponse = {
+    description: 'Payment required',
+    content: {
+        'application/json': {
+            schema: ApiErrorResponseSchema,
+        },
+    },
+} as const;
+
+export const ForbiddenErrorResponse = {
+    description: 'Forbidden',
+    content: {
+        'application/json': {
+            schema: ApiErrorResponseSchema,
+        },
+    },
+} as const;
+
+export const NotFoundErrorResponse = {
+    description: 'Resource not found',
+    content: {
+        'application/json': {
+            schema: ApiErrorResponseSchema,
+        },
+    },
+} as const;
+
+export const TimeoutErrorResponse = {
+    description: 'Request timed out',
+    content: {
+        'application/json': {
+            schema: ApiErrorResponseSchema,
+        },
+    },
+} as const;
+
+export const ConflictErrorResponse = {
+    description: 'Conflict',
+    content: {
+        'application/json': {
+            schema: ApiErrorResponseSchema,
+        },
+    },
+} as const;
+
+export const RateLimitErrorResponse = {
+    description: 'Rate limited',
+    content: {
+        'application/json': {
+            schema: ApiErrorResponseSchema,
+        },
+    },
+} as const;
+
+export const InternalErrorResponse = {
+    description: 'Internal server error',
+    content: {
+        'application/json': {
+            schema: ApiErrorResponseSchema,
+        },
+    },
+} as const;
+
+export const UpstreamErrorResponse = {
+    description: 'Upstream service failure',
+    content: {
+        'application/json': {
+            schema: ApiErrorResponseSchema,
+        },
+    },
+} as const;
+
+export { MemorySchema } from '@fius/core';
+
+export { LLMConfigBaseSchema, type ValidatedLLMConfig } from '@fius/core';
+
+export const TextPartSchema = z
+    .object({
+        type: z.literal('text').describe('Part type: text'),
+        text: z.string().describe('Text content'),
+    })
+    .strict()
+    .describe('Text content part');
+
+export const ImagePartSchema = z
+    .object({
+        type: z.literal('image').describe('Part type: image'),
+        image: z.string().describe('Base64-encoded image data'),
+        mimeType: z.string().optional().describe('MIME type of the image'),
+    })
+    .strict()
+    .describe('Image content part');
+
+export const FilePartSchema = z
+    .object({
+        type: z.literal('file').describe('Part type: file'),
+        data: z.string().describe('Base64-encoded file data'),
+        mimeType: z.string().describe('MIME type of the file'),
+        filename: z.string().optional().describe('Optional filename'),
+    })
+    .strict()
+    .describe('File content part');
+
+export const ResourcePartSchema = z
+    .object({
+        type: z.literal('resource').describe('Part type: resource'),
+        uri: z.string().describe('Canonical resource reference'),
+        name: z.string().describe('Display name for the resource'),
+        mimeType: z.string().describe('MIME type of the resource'),
+        kind: z
+            .enum(['text', 'image', 'audio', 'video', 'binary'])
+            .describe('Resource kind for rendering and prompt projection'),
+        size: z.number().int().nonnegative().optional().describe('Size in bytes'),
+        metadata: z
+            .object({
+                mtimeMs: z.number().nonnegative().optional().describe('mtime in ms'),
+                source: z
+                    .enum(['filesystem', 'upload', 'generated', 'tool', 'remote'])
+                    .optional()
+                    .describe('How the resource was created'),
+            })
+            .strict()
+            .optional()
+            .describe('Optional resource metadata'),
+    })
+    .strict()
+    .describe('Canonical resource reference part');
+
+export const UIResourcePartSchema = z
+    .object({
+        type: z.literal('ui-resource').describe('Part type: ui-resource'),
+        uri: z.string().describe('URI identifying the UI resource (must start with ui://)'),
+        mimeType: z
+            .string()
+            .describe('MIME type: text/html, text/uri-list, or application/vnd.mcp-ui.remote-dom'),
+        content: z.string().optional().describe('Inline HTML content or URL'),
+        blob: z.string().optional().describe('Base64-encoded content (alternative to content)'),
+        metadata: z
+            .object({
+                title: z.string().optional().describe('Display title for the UI resource'),
+                preferredSize: z
+                    .object({
+                        width: z.number().describe('Preferred width in pixels'),
+                        height: z.number().describe('Preferred height in pixels'),
+                    })
+                    .strict()
+                    .optional()
+                    .describe('Preferred rendering size'),
+            })
+            .strict()
+            .optional()
+            .describe('Optional metadata for the UI resource'),
+    })
+    .strict()
+    .describe('UI Resource content part for MCP-UI interactive components');
+
+export const ContentPartSchema = z
+    .discriminatedUnion('type', [
+        TextPartSchema,
+        ImagePartSchema,
+        FilePartSchema,
+        ResourcePartSchema,
+        UIResourcePartSchema,
+    ])
+    .describe('Message content part (text, image, file, resource, or UI resource)');
+
+export const RequestContentPartSchema = z
+    .discriminatedUnion('type', [TextPartSchema, ImagePartSchema, FilePartSchema])
+    .describe('Request message content part (text, image, or file)');
+
+export const RequestContentSchema = z
+    .union([z.string(), z.array(RequestContentPartSchema)])
+    .describe('Message content - string for text, or ContentPart[] for multimodal');
+
+function serializeBinaryValue(value: string | Uint8Array | Buffer | ArrayBuffer | URL): string {
+    if (typeof value === 'string') {
+        return value;
+    }
+    if (value instanceof URL) {
+        return value.toString();
+    }
+    if (value instanceof ArrayBuffer) {
+        return Buffer.from(new Uint8Array(value)).toString('base64');
+    }
+    return Buffer.from(value).toString('base64');
+}
+
+function toApiResourceMetadata(
+    metadata: Extract<CoreContentPart, { type: 'resource' }>['metadata'] | undefined
+) {
+    if (!metadata) {
+        return undefined;
+    }
+
+    const sanitized = {
+        ...(metadata.mtimeMs !== undefined ? { mtimeMs: metadata.mtimeMs } : {}),
+        ...(metadata.source !== undefined ? { source: metadata.source } : {}),
+    };
+
+    return Object.keys(sanitized).length > 0 ? sanitized : undefined;
+}
+
+export function toApiInternalMessage(
+    message: CoreInternalMessage
+): z.output<typeof InternalMessageSchema> {
+    return {
+        ...(message.id !== undefined ? { id: message.id } : {}),
+        role: message.role,
+        ...(message.timestamp !== undefined ? { timestamp: message.timestamp } : {}),
+        content: Array.isArray(message.content)
+            ? message.content.map((part) => toApiContentPart(part))
+            : message.content,
+        ...('reasoning' in message && message.reasoning !== undefined
+            ? { reasoning: message.reasoning }
+            : {}),
+        ...('tokenUsage' in message && message.tokenUsage !== undefined
+            ? { tokenUsage: message.tokenUsage }
+            : {}),
+        ...('estimatedCost' in message && message.estimatedCost !== undefined
+            ? { estimatedCost: message.estimatedCost }
+            : {}),
+        ...('pricingStatus' in message && message.pricingStatus !== undefined
+            ? { pricingStatus: message.pricingStatus }
+            : {}),
+        ...('usageScopeId' in message && message.usageScopeId !== undefined
+            ? { usageScopeId: message.usageScopeId }
+            : {}),
+        ...('model' in message && message.model !== undefined ? { model: message.model } : {}),
+        ...('provider' in message && message.provider !== undefined
+            ? { provider: message.provider }
+            : {}),
+        ...('toolCalls' in message && message.toolCalls !== undefined
+            ? { toolCalls: message.toolCalls }
+            : {}),
+        ...('toolCallId' in message && message.toolCallId !== undefined
+            ? { toolCallId: message.toolCallId }
+            : {}),
+        ...('name' in message && message.name !== undefined ? { name: message.name } : {}),
+        ...('success' in message && message.success !== undefined
+            ? { success: message.success }
+            : {}),
+    };
+}
+
+export function toContentInput(
+    rawContent: z.output<typeof RequestContentSchema>
+): CoreContentPart[] {
+    if (typeof rawContent === 'string') {
+        return [{ type: 'text', text: rawContent }];
+    }
+
+    return rawContent.map((part) => {
+        switch (part.type) {
+            case 'text':
+                return {
+                    type: 'text',
+                    text: part.text,
+                };
+            case 'image':
+                return {
+                    type: 'image',
+                    image: part.image,
+                    ...(part.mimeType !== undefined ? { mimeType: part.mimeType } : {}),
+                };
+            case 'file':
+                return {
+                    type: 'file',
+                    data: part.data,
+                    mimeType: part.mimeType,
+                    ...(part.filename !== undefined ? { filename: part.filename } : {}),
+                };
+        }
+    });
+}
+
+export function toApiContentPart(part: CoreContentPart): z.output<typeof ContentPartSchema> {
+    switch (part.type) {
+        case 'text':
+            return {
+                type: 'text',
+                text: part.text,
+            };
+        case 'image':
+            return {
+                type: 'image',
+                image: serializeBinaryValue(part.image),
+                ...(part.mimeType !== undefined ? { mimeType: part.mimeType } : {}),
+            };
+        case 'file':
+            return {
+                type: 'file',
+                data: serializeBinaryValue(part.data),
+                mimeType: part.mimeType,
+                ...(part.filename !== undefined ? { filename: part.filename } : {}),
+            };
+        case 'resource':
+            return {
+                type: 'resource',
+                uri: part.uri,
+                name: part.name,
+                mimeType: part.mimeType,
+                kind: part.kind,
+                ...(part.size !== undefined ? { size: part.size } : {}),
+                ...(toApiResourceMetadata(part.metadata) !== undefined
+                    ? { metadata: toApiResourceMetadata(part.metadata) }
+                    : {}),
+            };
+        case 'ui-resource':
+            return {
+                type: 'ui-resource',
+                uri: part.uri,
+                mimeType: part.mimeType,
+                ...(part.content !== undefined ? { content: part.content } : {}),
+                ...(part.blob !== undefined ? { blob: part.blob } : {}),
+                ...(part.metadata !== undefined ? { metadata: part.metadata } : {}),
+            };
+    }
+}
+
+export const ToolCallSchema = z
+    .object({
+        id: z.string().describe('Unique identifier for this tool call'),
+        type: z
+            .literal('function')
+            .describe('Tool call type (currently only function is supported)'),
+        function: z
+            .object({
+                name: z.string().describe('Name of the function to call'),
+                arguments: z.string().describe('Arguments for the function in JSON string format'),
+            })
+            .strict()
+            .describe('Function call details'),
+    })
+    .strict()
+    .describe('Tool call made by the assistant');
+
+export const TokenUsageSchema = z
+    .object({
+        inputTokens: z.number().int().nonnegative().optional().describe('Number of input tokens'),
+        outputTokens: z.number().int().nonnegative().optional().describe('Number of output tokens'),
+        reasoningTokens: z
+            .number()
+            .int()
+            .nonnegative()
+            .optional()
+            .describe('Number of reasoning tokens'),
+        cacheReadTokens: z
+            .number()
+            .int()
+            .nonnegative()
+            .optional()
+            .describe('Number of cache read tokens'),
+        cacheWriteTokens: z
+            .number()
+            .int()
+            .nonnegative()
+            .optional()
+            .describe('Number of cache write tokens'),
+        totalTokens: z.number().int().nonnegative().optional().describe('Total tokens used'),
+    })
+    .strict()
+    .describe('Token usage accounting');
+
+export const PricingStatusSchema = z
+    .enum(LLM_PRICING_STATUSES)
+    .describe('Whether pricing was resolved for this response');
+
+export const InternalMessageSchema = z
+    .object({
+        id: z.string().uuid().optional().describe('Unique message identifier (UUID)'),
+        role: z
+            .enum(['system', 'user', 'assistant', 'tool'])
+            .describe('Role of the message sender'),
+        timestamp: z.number().int().positive().optional().describe('Creation timestamp (Unix ms)'),
+        content: z
+            .union([z.string(), z.null(), z.array(ContentPartSchema)])
+            .describe('Message content (string, null, or array of parts)'),
+        reasoning: z.string().optional().describe('Optional model reasoning text'),
+        tokenUsage: TokenUsageSchema.optional().describe('Optional token usage accounting'),
+        estimatedCost: z
+            .number()
+            .nonnegative()
+            .optional()
+            .describe('Estimated cost in USD for this response'),
+        pricingStatus: PricingStatusSchema.optional().describe(
+            'Whether pricing was resolved for this response'
+        ),
+        usageScopeId: z
+            .string()
+            .optional()
+            .describe('Optional usage scope identifier for runtime-scoped metering'),
+        model: z.string().optional().describe('Model identifier for assistant messages'),
+        provider: z
+            .enum(LLM_PROVIDERS)
+            .optional()
+            .describe('Provider identifier for assistant messages'),
+        toolCalls: z.array(ToolCallSchema).optional().describe('Tool calls made by the assistant'),
+        toolCallId: z.string().optional().describe('ID of the tool call this message responds to'),
+        name: z.string().optional().describe('Name of the tool that produced this result'),
+        success: z
+            .boolean()
+            .optional()
+            .describe('Whether tool execution succeeded (present for role=tool messages)'),
+    })
+    .strict()
+    .describe('Internal message representation');
+
+export type TextPart = z.output<typeof TextPartSchema>;
+export type ImagePart = z.output<typeof ImagePartSchema>;
+export type FilePart = z.output<typeof FilePartSchema>;
+export type ContentPart = z.output<typeof ContentPartSchema>;
+export type RequestContentPart = z.output<typeof RequestContentPartSchema>;
+export type ToolCall = z.output<typeof ToolCallSchema>;
+export type TokenUsage = z.output<typeof TokenUsageSchema>;
+export type InternalMessage = z.output<typeof InternalMessageSchema>;
+
+export const LLMConfigResponseSchema = CoreLLMConfigBaseSchema.omit({ apiKey: true })
+    .extend({
+        hasApiKey: z.boolean().optional().describe('Whether an API key is configured'),
+    })
+    .describe('LLM configuration (apiKey omitted for security)');
+
+export const LLMConfigSchema = CoreLLMConfigBaseSchema.describe('LLM configuration with API key');
+
+export type LLMConfigResponse = z.output<typeof LLMConfigResponseSchema>;
+
+export { AgentCardSchema, type AgentCard } from '@fius/core';
+
+export {
+    McpServerConfigSchema,
+    StdioServerConfigSchema,
+    SseServerConfigSchema,
+    HttpServerConfigSchema,
+    type McpServerConfig,
+    type ValidatedMcpServerConfig,
+} from '@fius/core';
+
+export { PermissionsConfigSchema } from '@fius/core';
+
+export { ResourceConfigSchema } from '@fius/core';
+
+export const SessionTokenUsageSchema = TokenUsageSchema.required().describe(
+    'Session-level token usage (all fields required for cumulative totals)'
+);
+
+export const SessionUsageTrackingSchema = z
+    .object({
+        hasUntrackedChatGPTLoginUsage: z
+            .boolean()
+            .optional()
+            .describe('Whether this session includes known untracked ChatGPT Login usage'),
+    })
+    .strict()
+    .describe('Usage tracking caveats for a session');
+
+export const ModelStatisticsSchema = z
+    .object({
+        provider: z.string().describe('LLM provider identifier'),
+        model: z.string().describe('Model identifier'),
+        messageCount: z
+            .number()
+            .int()
+            .nonnegative()
+            .describe('Number of messages using this model'),
+        tokenUsage: SessionTokenUsageSchema.describe('Token usage for this model'),
+        estimatedCost: z.number().nonnegative().describe('Estimated cost in USD for this model'),
+        firstUsedAt: z.number().int().positive().describe('First use timestamp (Unix ms)'),
+        lastUsedAt: z.number().int().positive().describe('Last use timestamp (Unix ms)'),
+    })
+    .strict()
+    .describe('Per-model statistics within a session');
+
+export const UsageSummarySchema = z
+    .object({
+        tokenUsage: SessionTokenUsageSchema.describe(
+            'Aggregate token usage for the selected scope'
+        ),
+        estimatedCost: z
+            .number()
+            .nonnegative()
+            .describe('Total estimated cost in USD for the selected scope'),
+        hasUnpricedResponses: z
+            .boolean()
+            .describe(
+                'Whether any response in the selected scope has usage but no resolved pricing'
+            ),
+        modelStats: z
+            .array(
+                z
+                    .object({
+                        provider: z.string().describe('LLM provider identifier'),
+                        model: z.string().describe('Model identifier'),
+                        messageCount: z
+                            .number()
+                            .int()
+                            .nonnegative()
+                            .describe('Number of responses using this model in the selected scope'),
+                        tokenUsage: SessionTokenUsageSchema.describe(
+                            'Token usage for this model in the selected scope'
+                        ),
+                        estimatedCost: z
+                            .number()
+                            .nonnegative()
+                            .describe('Estimated cost in USD for this model in the selected scope'),
+                    })
+                    .strict()
+            )
+            .optional()
+            .describe('Per-model usage statistics within the selected scope'),
+    })
+    .strict()
+    .describe('Usage summary for a session or session scope');
+
+export const ScopedUsageSummarySchema = UsageSummarySchema.extend({
+    scopeId: z.string().describe('Usage scope identifier'),
+})
+    .strict()
+    .describe('Usage summary for a specific scope within a session');
+
+export const SessionMetadataSchema = z
+    .object({
+        id: z.string().describe('Unique session identifier'),
+        createdAt: z
+            .number()
+            .int()
+            .positive()
+            .nullable()
+            .describe('Creation timestamp (Unix ms, null if unavailable)'),
+        lastActivity: z
+            .number()
+            .int()
+            .positive()
+            .nullable()
+            .describe('Last activity timestamp (Unix ms, null if unavailable)'),
+        messageCount: z
+            .number()
+            .int()
+            .nonnegative()
+            .describe('Total number of messages in session'),
+        title: z.string().optional().nullable().describe('Optional session title'),
+        tokenUsage: SessionTokenUsageSchema.optional().describe(
+            'Aggregate token usage across all models'
+        ),
+        estimatedCost: z
+            .number()
+            .nonnegative()
+            .optional()
+            .describe('Total estimated cost in USD across all models'),
+        modelStats: z
+            .array(ModelStatisticsSchema)
+            .optional()
+            .describe('Per-model usage statistics (for multi-model sessions)'),
+        usageTracking: SessionUsageTrackingSchema.optional().describe(
+            'Known caveats or gaps in usage tracking for this session'
+        ),
+        workspaceId: z.string().optional().nullable().describe('Associated workspace ID, if any'),
+        parentSessionId: z
+            .string()
+            .optional()
+            .nullable()
+            .describe('Parent session ID if this session was forked, otherwise null'),
+    })
+    .strict()
+    .describe('Session metadata');
+
+export type SessionTokenUsage = z.output<typeof SessionTokenUsageSchema>;
+export type ModelStatistics = z.output<typeof ModelStatisticsSchema>;
+export type SessionUsageTracking = z.output<typeof SessionUsageTrackingSchema>;
+export type SessionMetadata = z.output<typeof SessionMetadataSchema>;
+
+export const WorkspaceSchema = z
+    .object({
+        id: z.string().describe('Workspace identifier'),
+        path: z.string().describe('Workspace root path'),
+        name: z.string().optional().nullable().describe('Optional workspace display name'),
+        createdAt: z.number().int().positive().describe('Creation timestamp (Unix ms)'),
+        lastActiveAt: z.number().int().positive().describe('Last active timestamp (Unix ms)'),
+    })
+    .strict()
+    .describe('Workspace metadata');
+
+export type Workspace = z.output<typeof WorkspaceSchema>;
+
+export const SkillSummarySchema = z
+    .object({
+        id: z.string().describe('Skill identifier'),
+        displayName: z.string().describe('Human-readable skill name'),
+        description: z.string().optional().describe('Skill description'),
+    })
+    .strict()
+    .describe('Skill catalog entry');
+
+export type SkillSummary = z.output<typeof SkillSummarySchema>;
+
+export const SkillDocumentSchema = SkillSummarySchema.extend({
+    instructions: z.string().describe('Full skill instructions'),
+})
+    .strict()
+    .describe('Skill document');
+
+export type SkillDocument = z.output<typeof SkillDocumentSchema>;
+
+export const ScheduleTaskSchema = z
+    .object({
+        instruction: z.string().describe('Instruction to execute'),
+        metadata: JsonObjectSchema.optional().describe('Optional task metadata'),
+    })
+    .strict()
+    .describe('Schedule task definition');
+
+export const ScheduleSchema = z
+    .object({
+        id: z.string().describe('Schedule ID'),
+        name: z.string().describe('Schedule name'),
+        cronExpression: z.string().describe('Cron expression'),
+        timezone: z.string().describe('Timezone for schedule'),
+        enabled: z.boolean().describe('Whether the schedule is enabled'),
+        task: ScheduleTaskSchema.describe('Schedule task configuration'),
+        sessionMode: z
+            .enum(['ephemeral', 'dedicated', 'inherit', 'fixed'])
+            .describe('Session context mode'),
+        sessionId: z.string().optional().describe('Session ID when using fixed/inherit mode'),
+        workspacePath: z.string().optional().describe('Workspace path override'),
+        createdAt: z.number().int().positive().describe('Creation timestamp (Unix ms)'),
+        updatedAt: z.number().int().positive().describe('Last update timestamp (Unix ms)'),
+        lastRunAt: z.number().int().positive().optional().describe('Last run timestamp (Unix ms)'),
+        nextRunAt: z.number().int().positive().optional().describe('Next run timestamp (Unix ms)'),
+        runCount: z.number().int().nonnegative().describe('Total executions'),
+        successCount: z.number().int().nonnegative().describe('Successful executions'),
+        failureCount: z.number().int().nonnegative().describe('Failed executions'),
+        lastError: z.string().optional().describe('Last execution error, if any'),
+    })
+    .strict()
+    .describe('Automation schedule');
+
+export type Schedule = z.output<typeof ScheduleSchema>;
+
+export const ExecutionLogSchema = z
+    .object({
+        id: z.string().describe('Execution log ID'),
+        scheduleId: z.string().describe('Schedule ID'),
+        triggeredAt: z.number().int().positive().describe('Trigger timestamp (Unix ms)'),
+        completedAt: z
+            .number()
+            .int()
+            .positive()
+            .optional()
+            .describe('Completion timestamp (Unix ms)'),
+        status: z.enum(['pending', 'success', 'failed', 'timeout']).describe('Execution status'),
+        duration: z.number().int().nonnegative().optional().describe('Execution duration in ms'),
+        error: z.string().optional().describe('Execution error, if any'),
+        result: z.string().optional().describe('Execution result, if any'),
+    })
+    .strict()
+    .describe('Schedule execution log');
+
+export type ExecutionLog = z.output<typeof ExecutionLogSchema>;
+
+export const SearchResultSchema = z
+    .object({
+        sessionId: z.string().describe('Session ID where the message was found'),
+        message: InternalMessageSchema.describe('The message that matched the search'),
+        matchedText: z.string().describe('The specific text that matched the search query'),
+        context: z.string().describe('Context around the match for preview'),
+        messageIndex: z
+            .number()
+            .int()
+            .nonnegative()
+            .describe('Index of the message within the session'),
+    })
+    .strict()
+    .describe('Result of a message search');
+
+export type SearchResult = z.output<typeof SearchResultSchema>;
+
+export const SessionSearchResultSchema = z
+    .object({
+        sessionId: z.string().describe('Session ID'),
+        matchCount: z
+            .number()
+            .int()
+            .nonnegative()
+            .describe('Number of messages that matched in this session'),
+        firstMatch: SearchResultSchema.describe('Preview of the first matching message'),
+        metadata: z
+            .object({
+                createdAt: z.number().int().positive().describe('Session creation timestamp'),
+                lastActivity: z.number().int().positive().describe('Last activity timestamp'),
+                messageCount: z.number().int().nonnegative().describe('Total messages in session'),
+            })
+            .strict()
+            .describe('Session metadata'),
+    })
+    .strict()
+    .describe('Result of a session search');
+
+export type SessionSearchResult = z.output<typeof SessionSearchResultSchema>;
+
+export const MessageSearchResponseSchema = z
+    .object({
+        results: z.array(SearchResultSchema).describe('Array of search results'),
+        total: z.number().int().nonnegative().describe('Total number of results available'),
+        hasMore: z.boolean().describe('Whether there are more results beyond the current page'),
+        query: z.string().describe('Query that was searched'),
+    })
+    .strict()
+    .describe('Message search response');
+
+export type MessageSearchResponse = z.output<typeof MessageSearchResponseSchema>;
+
+export const SessionSearchResponseSchema = z
+    .object({
+        results: z.array(SessionSearchResultSchema).describe('Array of session search results'),
+        total: z.number().int().nonnegative().describe('Total number of sessions with matches'),
+        hasMore: z
+            .boolean()
+            .describe(
+                'Always false - session search returns all matching sessions without pagination'
+            ),
+        query: z.string().describe('Query that was searched'),
+    })
+    .strict()
+    .describe('Session search response');
+
+export type SessionSearchResponse = z.output<typeof SessionSearchResponseSchema>;
+
+export const WebhookSchema = z
+    .object({
+        id: z.string().describe('Unique webhook identifier'),
+        url: z.string().url().describe('Webhook URL to send events to'),
+        events: z.array(z.string()).describe('Array of event types this webhook subscribes to'),
+        createdAt: z.number().int().positive().describe('Creation timestamp (Unix ms)'),
+    })
+    .strict()
+    .describe('Webhook subscription');
+
+export type Webhook = z.output<typeof WebhookSchema>;
+
+export const CatalogModelInfoSchema = z
+    .object({
+        name: z.string().describe('Model name identifier'),
+        maxInputTokens: z.number().int().positive().describe('Maximum input tokens'),
+        default: z.boolean().optional().describe('Whether this is a default model'),
+        supportedFileTypes: z
+            .array(z.enum(SUPPORTED_FILE_TYPES))
+            .describe('File types this model supports'),
+        displayName: z.string().optional().describe('Human-readable display name'),
+        pricing: z
+            .object({
+                inputPerM: z.number().describe('Input cost per million tokens (USD)'),
+                outputPerM: z.number().describe('Output cost per million tokens (USD)'),
+                cacheReadPerM: z.number().optional().describe('Cache read cost per million tokens'),
+                cacheWritePerM: z
+                    .number()
+                    .optional()
+                    .describe('Cache write cost per million tokens'),
+                currency: z.literal('USD').optional().describe('Currency'),
+                unit: z.literal('per_million_tokens').optional().describe('Unit'),
+            })
+            .optional()
+            .describe('Pricing information in USD per million tokens'),
+    })
+    .strict()
+    .describe('Model information from LLM registry');
+
+export type CatalogModelInfo = z.output<typeof CatalogModelInfoSchema>;
+
+export const ProviderCatalogSchema = z
+    .object({
+        name: z.string().describe('Provider display name'),
+        hasApiKey: z.boolean().describe('Whether API key is configured'),
+        primaryEnvVar: z.string().describe('Primary environment variable for API key'),
+        supportsBaseURL: z.boolean().describe('Whether custom base URLs are supported'),
+        models: z.array(CatalogModelInfoSchema).describe('Models available from this provider'),
+        supportedFileTypes: z
+            .array(z.enum(SUPPORTED_FILE_TYPES))
+            .describe('Provider-level file type support'),
+    })
+    .strict()
+    .describe('Provider catalog entry with models and capabilities');
+
+export type ProviderCatalog = z.output<typeof ProviderCatalogSchema>;
+
+export const ModelFlatSchema = CatalogModelInfoSchema.extend({
+    provider: z.string().describe('Provider identifier for this model'),
+}).describe('Flattened model entry with provider information');
+
+export type ModelFlat = z.output<typeof ModelFlatSchema>;
+
+export const AgentRegistryEntrySchema = z
+    .object({
+        id: z.string().describe('Unique agent identifier'),
+        name: z.string().describe('Agent name'),
+        description: z.string().describe('Agent description'),
+        author: z.string().optional().describe('Agent author'),
+        tags: z.array(z.string()).optional().describe('Agent tags'),
+        type: z.enum(['builtin', 'custom']).describe('Agent type'),
+    })
+    .strict()
+    .describe('Agent registry entry');
+
+export type AgentRegistryEntry = z.output<typeof AgentRegistryEntrySchema>;
+
+export const ResourceSchema = z
+    .object({
+        uri: z.string().describe('Resource URI'),
+        name: z.string().optional().describe('Resource name'),
+        description: z.string().optional().describe('Resource description'),
+        mimeType: z.string().optional().describe('MIME type of the resource'),
+        source: z.enum(['mcp', 'internal']).describe('Source system that provides this resource'),
+        serverName: z
+            .string()
+            .optional()
+            .describe('Original server/provider name (for MCP resources)'),
+        size: z.number().optional().describe('Size of the resource in bytes (if known)'),
+        lastModified: z
+            .string()
+            .datetime()
+            .optional()
+            .describe('Last modified timestamp (ISO 8601 string)'),
+        metadata: z
+            .record(z.string(), JsonValueSchema)
+            .optional()
+            .describe('Additional metadata specific to the resource type'),
+    })
+    .strict()
+    .describe('Resource metadata');
+
+export type Resource = z.output<typeof ResourceSchema>;
+
+export const ToolSchema = z
+    .object({
+        name: z.string().describe('Tool name'),
+        description: z.string().describe('Tool description'),
+        inputSchema: ToolInputSchema.describe('JSON Schema for tool input parameters'),
+    })
+    .strict()
+    .describe('Tool metadata');
+
+export type Tool = z.output<typeof ToolSchema>;
+
+export const PromptArgumentSchema = z
+    .object({
+        name: z.string().describe('Argument name'),
+        description: z.string().optional().describe('Argument description'),
+        required: z.boolean().optional().describe('Whether the argument is required'),
+    })
+    .strict()
+    .describe('Prompt argument definition');
+
+export type PromptArgument = z.output<typeof PromptArgumentSchema>;
+
+export const PromptDefinitionSchema = z
+    .object({
+        name: z.string().describe('Prompt name'),
+        title: z.string().optional().describe('Prompt title'),
+        description: z.string().optional().describe('Prompt description'),
+        arguments: z
+            .array(PromptArgumentSchema)
+            .optional()
+            .describe('Array of argument definitions'),
+        userInvocable: z.boolean().optional().describe('Whether to show in slash command menu'),
+    })
+    .strict()
+    .describe('Prompt definition (MCP-compliant)');
+
+export type PromptDefinition = z.output<typeof PromptDefinitionSchema>;
+
+export const PromptInfoSchema = z
+    .object({
+        name: z.string().describe('Prompt name'),
+        title: z.string().optional().describe('Prompt title'),
+        description: z.string().optional().describe('Prompt description'),
+        arguments: z
+            .array(PromptArgumentSchema)
+            .optional()
+            .describe('Array of argument definitions'),
+        userInvocable: z.boolean().optional().describe('Whether to show in slash command menu'),
+        source: z.enum(['mcp', 'config', 'custom']).describe('Source of the prompt'),
+        displayName: z.string().optional().describe('Base display name set by provider'),
+        commandName: z.string().optional().describe('Collision-resolved slash command name'),
+        metadata: JsonObjectSchema.optional().describe('Additional metadata'),
+    })
+    .strict()
+    .describe('Enhanced prompt information');
+
+export type PromptInfo = z.output<typeof PromptInfoSchema>;
+
+export const PromptSchema = z
+    .object({
+        id: z.string().describe('Unique prompt identifier'),
+        name: z.string().describe('Prompt name'),
+        description: z.string().optional().describe('Prompt description'),
+        content: z.string().describe('Prompt template content'),
+        variables: z
+            .array(z.string())
+            .optional()
+            .describe('List of variable placeholders in the prompt'),
+    })
+    .strict()
+    .describe('Prompt template');
+
+export type Prompt = z.output<typeof PromptSchema>;
+
+export const OkResponseSchema = <T extends z.ZodTypeAny>(dataSchema: T) =>
+    z
+        .object({
+            ok: z.literal(true).describe('Indicates successful response'),
+            data: dataSchema.describe('Response data'),
+        })
+        .strict()
+        .describe('Successful API response');
+
+export const ErrorResponseSchema = z
+    .object({
+        ok: z.literal(false).describe('Indicates failed response'),
+        error: z
+            .object({
+                message: z.string().describe('Error message'),
+                code: z.string().optional().describe('Error code'),
+                details: JsonValueSchema.optional().describe('Additional error details'),
+            })
+            .strict()
+            .describe('Error details'),
+    })
+    .strict()
+    .describe('Error API response');
+
+export type ErrorResponse = z.output<typeof ErrorResponseSchema>;
+
+export const StandardErrorEnvelopeSchema = z
+    .object({
+        code: z.string().describe('Error code'),
+        message: z.string().describe('Error message'),
+        scope: z.string().describe('Error scope'),
+        type: z.string().describe('Error type'),
+        context: JsonValueSchema.optional().describe('Error context'),
+        recovery: z
+            .union([z.string(), z.array(z.string())])
+            .optional()
+            .describe('Recovery guidance'),
+        traceId: z.string().describe('Trace identifier'),
+        endpoint: z.string().describe('Request endpoint'),
+        method: z.string().describe('HTTP method'),
+    })
+    .strict()
+    .describe('Standard API error envelope');
+
+export type StandardErrorEnvelope = z.output<typeof StandardErrorEnvelopeSchema>;
+
+export const StatusResponseSchema = z
+    .object({
+        status: z.string().describe('Operation status'),
+        message: z.string().optional().describe('Optional status message'),
+    })
+    .strict()
+    .describe('Status response');
+
+export type StatusResponse = z.output<typeof StatusResponseSchema>;
+
+export const DeleteResponseSchema = z
+    .object({
+        status: z.literal('deleted').describe('Indicates successful deletion'),
+        id: z.string().optional().describe('ID of the deleted resource'),
+    })
+    .strict()
+    .describe('Delete operation response');
+
+export type DeleteResponse = z.output<typeof DeleteResponseSchema>;

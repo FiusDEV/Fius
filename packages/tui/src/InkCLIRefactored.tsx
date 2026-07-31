@@ -1,0 +1,454 @@
+
+
+import React, { useCallback, useState } from 'react';
+import { render } from 'ink';
+import { registerGracefulShutdown } from './host/index.js';
+import { enableBracketedPaste, disableBracketedPaste } from './utils/bracketedPaste.js';
+import type { TuiAgentBackend } from './agent-backend.js';
+
+// Types
+import type { StartupInfo } from './state/types.js';
+
+// Contexts (keyboard/mouse providers)
+import {
+    KeypressProvider,
+    MouseProvider,
+    ScrollProvider,
+    SoundProvider,
+} from './contexts/index.js';
+
+// Sound notification
+import type { SoundConfig, SoundNotificationService } from './utils/soundNotification.js';
+
+// Components
+import { ErrorBoundary } from './components/ErrorBoundary.js';
+import { AlternateBufferCLI, StaticCLI } from './components/modes/index.js';
+
+// Hooks
+import { useStreaming } from './hooks/useStreaming.js';
+import { useHeaderData } from './hooks/useHeaderData.js';
+
+// Utils
+import { getStartupInfo } from './utils/messageFormatting.js';
+
+// Rendering mode: true = alternate buffer with VirtualizedList, false = Static pattern
+// Alternate buffer mode handles dynamic overlay re-renders correctly (no screen duplication)
+const USE_ALTERNATE_BUFFER = true;
+
+function formatCost(c: number): string {
+    if (c < 0.01) return `$${c.toFixed(4)}`;
+    if (c < 1) return `$${c.toFixed(3)}`;
+    return `$${c.toFixed(2)}`;
+}
+
+interface InkCLIProps {
+    agent: TuiAgentBackend;
+    initialSessionId: string | null;
+    initialPrompt?: string | undefined;
+    startupInfo: StartupInfo;
+    soundService: SoundNotificationService | null;
+    configFilePath: string | null;
+    initialBypassPermissions?: boolean;
+}
+
+
+function InkCLIInner({
+    agent,
+    initialSessionId,
+    initialPrompt,
+    startupInfo,
+    soundService,
+    configFilePath,
+    initialBypassPermissions = false,
+}: InkCLIProps) {
+    // Selection hint callback for alternate buffer mode
+    const [, setSelectionHintShown] = useState(false);
+
+    // Streaming mode - can be toggled via /stream command
+    const { streaming } = useStreaming();
+
+    // Header data (version, email, plan) — fetched here so state changes trigger re-renders
+    const headerData = useHeaderData();
+
+    const handleSelectionAttempt = useCallback(() => {
+        setSelectionHintShown(true);
+    }, []);
+
+    if (USE_ALTERNATE_BUFFER) {
+        return (
+            <SoundProvider soundService={soundService}>
+                <ScrollProvider onSelectionAttempt={handleSelectionAttempt}>
+                    <AlternateBufferCLI
+                        agent={agent}
+                        initialSessionId={initialSessionId}
+                        initialPrompt={initialPrompt}
+                        startupInfo={startupInfo}
+                        onSelectionAttempt={handleSelectionAttempt}
+                        useStreaming={streaming}
+                        configFilePath={configFilePath}
+                        initialBypassPermissions={initialBypassPermissions}
+                        headerData={headerData}
+                    />
+                </ScrollProvider>
+            </SoundProvider>
+        );
+    }
+
+    // Static mode - no ScrollProvider needed
+    return (
+        <SoundProvider soundService={soundService}>
+            <StaticCLI
+                agent={agent}
+                initialSessionId={initialSessionId}
+                initialPrompt={initialPrompt}
+                startupInfo={startupInfo}
+                useStreaming={streaming}
+                configFilePath={configFilePath}
+                initialBypassPermissions={initialBypassPermissions}
+                headerData={headerData}
+            />
+        </SoundProvider>
+    );
+}
+
+
+export function InkCLIRefactored({
+    agent,
+    initialSessionId,
+    initialPrompt,
+    startupInfo,
+    soundService,
+    configFilePath,
+    initialBypassPermissions = false,
+}: InkCLIProps) {
+    return (
+        <ErrorBoundary>
+            <KeypressProvider>
+                {/* Mouse events only in alternate buffer mode - Static mode uses native terminal selection */}
+                <MouseProvider mouseEventsEnabled={USE_ALTERNATE_BUFFER}>
+                    <InkCLIInner
+                        agent={agent}
+                        initialSessionId={initialSessionId}
+                        initialPrompt={initialPrompt}
+                        startupInfo={startupInfo}
+                        soundService={soundService}
+                        configFilePath={configFilePath}
+                        initialBypassPermissions={initialBypassPermissions}
+                    />
+                </MouseProvider>
+            </KeypressProvider>
+        </ErrorBoundary>
+    );
+}
+
+
+export interface InkCLIOptions {
+    
+    updateInfo?: { current: string; latest: string; updateCommand: string } | undefined;
+    
+    needsAgentSync?: boolean | undefined;
+    
+    configFilePath?: string | null | undefined;
+    
+    initialPrompt?: string | undefined;
+    
+    bypassPermissions?: boolean | undefined;
+}
+
+
+export async function startInkCliRefactored(
+    agent: TuiAgentBackend,
+    initialSessionId: string | null,
+    options: InkCLIOptions = {}
+): Promise<void> {
+    registerGracefulShutdown(() => agent, { inkMode: true });
+
+    // Enable bracketed paste mode so we can detect pasted text
+    // This wraps pastes with escape sequences that our KeypressContext handles
+    enableBracketedPaste();
+
+    // The UI can render before any session is created.
+    const baseStartupInfo = await getStartupInfo(agent, initialSessionId);
+
+    const startupInfo = {
+        ...baseStartupInfo,
+        updateInfo: options.updateInfo,
+        needsAgentSync: options.needsAgentSync,
+    };
+
+    // Load preferences helpers (non-fatal if unavailable)
+    let globalPreferencesExistFn: () => boolean = () => false;
+    let loadGlobalPreferencesFn: (() => Promise<{ sounds?: Partial<SoundConfig> }>) | null = null;
+    let agentPreferencesExistFn: (agentId: string) => boolean = () => false;
+    let loadAgentPreferencesFn:
+        | ((agentId: string) => Promise<{ tools?: { disabled?: string[] } }>)
+        | null = null;
+
+    try {
+        const agentManagement = await import('@fius/agent-management');
+        globalPreferencesExistFn = agentManagement.globalPreferencesExist;
+        loadGlobalPreferencesFn = agentManagement.loadGlobalPreferences;
+        agentPreferencesExistFn = agentManagement.agentPreferencesExist;
+        loadAgentPreferencesFn = agentManagement.loadAgentPreferences;
+    } catch (error) {
+        agent.logger.debug(
+            `Preferences module could not be loaded: ${error instanceof Error ? error.message : String(error)}`
+        );
+    }
+
+    let soundService: SoundNotificationService | null = null;
+    // Initialize sound config with defaults (enabled by default even without preferences file)
+    let soundConfig: SoundConfig = {
+        enabled: true,
+        onStartup: false,
+        startupSoundFile: undefined,
+        onApprovalRequired: true,
+        approvalSoundFile: undefined,
+        onTaskComplete: true,
+        completeSoundFile: undefined,
+    };
+
+    // Initialize sound service from preferences (non-fatal)
+    try {
+        const { SoundNotificationService: SoundNotificationServiceImpl } = await import(
+            './utils/soundNotification.js'
+        );
+
+        // Override with user preferences if they exist
+        if (globalPreferencesExistFn() && loadGlobalPreferencesFn) {
+            try {
+                const preferences = await loadGlobalPreferencesFn();
+                soundConfig = {
+                    enabled: preferences.sounds?.enabled ?? soundConfig.enabled,
+                    onStartup: preferences.sounds?.onStartup ?? soundConfig.onStartup,
+                    startupSoundFile:
+                        preferences.sounds?.startupSoundFile ?? soundConfig.startupSoundFile,
+                    onApprovalRequired:
+                        preferences.sounds?.onApprovalRequired ?? soundConfig.onApprovalRequired,
+                    approvalSoundFile:
+                        preferences.sounds?.approvalSoundFile ?? soundConfig.approvalSoundFile,
+                    onTaskComplete:
+                        preferences.sounds?.onTaskComplete ?? soundConfig.onTaskComplete,
+                    completeSoundFile:
+                        preferences.sounds?.completeSoundFile ?? soundConfig.completeSoundFile,
+                };
+            } catch (error) {
+                // Continue with default sounds - this is non-critical functionality
+                agent.logger.debug(
+                    `Sound preferences could not be loaded: ${error instanceof Error ? error.message : String(error)}`
+                );
+            }
+        }
+
+        // Always create the service so sound settings can be toggled at runtime (service gates playback by config)
+        soundService = new SoundNotificationServiceImpl(soundConfig);
+        soundService.playStartupSound();
+    } catch (error) {
+        agent.logger.debug(
+            `Sound initialization failed: ${error instanceof Error ? error.message : String(error)}`
+        );
+        soundService = null;
+    }
+
+    // Initialize tool preferences (per-agent)
+    if (agentPreferencesExistFn(agent.config.agentId) && loadAgentPreferencesFn) {
+        try {
+            const preferences = await loadAgentPreferencesFn(agent.config.agentId);
+            agent.setGlobalDisabledTools(preferences.tools?.disabled ?? []);
+        } catch (error) {
+            agent.logger.debug(
+                `Agent tool preferences could not be loaded: ${error instanceof Error ? error.message : String(error)}`
+            );
+        }
+    }
+
+    // Import exit handler before render to avoid race condition
+    const { registerExitHandler } = await import('./interactive-commands/exit-handler.js');
+
+    const inkApp = render(
+        <InkCLIRefactored
+            agent={agent}
+            initialSessionId={initialSessionId}
+            initialPrompt={options.initialPrompt}
+            startupInfo={startupInfo}
+            soundService={soundService}
+            configFilePath={options.configFilePath ?? null}
+            initialBypassPermissions={options.bypassPermissions ?? false}
+        />,
+        {
+            exitOnCtrlC: false,
+            alternateBuffer: USE_ALTERNATE_BUFFER,
+            // Incremental rendering works better with VirtualizedList
+            // Static pattern doesn't need it (and may work better without)
+            incrementalRendering: USE_ALTERNATE_BUFFER,
+        }
+    );
+
+    // Register exit handler immediately after render (synchronous, before any await)
+    registerExitHandler(() => inkApp.unmount());
+
+    await inkApp.waitUntilExit();
+
+    // Disable bracketed paste mode to restore normal terminal behavior
+    disableBracketedPaste();
+
+    const { wasLogoutRequested } = await import('./interactive-commands/exit-handler.js');
+    const isLogout = wasLogoutRequested();
+
+    if (isLogout) {
+        // Clear terminal on logout — clean slate for login screen
+        if (process.platform === 'win32') {
+            const { execSync } = await import('child_process');
+            execSync('cls', { stdio: 'inherit' });
+        } else {
+            process.stdout.write('\x1B[2J\x1B[0f\x1B[3J');
+        }
+        return;
+    }
+
+    // Display session stats if available (after Ink has unmounted)
+    const chalk = (await import('chalk')).default;
+    const { getExitStats, clearExitStats } = await import('./interactive-commands/exit-stats.js');
+    const exitStats = getExitStats();
+    if (exitStats) {
+        // Add visual separation - clear space like Gemini CLI does
+        // This creates a clean slate showing only the exit command and summary
+        process.stdout.write('\n'.repeat(1));
+
+        process.stdout.write(chalk.bold.cyan('▥ Session Summary') + '\n');
+        process.stdout.write(chalk.dim('─'.repeat(50)) + '\n');
+
+        // Session ID
+        if (exitStats.sessionId) {
+            process.stdout.write(chalk.gray(`  Session ID:  ${exitStats.sessionId}`) + '\n');
+        }
+
+        // Duration
+        if (exitStats.duration) {
+            process.stdout.write(chalk.gray(`  Duration:    ${exitStats.duration}`) + '\n');
+        }
+
+        // Message count
+        if (exitStats.messageCount.total > 0) {
+            process.stdout.write(
+                chalk.gray(
+                    `  Messages:    ${exitStats.messageCount.total} total (${exitStats.messageCount.user} user, ${exitStats.messageCount.assistant} assistant)`
+                ) + '\n'
+            );
+        }
+        // Multi-model breakdown (if multiple models were used)
+        if (exitStats.modelStats && exitStats.modelStats.length > 1) {
+            process.stdout.write(chalk.gray('\n  Models Used:') + '\n');
+
+            for (const modelStat of exitStats.modelStats) {
+                const modelLabel = `${modelStat.model} (${modelStat.messageCount} msgs)`;
+                process.stdout.write(chalk.gray(`    • ${modelLabel}`) + '\n');
+
+                if (exitStats.tokenUsage) {
+                    // Detailed token breakdown per model
+                    const tokens = modelStat.tokenUsage;
+                    process.stdout.write(
+                        chalk.gray(
+                            `      Input tokens:       ${tokens.inputTokens.toLocaleString()}`
+                        ) + '\n'
+                    );
+                    process.stdout.write(
+                        chalk.gray(
+                            `      Output tokens:      ${tokens.outputTokens.toLocaleString()}`
+                        ) + '\n'
+                    );
+                    process.stdout.write(
+                        chalk.gray(
+                            `      Reasoning tokens:   ${tokens.reasoningTokens.toLocaleString()}`
+                        ) + '\n'
+                    );
+                    process.stdout.write(
+                        chalk.gray(
+                            `      Cache read tokens:  ${tokens.cacheReadTokens.toLocaleString()}`
+                        ) + '\n'
+                    );
+                    process.stdout.write(
+                        chalk.gray(
+                            `      Cache write tokens: ${tokens.cacheWriteTokens.toLocaleString()}`
+                        ) + '\n'
+                    );
+                    process.stdout.write(
+                        chalk.gray(
+                            `      Total tokens:       ${tokens.totalTokens.toLocaleString()}`
+                        ) + '\n'
+                    );
+
+                    if (modelStat.estimatedCost !== undefined) {
+                        process.stdout.write(
+                            chalk.gray(
+                                `      Cost:               ${formatCost(modelStat.estimatedCost)}`
+                            ) + '\n'
+                        );
+                    }
+                }
+            }
+        }
+
+        if (exitStats.usageNote) {
+            process.stdout.write(chalk.gray('\n  Usage:') + '\n');
+            process.stdout.write(chalk.gray(`    ${exitStats.usageNote}`) + '\n');
+        }
+
+        // Token usage - label depends on whether multi-model was shown
+        if (exitStats.tokenUsage) {
+            const {
+                inputTokens,
+                outputTokens,
+                reasoningTokens,
+                cacheReadTokens,
+                cacheWriteTokens,
+                totalTokens,
+            } = exitStats.tokenUsage;
+
+            // Calculate cache savings percentage
+            const totalInputWithCache = inputTokens + cacheReadTokens;
+            const cacheSavingsPercent =
+                totalInputWithCache > 0
+                    ? ((cacheReadTokens / totalInputWithCache) * 100).toFixed(1)
+                    : '0.0';
+
+            const tokenSectionLabel =
+                exitStats.modelStats && exitStats.modelStats.length > 1
+                    ? '\n  Total Token Usage:'
+                    : '\n  Token Usage:';
+            process.stdout.write(chalk.gray(tokenSectionLabel) + '\n');
+            process.stdout.write(
+                chalk.gray(`    Input tokens:       ${inputTokens.toLocaleString()}`) + '\n'
+            );
+            process.stdout.write(
+                chalk.gray(`    Output tokens:      ${outputTokens.toLocaleString()}`) + '\n'
+            );
+            process.stdout.write(
+                chalk.gray(`    Reasoning tokens:   ${reasoningTokens.toLocaleString()}`) + '\n'
+            );
+            const cacheReadLabel =
+                cacheReadTokens > 0
+                    ? `${cacheReadTokens.toLocaleString()} (◈ ${cacheSavingsPercent}% savings)`
+                    : cacheReadTokens.toLocaleString();
+            process.stdout.write(chalk.gray(`    Cache read tokens:  ${cacheReadLabel}`) + '\n');
+            process.stdout.write(
+                chalk.gray(`    Cache write tokens: ${cacheWriteTokens.toLocaleString()}`) + '\n'
+            );
+            process.stdout.write(
+                chalk.gray(`    Total tokens:       ${totalTokens.toLocaleString()}`) + '\n'
+            );
+        }
+
+        // Estimated cost
+        if (exitStats.estimatedCost !== undefined) {
+            process.stdout.write(
+                chalk.green(`\n  Estimated Cost: ${formatCost(exitStats.estimatedCost)}`) + '\n'
+            );
+        }
+
+        clearExitStats();
+    }
+
+    process.stdout.write(chalk.dim('─'.repeat(50)) + '\n');
+    process.stdout.write('\n' + chalk.rgb(255, 165, 0)('Exiting Fius CLI. Goodbye!') + '\n');
+}

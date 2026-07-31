@@ -1,0 +1,118 @@
+import { FiusRuntimeError, ErrorScope, ErrorType } from '@fius/core';
+import { ConfigErrorCode } from './error-codes.js';
+
+/**
+ * Config runtime error factory methods
+ * Creates properly typed errors for configuration operations
+ */
+export class ConfigError {
+    static fileNotFound(configPath: string) {
+        return new FiusRuntimeError(
+            ConfigErrorCode.FILE_NOT_FOUND,
+            ErrorScope.CONFIG,
+            ErrorType.USER,
+            `Configuration file not found: ${configPath}`,
+            { configPath },
+            'Ensure the configuration file exists at the specified path'
+        );
+    }
+
+    static fileReadError(configPath: string, cause: string) {
+        return new FiusRuntimeError(
+            ConfigErrorCode.FILE_READ_ERROR,
+            ErrorScope.CONFIG,
+            ErrorType.SYSTEM,
+            `Failed to read configuration file: ${cause}`,
+            { configPath, cause },
+            'Check file permissions and ensure the file is not corrupted'
+        );
+    }
+
+    static fileWriteError(configPath: string, cause: string) {
+        return new FiusRuntimeError(
+            ConfigErrorCode.FILE_WRITE_ERROR,
+            ErrorScope.CONFIG,
+            ErrorType.SYSTEM,
+            `Failed to write configuration file '${configPath}': ${cause}`,
+            { configPath, cause },
+            'Check file permissions and available disk space'
+        );
+    }
+
+    static parseError(configPath: string, cause: string) {
+        return new FiusRuntimeError(
+            ConfigErrorCode.PARSE_ERROR,
+            ErrorScope.CONFIG,
+            ErrorType.USER,
+            `Failed to parse configuration file: ${cause}`,
+            { configPath, cause },
+            'Ensure the configuration file contains valid YAML syntax'
+        );
+    }
+
+    static noProjectDefault(projectPath: string) {
+        return new FiusRuntimeError(
+            ConfigErrorCode.NO_PROJECT_DEFAULT,
+            ErrorScope.CONFIG,
+            ErrorType.USER,
+            `No project agent found and no global preferences configured.\nSet a primaryAgent in a workspace registry under agents/, create a single workspace agent under agents/, or run \`fius setup\` to configure preferences.`,
+            { projectPath },
+            'Run `fius setup` or create a project-specific agent config'
+        );
+    }
+
+    static invalidProjectPrimary(registryPath: string, primaryAgent: string, reason?: string) {
+        return new FiusRuntimeError(
+            ConfigErrorCode.INVALID_PROJECT_PRIMARY,
+            ErrorScope.CONFIG,
+            ErrorType.USER,
+            `Invalid primaryAgent '${primaryAgent}' in ${registryPath}${reason ? `: ${reason}` : ''}`,
+            { registryPath, primaryAgent, reason },
+            'Update the workspace registry so primaryAgent points to a valid workspace agent config'
+        );
+    }
+
+    static noGlobalPreferences() {
+        return new FiusRuntimeError(
+            ConfigErrorCode.NO_GLOBAL_PREFERENCES,
+            ErrorScope.CONFIG,
+            ErrorType.USER,
+            `No global preferences found. Run \`fius setup\` to get started.`,
+            {},
+            'Run `fius setup` to configure your AI preferences'
+        );
+    }
+
+    static setupIncomplete() {
+        return new FiusRuntimeError(
+            ConfigErrorCode.SETUP_INCOMPLETE,
+            ErrorScope.CONFIG,
+            ErrorType.USER,
+            `Global preferences setup is incomplete. Run \`fius setup\` to complete.`,
+            {},
+            'Run `fius setup` to complete your configuration'
+        );
+    }
+
+    static bundledNotFound(bundledPath: string) {
+        return new FiusRuntimeError(
+            ConfigErrorCode.BUNDLED_NOT_FOUND,
+            ErrorScope.CONFIG,
+            ErrorType.NOT_FOUND,
+            `Bundled default agent not found: ${bundledPath}. Run npm run build first.`,
+            { path: bundledPath },
+            'Run `npm run build` to build the bundled agents'
+        );
+    }
+
+    static unknownContext(context: string) {
+        return new FiusRuntimeError(
+            ConfigErrorCode.UNKNOWN_CONTEXT,
+            ErrorScope.CONFIG,
+            ErrorType.SYSTEM,
+            `Unknown execution context: ${context}`,
+            { context },
+            'This is an internal error - please report it'
+        );
+    }
+}

@@ -1,0 +1,22 @@
+
+export enum ContextErrorCode {
+    MESSAGE_ROLE_MISSING = 'context_message_role_missing',
+    MESSAGE_CONTENT_EMPTY = 'context_message_content_empty',
+    USER_MESSAGE_CONTENT_INVALID = 'context_user_message_content_invalid',
+    ASSISTANT_MESSAGE_CONTENT_OR_TOOLS_REQUIRED = 'context_assistant_message_content_or_tools_required',
+    ASSISTANT_MESSAGE_TOOL_CALLS_INVALID = 'context_assistant_message_tool_calls_invalid',
+    ASSISTANT_MESSAGE_ID_MISSING = 'context_assistant_message_id_missing',
+    TOOL_MESSAGE_FIELDS_MISSING = 'context_tool_message_fields_missing',
+    TOOL_CALL_ID_NAME_REQUIRED = 'context_tool_call_id_name_required',
+    SYSTEM_MESSAGE_CONTENT_INVALID = 'context_system_message_content_invalid',
+    TOKEN_COUNT_FAILED = 'context_token_count_failed',
+    PRESERVE_VALUES_NEGATIVE = 'context_preserve_values_negative',
+    MIN_MESSAGES_NEGATIVE = 'context_min_messages_negative',
+    COMPACTION_INVALID_TYPE = 'context_compaction_invalid_type',
+    COMPACTION_VALIDATION = 'context_compaction_validation',
+    COMPACTION_MISSING_LLM = 'context_compaction_missing_llm',
+    COMPACTION_PROVIDER_ALREADY_REGISTERED = 'context_compaction_provider_already_registered',
+    MESSAGE_NOT_FOUND = 'context_message_not_found',
+    MESSAGE_NOT_ASSISTANT = 'context_message_not_assistant',
+    ASSISTANT_CONTENT_NOT_STRING = 'context_assistant_content_not_string',
+}

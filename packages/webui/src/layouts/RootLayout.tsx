@@ -1,0 +1,35 @@
+import { Outlet } from '@tanstack/react-router';
+import { HelmetProvider, Helmet } from 'react-helmet-async';
+import { QueryProvider } from '@/components/providers/QueryProvider';
+import { AnalyticsProvider } from '@/lib/analytics/index';
+import { EventBusProvider } from '@/components/providers/EventBusProvider';
+import { ChatProvider } from '@/components/hooks/ChatContext';
+import { SpeechReset } from '@/components/ui/speech-reset';
+import { ToastContainer } from '@/components/Toast/ToastContainer';
+
+export function RootLayout() {
+    return (
+        <HelmetProvider>
+            <Helmet>
+                <title>Fius Web</title>
+                <meta
+                    name="description"
+                    content="Interactive playground for testing MCP servers and talking to AI agents"
+                />
+            </Helmet>
+            <QueryProvider>
+                <AnalyticsProvider>
+                    <EventBusProvider>
+                        <ChatProvider>
+                            <SpeechReset />
+                            <div className="flex h-screen w-screen flex-col supports-[height:100svh]:h-[100svh] supports-[height:100dvh]:h-[100dvh]">
+                                <Outlet />
+                            </div>
+                            <ToastContainer />
+                        </ChatProvider>
+                    </EventBusProvider>
+                </AnalyticsProvider>
+            </QueryProvider>
+        </HelmetProvider>
+    );
+}

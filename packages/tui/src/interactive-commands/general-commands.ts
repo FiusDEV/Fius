@@ -1,0 +1,503 @@
+
+
+import chalk from 'chalk';
+import { parseCodexBaseURL } from '@fius/core';
+import type { CommandDefinition, CommandHandlerResult, CommandContext } from './command-parser.js';
+import { formatForInkCli } from './utils/format-output.js';
+import { CommandOutputHelper } from './utils/command-output.js';
+import type { HelpStyledData, ShortcutsStyledData } from '../state/types.js';
+import { writeToClipboard } from '../utils/clipboardUtils.js';
+import { hasMeaningfulTokenUsage, setExitStats } from './exit-stats.js';
+import { triggerExit } from './exit-handler.js';
+import type { TuiAgentBackend } from '../agent-backend.js';
+
+function isChatGPTLoginConfig(agent: TuiAgentBackend): boolean {
+    const llmConfig = agent.getCurrentLLMConfig();
+    return (
+        llmConfig.provider === 'openai-compatible' &&
+        parseCodexBaseURL(llmConfig.baseURL)?.authMode === 'chatgpt'
+    );
+}
+
+
+export function createHelpCommand(
+    getAvailableCommandsForAgent: (agent: TuiAgentBackend) => CommandDefinition[]
+): CommandDefinition {
+    return {
+        name: 'help',
+        description: 'Show help information',
+        usage: '/help',
+        category: 'General',
+        aliases: ['h', '?'],
+        handler: async (
+            _args: string[],
+            agent: TuiAgentBackend,
+            _ctx: CommandContext
+        ): Promise<CommandHandlerResult> => {
+            const allCommands = getAvailableCommandsForAgent(agent);
+
+            // Build styled data for help
+            const styledData: HelpStyledData = {
+                commands: allCommands.map((cmd) => ({
+                    name: cmd.name,
+                    description: cmd.description,
+                    category: cmd.category || 'General',
+                })),
+            };
+
+            // Build fallback text
+            const fallbackLines: string[] = ['Available Commands:'];
+            for (const cmd of allCommands) {
+                fallbackLines.push(`  /${cmd.name} - ${cmd.description}`);
+            }
+
+            return CommandOutputHelper.styled('help', styledData, fallbackLines.join('\n'));
+        },
+    };
+}
+
+
+export const generalCommands: CommandDefinition[] = [
+    {
+        name: 'exit',
+        description: 'Exit the CLI',
+        usage: '/exit',
+        category: 'General',
+        aliases: ['quit', 'q'],
+        handler: async (
+            _args: string[],
+            agent: TuiAgentBackend,
+            ctx: CommandContext
+        ): Promise<boolean | string> => {
+            // Store session stats to be displayed after Ink exits
+            try {
+                const { sessionId } = ctx;
+                if (sessionId) {
+                    const [sessionMetadata, history] = await Promise.all([
+                        agent.sessionManager.getSessionMetadata(sessionId),
+                        agent.getSessionHistory(sessionId),
+                    ]);
+
+                    if (sessionMetadata) {
+                        const usedChatGPTLogin =
+                            sessionMetadata.usageTracking?.hasUntrackedChatGPTLoginUsage ||
+                            isChatGPTLoginConfig(agent);
+                        const hasTrackedTokenUsage = hasMeaningfulTokenUsage(
+                            sessionMetadata.tokenUsage
+                        );
+                        const usageNote =
+                            usedChatGPTLogin && hasTrackedTokenUsage
+                                ? 'Partial totals only. This session used ChatGPT Login and other tracked models; ChatGPT token counts are not available in Fius.'
+                                : usedChatGPTLogin
+                                  ? 'Tracked via ChatGPT Login. Token counts are not available in Fius for this session.'
+                                  : undefined;
+
+                        // Calculate session duration
+                        let durationStr: string | undefined;
+                        if (sessionMetadata.createdAt) {
+                            const duration =
+                                Date.now() - new Date(sessionMetadata.createdAt).getTime();
+                            const minutes = Math.floor(duration / 60000);
+                            const seconds = Math.floor((duration % 60000) / 1000);
+                            durationStr = minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds}s`;
+                        }
+
+                        // Message counts
+                        const messageCount = {
+                            total: history?.length || 0,
+                            user: history?.filter((msg) => msg.role === 'user').length || 0,
+                            assistant:
+                                history?.filter((msg) => msg.role === 'assistant').length || 0,
+                        };
+
+                        // Store stats for display after exit
+                        setExitStats({
+                            ...(sessionId && { sessionId }),
+                            ...(durationStr && { duration: durationStr }),
+                            messageCount,
+                            ...(sessionMetadata.tokenUsage &&
+                                hasTrackedTokenUsage && {
+                                    tokenUsage: sessionMetadata.tokenUsage,
+                                }),
+                            ...(sessionMetadata.estimatedCost !== undefined && {
+                                estimatedCost: sessionMetadata.estimatedCost,
+                            }),
+                            ...(sessionMetadata.modelStats && {
+                                modelStats: sessionMetadata.modelStats,
+                            }),
+                            ...(usageNote && { usageNote }),
+                        });
+                    }
+                }
+            } catch (error) {
+                // Silently ignore errors - don't block exit
+                agent.logger.debug(
+                    `Failed to collect session stats on exit: ${error instanceof Error ? error.message : String(error)}`
+                );
+            }
+
+            // Trigger graceful exit - this will unmount the Ink app
+            // After unmount, session stats will be printed to stdout
+            triggerExit();
+
+            // Return true to indicate command was handled
+            return true;
+        },
+    },
+    {
+        name: 'new',
+        description: 'Start a new conversation',
+        usage: '/new',
+        category: 'General',
+        handler: async (
+            _args: string[],
+            agent: TuiAgentBackend,
+            _ctx: CommandContext
+        ): Promise<boolean | string> => {
+            try {
+                // Create a new session
+                const newSession = await agent.createSession();
+                const newSessionId = newSession.id;
+
+                // Emit session:created to switch the CLI to the new session
+                agent.emit('session:created', {
+                    sessionId: newSessionId,
+                    switchTo: true,
+                });
+
+                return formatForInkCli(
+                     ` New conversation started\n Use /sessions to see previous conversations`
+                );
+            } catch (error) {
+                const errorMsg = `Failed to create new session: ${error instanceof Error ? error.message : String(error)}`;
+                agent.logger.error(errorMsg);
+                return formatForInkCli(`⚠ ${errorMsg}`);
+            }
+        },
+    },
+    {
+        name: 'clear',
+        description: 'Continue conversation, free up AI context window',
+        usage: '/clear',
+        category: 'General',
+        handler: async (
+            _args: string[],
+            agent: TuiAgentBackend,
+            ctx: CommandContext
+        ): Promise<boolean | string> => {
+            try {
+                const { sessionId } = ctx;
+                if (!sessionId) {
+                    return formatForInkCli('⚠  No active session to clear');
+                }
+
+                // Clear context window - adds a marker so filterCompacted skips prior messages
+                // History stays in DB for review, but LLM won't see it
+                await agent.clearContext(sessionId);
+
+                return formatForInkCli(
+                    ' Context window cleared\n Conversation continues - AI will not see older messages'
+                );
+            } catch (error) {
+                const errorMsg = `Failed to clear context: ${error instanceof Error ? error.message : String(error)}`;
+                agent.logger.error(errorMsg);
+                return formatForInkCli(`⚠ ${errorMsg}`);
+            }
+        },
+    },
+    {
+        name: 'compact',
+        description: 'Compact context by summarizing older messages',
+        usage: '/compact',
+        category: 'General',
+        aliases: ['summarize'],
+        handler: async (
+            _args: string[],
+            agent: TuiAgentBackend,
+            ctx: CommandContext
+        ): Promise<boolean | string> => {
+            try {
+                const { sessionId } = ctx;
+                if (!sessionId) {
+                    return formatForInkCli('⚠  No active session to compact');
+                }
+
+                // Compact context - generates summary and hides older messages
+                // The context:compacting and context:compacted events are handled by useAgentEvents
+                // which shows the compacting indicator and notification message
+                const result = await agent.compactContext(sessionId);
+
+                if (!result) {
+                    return formatForInkCli(
+                        ' Nothing to compact - history is too short or compaction is not configured.'
+                    );
+                }
+
+                // Return true - notification is shown via context:compacted event handler
+                return true;
+            } catch (error) {
+                const errorMsg = `Failed to compact context: ${error instanceof Error ? error.message : String(error)}`;
+                agent.logger.error(errorMsg);
+                return formatForInkCli(`⚠ ${errorMsg}`);
+            }
+        },
+    },
+    {
+        name: 'context',
+        description: 'Show context window usage statistics',
+        usage: '/context',
+        category: 'General',
+        aliases: ['ctx'],
+        handler: async (
+            _args: string[],
+            agent: TuiAgentBackend,
+            ctx: CommandContext
+        ): Promise<boolean | string> => {
+            try {
+                const { sessionId } = ctx;
+                if (!sessionId) {
+                    return formatForInkCli('⚠  No active session');
+                }
+
+                const stats = await agent.getContextStats(sessionId);
+
+                // Create a visual progress bar (clamped to 0-100% for display)
+                const barWidth = 20;
+                const displayPercent = Math.min(Math.max(stats.usagePercent, 0), 100);
+                const filledWidth = Math.round((displayPercent / 100) * barWidth);
+                const emptyWidth = barWidth - filledWidth;
+                const progressBar = '█'.repeat(filledWidth) + '░'.repeat(emptyWidth);
+
+                // Color based on usage
+                let usageColor = chalk.green;
+                if (stats.usagePercent > 80) usageColor = chalk.red;
+                else if (stats.usagePercent > 60) usageColor = chalk.yellow;
+
+                // Helper to format token counts
+                const formatTokens = (tokens: number): string => {
+                    if (tokens >= 1000) {
+                        return `${(tokens / 1000).toFixed(1)}k`;
+                    }
+                    return tokens.toLocaleString();
+                };
+
+                // Calculate auto compact buffer (reserved space before compaction triggers)
+                // maxContextTokens already has thresholdPercent applied, so we need to derive
+                // the buffer as: maxContextTokens * (1 - thresholdPercent) / thresholdPercent
+                const autoCompactBuffer =
+                    stats.thresholdPercent > 0 && stats.thresholdPercent < 1.0
+                        ? Math.floor(
+                              (stats.maxContextTokens * (1 - stats.thresholdPercent)) /
+                                  stats.thresholdPercent
+                          )
+                        : 0;
+                const bufferPercent = Math.round((1 - stats.thresholdPercent) * 100);
+                const bufferLabel =
+                    bufferPercent > 0
+                        ? `Auto compact buffer (${bufferPercent}%)`
+                        : 'Auto compact buffer';
+
+                const totalTokenSpace = stats.maxContextTokens + autoCompactBuffer;
+                const usedTokens = stats.estimatedTokens + autoCompactBuffer;
+
+                // Helper to calculate percentage of total token space
+                const pct = (tokens: number): string => {
+                    const percent =
+                        totalTokenSpace > 0 ? ((tokens / totalTokenSpace) * 100).toFixed(1) : '0.0';
+                    return `${percent}%`;
+                };
+
+                const overflowWarning = stats.usagePercent > 100 ? ' ⚠  OVERFLOW' : '';
+                const { breakdown } = stats;
+
+                const tokenDisplay = `~${formatTokens(usedTokens)}`;
+
+                const breakdownLabel = chalk.dim('(estimated)');
+                const lines = [
+                    ` Context Usage`,
+                    `   ${usageColor(progressBar)} ${stats.usagePercent}%${overflowWarning}`,
+                    `   ${chalk.dim(stats.modelDisplayName)} · ${tokenDisplay} / ${formatTokens(totalTokenSpace)} tokens`,
+                    ``,
+                    `   ${chalk.cyan('Breakdown:')} ${breakdownLabel}`,
+                    `   ├─ System prompt: ${formatTokens(breakdown.systemPrompt)} (${pct(breakdown.systemPrompt)})`,
+                    `   ├─ Tools: ${formatTokens(breakdown.tools.total)} (${pct(breakdown.tools.total)})`,
+                    `   ├─ Messages: ${formatTokens(breakdown.messages)} (${pct(breakdown.messages)})`,
+                    `   └─ ${bufferLabel}: ${formatTokens(autoCompactBuffer)} (${pct(autoCompactBuffer)})`,
+                    ``,
+                    `   Messages: ${stats.filteredMessageCount} visible (${stats.messageCount} total)`,
+                ];
+
+                // Show pruned tool count if any
+                if (stats.prunedToolCount > 0) {
+                    lines.push(`     ${stats.prunedToolCount} tool output(s) pruned`);
+                }
+
+                if (stats.hasSummary) {
+                    lines.push(`    Context has been compacted`);
+                }
+
+                if (stats.usagePercent > 100) {
+                    lines.push(
+                        `    Use /compact to manually compact, or send a message to trigger auto-compaction`
+                    );
+                }
+
+                return formatForInkCli(lines.join('\n'));
+            } catch (error) {
+                const errorMsg = `Failed to get context stats: ${error instanceof Error ? error.message : String(error)}`;
+                agent.logger.error(errorMsg);
+                return formatForInkCli(`⚠ ${errorMsg}`);
+            }
+        },
+    },
+    {
+        name: 'copy',
+        description: 'Copy the last assistant response to clipboard',
+        usage: '/copy',
+        category: 'General',
+        aliases: ['cp'],
+        handler: async (
+            _args: string[],
+            agent: TuiAgentBackend,
+            ctx: CommandContext
+        ): Promise<boolean | string> => {
+            try {
+                const { sessionId } = ctx;
+                if (!sessionId) {
+                    return formatForInkCli('✗ No active session');
+                }
+
+                // Get session history
+                const history = await agent.getSessionHistory(sessionId);
+                if (!history || history.length === 0) {
+                    return formatForInkCli('✗ No messages in current session');
+                }
+
+                // Find the last assistant message
+                const lastAssistantMessage = [...history]
+                    .reverse()
+                    .find((msg) => msg.role === 'assistant');
+
+                if (!lastAssistantMessage) {
+                    return formatForInkCli('✗ No assistant response to copy');
+                }
+
+                // Extract text content from the message
+                let textContent = '';
+                if (typeof lastAssistantMessage.content === 'string') {
+                    textContent = lastAssistantMessage.content;
+                } else if (Array.isArray(lastAssistantMessage.content)) {
+                    // Handle multi-part content
+                    textContent = lastAssistantMessage.content
+                        .filter(
+                            (part): part is { type: 'text'; text: string } => part.type === 'text'
+                        )
+                        .map((part) => part.text)
+                        .join('\n');
+                }
+
+                if (!textContent) {
+                    return formatForInkCli('✗ No text content to copy');
+                }
+
+                // Copy to clipboard
+                const success = await writeToClipboard(textContent);
+                if (success) {
+                    const preview =
+                        textContent.length > 50
+                            ? textContent.substring(0, 50) + '...'
+                            : textContent;
+                    return formatForInkCli(
+                        ` Copied to clipboard (${textContent.length} chars)\n${preview.replace(/\n/g, ' ')}`
+                    );
+                } else {
+                    return formatForInkCli('✗ Failed to copy to clipboard');
+                }
+            } catch (error) {
+                const errorMsg = `Failed to copy: ${error instanceof Error ? error.message : String(error)}`;
+                agent.logger.error(errorMsg);
+                return formatForInkCli(`⚠ ${errorMsg}`);
+            }
+        },
+    },
+    {
+        name: 'shortcuts',
+        description: 'Show keyboard shortcuts',
+        usage: '/shortcuts',
+        category: 'General',
+        aliases: ['keys', 'hotkeys'],
+        handler: async (
+            _args: string[],
+            _agent: TuiAgentBackend,
+            _ctx: CommandContext
+        ): Promise<CommandHandlerResult> => {
+            const styledData: ShortcutsStyledData = {
+                categories: [
+                    {
+                        name: 'Global',
+                        shortcuts: [
+                            { keys: 'Ctrl+C', description: 'Clear input, then exit (press twice)' },
+                            { keys: 'Ctrl+T', description: 'Toggle todo list (show/hide todos)' },
+                            { keys: 'Escape', description: 'Cancel processing / close overlay' },
+                        ],
+                    },
+                    {
+                        name: 'Input',
+                        shortcuts: [
+                            { keys: 'Enter', description: 'Submit message' },
+                            { keys: 'Shift+Enter', description: 'New line (multi-line input)' },
+                            { keys: 'Up/Down', description: 'Navigate input history' },
+                            { keys: 'Ctrl+R', description: 'Search history (enter search mode)' },
+                            {
+                                keys: 'Tab',
+                                description: 'Switch model within current provider',
+                            },
+                            { keys: 'Ctrl+U', description: 'Clear input line' },
+                            { keys: 'Ctrl+W', description: 'Delete word before cursor' },
+                            { keys: 'Ctrl+A', description: 'Move cursor to start' },
+                            { keys: 'Ctrl+E', description: 'Move cursor to end' },
+                        ],
+                    },
+                    {
+                        name: 'History Search (after Ctrl+R)',
+                        shortcuts: [
+                            { keys: 'Ctrl+R', description: 'Next older match' },
+                            { keys: 'Ctrl+E', description: 'Next newer match' },
+                            { keys: 'Enter', description: 'Accept and exit search' },
+                            { keys: 'Escape', description: 'Cancel search' },
+                        ],
+                    },
+                    {
+                        name: 'Autocomplete & Selectors',
+                        shortcuts: [
+                            { keys: 'Up/Down', description: 'Navigate options' },
+                            { keys: 'Enter', description: 'Select / execute' },
+                            { keys: 'Tab', description: 'Load command into input' },
+                            { keys: 'Escape', description: 'Close overlay' },
+                        ],
+                    },
+                    {
+                        name: 'Tool Approval',
+                        shortcuts: [
+                            { keys: 'y', description: 'Allow once' },
+                            { keys: 'a', description: 'Allow for session' },
+                            { keys: 'n', description: 'Deny' },
+                            { keys: 'Escape', description: 'Cancel' },
+                        ],
+                    },
+                ],
+            };
+
+            // Build fallback text
+            const fallbackLines: string[] = ['Keyboard Shortcuts:'];
+            for (const category of styledData.categories) {
+                fallbackLines.push(`\n${category.name}:`);
+                for (const shortcut of category.shortcuts) {
+                    fallbackLines.push(`  ${shortcut.keys.padEnd(14)} ${shortcut.description}`);
+                }
+            }
+
+            return CommandOutputHelper.styled('shortcuts', styledData, fallbackLines.join('\n'));
+        },
+    },
+];

@@ -1,0 +1,56 @@
+/**
+ * Bash Output Tool
+ *
+ * Internal tool for retrieving output from background processes
+ */
+
+import { z } from 'zod';
+import { createLocalToolCallHeader, defineTool, truncateForHeader } from '@fius/core/tools';
+import type { Tool, ToolExecutionContext } from '@fius/core/tools';
+import type { ProcessServiceGetter } from './bash-exec-tool.js';
+
+const BashOutputInputSchema = z
+    .object({
+        process_id: z.string().describe('Process ID from bash_exec (when run_in_background=true)'),
+    })
+    .strict();
+
+/**
+ * Create the bash_output internal tool
+ */
+export function createBashOutputTool(
+    getProcessService: ProcessServiceGetter
+): Tool<typeof BashOutputInputSchema> {
+    return defineTool({
+        id: 'bash_output',
+        description:
+            'Retrieve output from a background process started with bash_exec. Returns stdout, stderr, status (running/completed/failed), exit code, and duration. Each call returns only new output since last read. The output buffer is cleared after reading. Use this tool to monitor long-running commands.',
+        inputSchema: BashOutputInputSchema,
+        presentation: {
+            describeHeader: (input) =>
+                createLocalToolCallHeader({
+                    title: 'Bash Output',
+                    argsText: truncateForHeader(input.process_id, 80),
+                }),
+        },
+        async execute(input, context: ToolExecutionContext) {
+            const resolvedProcessService = await getProcessService(context, {
+                background: true,
+            });
+
+            // Input is validated by provider before reaching here
+            const { process_id } = input;
+
+            // Get output from ProcessService
+            const result = await resolvedProcessService.getProcessOutput(process_id);
+
+            return {
+                stdout: result.stdout,
+                stderr: result.stderr,
+                status: result.status,
+                ...(result.exitCode !== undefined && { exit_code: result.exitCode }),
+                ...(result.duration !== undefined && { duration: result.duration }),
+            };
+        },
+    });
+}

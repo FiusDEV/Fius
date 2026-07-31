@@ -1,0 +1,86 @@
+# Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+feature-plans/
+technical-plans/
+
+# Build output
+dist/
+build/
+.next/
+.turbo/
+.vercel/
+dist-electron/
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Cursor
+.cursor/mcp.json
+
+## Cursor Task master MCP rules
+.cursor/rules/taskmaster.mdc
+.cursor/rules/dev_workflow.mdc
+.cursor/rules/taskmaster_dev_workflow.mdc
+
+# Claude Code local settings
+.claude/settings.local.json
+
+# Serena MCP server data
+.serena/
+
+# Logs
+logs/
+*.log
+
+# TypeScript cache
+*.tsbuildinfo
+
+# tsup bundled config cache
+tsup.config.bundled_*.mjs
+
+# Transient TypeScript emits inside source folders (should only be in dist/)
+packages/*/src/**/*.js
+packages/*/src/**/*.js.map
+packages/*/src/**/*.d.ts
+packages/*/src/**/*.d.ts.map
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Coverage directory (main public, but allow webui public)
+/public/
+!/packages/cli/src/webui/public/
+
+# Test temporary files
+test-temp/
+packages/image-bundler/.tmp-bundle-test-*/
+
+# temporary storage
+.fius/
+
+# Temporarily ignore module READMEs in core package
+packages/core/src/*/README.md
+
+# temporarily ignore sports analytics agent
+agents/sports-analytics-agent/
+.verdaccio
+
+packages/os-electron/out/

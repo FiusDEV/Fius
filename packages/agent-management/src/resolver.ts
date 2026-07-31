@@ -1,0 +1,305 @@
+import { promises as fs } from 'fs';
+import path from 'path';
+import { isPath, getFiusGlobalPath, resolveBundledScript } from './utils/path.js';
+import {
+    getExecutionContext,
+    findFiusSourceRoot,
+    findFiusProjectRoot,
+} from './utils/execution-context.js';
+import { logger } from '@fius/core';
+import { loadGlobalPreferences, globalPreferencesExist } from './preferences/loader.js';
+import { ConfigError } from './config/index.js';
+import { RegistryError } from './registry/errors.js';
+import { AgentManager } from './AgentManager.js';
+import { installBundledAgent } from './installation.js';
+import {
+    isProjectRegistryError,
+    resolveDefaultProjectRegistryAgentPath,
+} from './project-registry.js';
+
+/**
+ * Entry in the installed agents registry (registry.json)
+ */
+interface InstalledAgentEntry {
+    id: string;
+    name: string;
+    description: string;
+    configPath: string;
+    author: string;
+    tags: string[];
+}
+
+/**
+ * Installed agents registry format
+ */
+interface InstalledRegistry {
+    agents: InstalledAgentEntry[];
+}
+
+/**
+ * Resolve agent path with automatic installation if needed
+ * @param nameOrPath Optional agent name or explicit path
+ * @param autoInstall Whether to automatically install missing agents from bundled registry (default: true)
+ * @returns Resolved absolute path to agent config
+ * @throws {ConfigError} For path/config issues (file not found, unknown context, setup incomplete)
+ * @throws {RegistryError} For agent lookup failures (agent not found, not installed)
+ */
+export async function resolveAgentPath(
+    nameOrPath?: string,
+    autoInstall: boolean = true
+): Promise<string> {
+    if (nameOrPath && isPath(nameOrPath)) {
+        const resolved = path.resolve(nameOrPath);
+        try {
+            const stat = await fs.stat(resolved);
+            if (!stat.isFile()) {
+                throw ConfigError.fileNotFound(resolved);
+            }
+            return resolved;
+        } catch {
+            throw ConfigError.fileNotFound(resolved);
+        }
+    }
+
+    if (nameOrPath) {
+        return await resolveAgentByName(nameOrPath, autoInstall);
+    }
+
+    return await resolveDefaultAgentByContext(autoInstall);
+}
+
+/**
+ * Resolve agent by name from installed or bundled registry
+ */
+async function resolveAgentByName(agentId: string, autoInstall: boolean): Promise<string> {
+    const agentsDir = getFiusGlobalPath('agents');
+    const installedRegistryPath = path.join(agentsDir, 'registry.json');
+
+    try {
+        const manager = new AgentManager(installedRegistryPath);
+        await manager.loadRegistry();
+        if (manager.hasAgent(agentId)) {
+            const agentPath = await getAgentConfigPath(agentId);
+            return agentPath;
+        }
+    } catch (error) {
+        logger.debug(`Agent '${agentId}' not found in installed registry: ${error}`);
+    }
+
+    if (autoInstall) {
+        try {
+            logger.info(`Auto-installing agent '${agentId}' from bundled registry`);
+            const configPath = await installBundledAgent(agentId);
+            return configPath;
+        } catch (error) {
+            logger.debug(`Failed to auto-install agent '${agentId}': ${error}`);
+            throw RegistryError.agentNotFound(agentId, []);
+        }
+    }
+
+    throw RegistryError.agentNotInstalledAutoInstallDisabled(agentId, []);
+}
+
+/**
+ * Get config path for an agent from the installed registry
+ */
+async function getAgentConfigPath(agentId: string): Promise<string> {
+    const agentsDir = getFiusGlobalPath('agents');
+    const installedRegistryPath = path.join(agentsDir, 'registry.json');
+
+    const registryContent = await fs.readFile(installedRegistryPath, 'utf-8');
+    const registry = JSON.parse(registryContent) as InstalledRegistry;
+    const agentEntry = registry.agents.find((a) => a.id === agentId);
+
+    if (!agentEntry) {
+        const available = registry.agents.map((a) => a.id);
+        throw RegistryError.agentNotFound(agentId, available);
+    }
+
+    return path.resolve(path.dirname(installedRegistryPath), agentEntry.configPath);
+}
+
+/**
+ * Resolve default agent based on execution context
+ */
+async function resolveDefaultAgentByContext(autoInstall: boolean = true): Promise<string> {
+    const executionContext = getExecutionContext();
+
+    switch (executionContext) {
+        case 'fius-source':
+            return await resolveDefaultAgentForFiusSource(autoInstall);
+
+        case 'fius-project':
+            return await resolveDefaultAgentForFiusProject(autoInstall);
+
+        case 'global-cli':
+            return await resolveDefaultAgentForGlobalCLI(autoInstall);
+
+        default:
+            throw ConfigError.unknownContext(executionContext);
+    }
+}
+
+/**
+ * Resolution for Fius source code context
+ * - Dev mode (FIUS_DEV_MODE=true): Always use repo config file
+ * - User with setup: Use their preferences
+ * - Otherwise: Fallback to repo config file
+ */
+async function resolveDefaultAgentForFiusSource(autoInstall: boolean = true): Promise<string> {
+    logger.debug('Resolving default agent for fius source context');
+    const sourceRoot = findFiusSourceRoot();
+    if (!sourceRoot) {
+        throw ConfigError.bundledNotFound('fius source directory not found');
+    }
+    const repoConfigPath = path.join(sourceRoot, 'agents', 'coding-agent', 'coding-agent.yml');
+
+    const isDevMode = process.env.FIUS_DEV_MODE === 'true';
+
+    if (isDevMode) {
+        logger.debug('Dev mode: using repository config file');
+        try {
+            await fs.access(repoConfigPath);
+            return repoConfigPath;
+        } catch {
+            throw ConfigError.bundledNotFound(repoConfigPath);
+        }
+    }
+
+    if (globalPreferencesExist()) {
+        try {
+            const preferences = await loadGlobalPreferences();
+            if (preferences.setup.completed) {
+                logger.debug('Using user preferences in fius-source context');
+                const preferredAgentName = preferences.defaults.defaultAgent;
+                return await resolveAgentByName(preferredAgentName, autoInstall);
+            }
+        } catch (error) {
+            logger.warn(`Failed to load preferences, falling back to repo config: ${error}`);
+        }
+    }
+
+    logger.debug('Using repository config (no preferences or setup incomplete)');
+    try {
+        await fs.access(repoConfigPath);
+        return repoConfigPath;
+    } catch {
+        throw ConfigError.bundledNotFound(repoConfigPath);
+    }
+}
+
+/**
+ * Resolution for Fius project context - project default OR preferences default
+ */
+async function resolveDefaultAgentForFiusProject(autoInstall: boolean = true): Promise<string> {
+    logger.debug('Resolving default agent for fius project context');
+    const projectRoot = findFiusProjectRoot();
+    if (!projectRoot) {
+        throw ConfigError.unknownContext('fius-project: project root not found');
+    }
+
+    try {
+        const projectRegistryAgentPath = await resolveDefaultProjectRegistryAgentPath(projectRoot);
+        if (projectRegistryAgentPath) {
+            return projectRegistryAgentPath;
+        }
+    } catch (error) {
+        if (isProjectRegistryError(error) && error.code === 'PROJECT_REGISTRY_INVALID_PRIMARY') {
+            throw ConfigError.invalidProjectPrimary(
+                error.registryPath,
+                error.agentId ?? '',
+                error.message
+            );
+        }
+        throw error;
+    }
+
+    const candidatePaths = [
+        path.join(projectRoot, 'agents', 'coding-agent', 'coding-agent.yml'),
+        path.join(projectRoot, 'agents', 'coding-agent', 'coding-agent.yaml'),
+        path.join(projectRoot, 'coding-agent.yml'),
+        path.join(projectRoot, 'coding-agent.yaml'),
+        path.join(projectRoot, 'agents', 'coding-agent.yml'),
+        path.join(projectRoot, 'agents', 'coding-agent.yaml'),
+        path.join(projectRoot, 'src', 'fius', 'agents', 'coding-agent.yml'),
+        path.join(projectRoot, 'src', 'fius', 'agents', 'coding-agent.yaml'),
+    ];
+
+    for (const p of candidatePaths) {
+        try {
+            await fs.access(p);
+            return p;
+        } catch {
+        }
+    }
+    logger.debug(`No project-local coding-agent found in ${projectRoot}`);
+
+    if (globalPreferencesExist()) {
+        try {
+            const preferences = await loadGlobalPreferences();
+            if (preferences.setup.completed && preferences.defaults.defaultAgent) {
+                const preferredAgentName = preferences.defaults.defaultAgent;
+                return await resolveAgentByName(preferredAgentName, autoInstall);
+            }
+        } catch (error) {
+            logger.debug(`Could not load global preferences for project fallback: ${error}`);
+        }
+    }
+
+    return await resolveAgentByName('fius', autoInstall);
+}
+
+/**
+ * Resolution for Global CLI context - preferences default REQUIRED
+ */
+async function resolveDefaultAgentForGlobalCLI(autoInstall: boolean = true): Promise<string> {
+    logger.debug('Resolving default agent for global CLI context');
+    if (globalPreferencesExist()) {
+        try {
+            const preferences = await loadGlobalPreferences();
+            if (preferences.setup.completed && preferences.defaults.defaultAgent) {
+                const preferredAgentName = preferences.defaults.defaultAgent;
+                return await resolveAgentByName(preferredAgentName, autoInstall);
+            }
+        } catch (error) {
+            logger.debug(`Could not load global preferences for CLI fallback: ${error}`);
+        }
+    }
+
+    return await resolveAgentByName('fius', autoInstall);
+}
+
+/**
+ * Update default agent preference
+ * @param agentName The agent name to set as the new default
+ * @throws {RegistryError} If the agent is not found in installed or bundled registry
+ */
+export async function updateDefaultAgentPreference(agentName: string): Promise<void> {
+    const agentsDir = getFiusGlobalPath('agents');
+    const installedRegistryPath = path.join(agentsDir, 'registry.json');
+    const bundledRegistryPath = resolveBundledScript('agents/agent-registry.json');
+
+    const registriesToCheck = [
+        { path: installedRegistryPath, name: 'installed' },
+        { path: bundledRegistryPath, name: 'bundled' },
+    ];
+
+    for (const registry of registriesToCheck) {
+        try {
+            const manager = new AgentManager(registry.path);
+            await manager.loadRegistry();
+            if (manager.hasAgent(agentName)) {
+                const { updateGlobalPreferences } = await import('./preferences/loader.js');
+                await updateGlobalPreferences({
+                    defaults: { defaultAgent: agentName },
+                });
+                logger.info(`Updated default agent preference to: ${agentName}`);
+                return;
+            }
+        } catch (error) {
+            logger.debug(`Agent '${agentName}' not found in ${registry.name} registry: ${error}`);
+        }
+    }
+
+    throw RegistryError.agentNotFound(agentName, []);
+}

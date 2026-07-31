@@ -1,0 +1,568 @@
+
+
+import path from 'path';
+import os from 'os';
+import type {
+    InternalMessage,
+    ContentPart,
+    ToolCall,
+    ToolPresentationSnapshotV1,
+} from '@fius/core';
+import { isTextPart, isAssistantMessage, isToolMessage } from '@fius/core';
+import type { Message, ExternalTriggerStyledData } from '../state/types.js';
+import { supportsStartupInfo, type TuiAgentBackend } from '../agent-backend.js';
+
+const HIDDEN_TOOL_NAMES = new Set(['wait_for']);
+
+export function normalizeToolName(toolName: string): string {
+    if (toolName.startsWith('mcp--')) {
+        const trimmed = toolName.substring('mcp--'.length);
+        const parts = trimmed.split('--');
+        return parts.length >= 2 ? parts.slice(1).join('--') : trimmed;
+    }
+    return toolName;
+}
+
+export function shouldHideTool(toolName: string | undefined): boolean {
+    if (!toolName) {
+        return false;
+    }
+
+    return HIDDEN_TOOL_NAMES.has(normalizeToolName(toolName));
+}
+
+const backgroundCompletionRegex =
+    /<background-task-completion>[\s\S]*?<\/background-task-completion>/g;
+const stripBackgroundCompletion = (text: string): string =>
+    text.replace(backgroundCompletionRegex, '').replace('<background-task-completion>', '').trim();
+
+import { generateMessageId } from './idGenerator.js';
+
+const AUTOMATION_TRIGGER_REGEX =
+    /<scheduled_automation_trigger>[\s\S]*?<\/scheduled_automation_trigger>/;
+
+export function extractAutomationTriggerInfo(content: string): {
+    label: string;
+    timestamp: string | null;
+    source: ExternalTriggerStyledData['source'];
+} | null {
+    const match = content.match(AUTOMATION_TRIGGER_REGEX);
+    if (!match) {
+        return null;
+    }
+
+    const block = match[0];
+    const taskMatch = block.match(/Task:\s*(.+)/i);
+    const triggeredMatch = block.match(/Triggered at:\s*(.+)/i);
+    const taskName = taskMatch?.[1]?.trim();
+    const triggeredAt = triggeredMatch?.[1]?.trim() ?? null;
+
+    return {
+        label: taskName ? `◷ Scheduled Task: ${taskName}` : '◷ Scheduled Task',
+        timestamp: triggeredAt,
+        source: 'scheduler',
+    };
+}
+
+export function stripAutomationTriggerTags(content: string): string {
+    const stripped = content.replace(
+        /<scheduled_automation_trigger>[\s\S]*?<\/scheduled_automation_trigger>\s*/g,
+        ''
+    );
+    return stripped === content ? content : stripped.trim();
+}
+
+
+export function makeRelativePath(absolutePath: string, cwd: string = process.cwd()): string {
+    // Normalize paths for comparison
+    const normalizedPath = path.normalize(absolutePath);
+    const normalizedCwd = path.normalize(cwd);
+    const homeDir = os.homedir();
+
+    // If under cwd, return relative path
+    if (normalizedPath.startsWith(normalizedCwd + path.sep) || normalizedPath === normalizedCwd) {
+        const relative = path.relative(normalizedCwd, normalizedPath);
+        return relative || '.';
+    }
+
+    // If under home directory, use tilde
+    if (normalizedPath.startsWith(homeDir + path.sep) || normalizedPath === homeDir) {
+        return '~' + normalizedPath.slice(homeDir.length);
+    }
+
+    // Return absolute path as-is
+    return absolutePath;
+}
+
+
+export function formatPathForDisplay(
+    absolutePath: string,
+    maxWidth: number = 60,
+    cwd: string = process.cwd()
+): string {
+    // First convert to relative
+    const relativePath = makeRelativePath(absolutePath, cwd);
+
+    // If fits, return as-is
+    if (relativePath.length <= maxWidth) {
+        return relativePath;
+    }
+
+    // Apply center-truncation
+    return centerTruncatePath(relativePath, maxWidth);
+}
+
+
+export function centerTruncatePath(filePath: string, maxWidth: number): string {
+    if (filePath.length <= maxWidth) {
+        return filePath;
+    }
+
+    const sep = path.sep;
+    const segments = filePath.split(sep).filter(Boolean);
+
+    if (segments.length <= 3) {
+        // Too few segments to center-truncate, just end-truncate
+        return filePath.slice(0, maxWidth - 1) + '…';
+    }
+
+    // Keep first segment and last 2 segments
+    const first = filePath.startsWith(sep) ? sep + segments[0] : segments[0];
+    const lastTwo = segments.slice(-2).join(sep);
+
+    const truncated = `${first}${sep}…${sep}${lastTwo}`;
+
+    if (truncated.length <= maxWidth) {
+        return truncated;
+    }
+
+    // Still too long - try with just the filename
+    const filename = segments[segments.length - 1] || '';
+    const withJustFilename = `…${sep}${filename}`;
+
+    if (withJustFilename.length <= maxWidth) {
+        return withJustFilename;
+    }
+
+    // Filename itself is too long, end-truncate it
+    return filename.slice(0, maxWidth - 1) + '…';
+}
+
+
+function toTitleCase(name: string): string {
+    return name
+        .replace(/[_-]+/g, ' ')
+        .split(' ')
+        .filter(Boolean)
+        .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+        .join(' ');
+}
+
+export function getToolDisplayName(toolName: string): string {
+    // MCP tools: strip `mcp--` prefix and server name for clean display
+    if (toolName.startsWith('mcp--')) {
+        const parts = toolName.split('--');
+        if (parts.length >= 3) {
+            return toTitleCase(parts.slice(2).join('--'));
+        }
+        return toTitleCase(toolName.substring(5));
+    }
+    return toTitleCase(toolName);
+}
+
+
+export function getToolTypeBadge(toolName: string): string {
+    // MCP tools with server name
+    if (toolName.startsWith('mcp--')) {
+        const parts = toolName.split('--');
+        if (parts.length >= 3 && parts[1]) {
+            return `MCP: ${parts[1]}`; // Format: 'MCP: github', 'MCP: postgres'
+        }
+        return 'MCP';
+    }
+
+    return 'local';
+}
+
+
+export interface FormattedToolHeader {
+    
+    displayName: string;
+    
+    argsFormatted: string;
+    
+    badge: string;
+    
+    header: string;
+}
+
+
+export function formatToolHeader(options: {
+    toolName: string;
+    args: Record<string, unknown>;
+    presentationSnapshot?: ToolPresentationSnapshotV1;
+}): FormattedToolHeader {
+    const { toolName, args, presentationSnapshot } = options;
+
+    const snapshotHeader = presentationSnapshot?.header;
+    const displayName = snapshotHeader?.title ?? getToolDisplayName(toolName);
+    const argsFormatted = snapshotHeader?.argsText ?? formatArgsFallback(args);
+    const badge = getToolTypeBadge(toolName);
+
+    // Only show badge for MCP tools (external tools worth distinguishing)
+    const isMcpTool = badge.startsWith('MCP');
+    const badgeSuffix = isMcpTool ? ` [${badge}]` : '';
+
+    // Format: DisplayName(args) [badge] (badge only for MCP)
+    const header = argsFormatted
+        ? `${displayName}(${argsFormatted})${badgeSuffix}`
+        : `${displayName}()${badgeSuffix}`;
+
+    return {
+        displayName,
+        argsFormatted,
+        badge,
+        header,
+    };
+}
+
+
+function formatArgsFallback(args: Record<string, unknown>): string {
+    const entries = Object.entries(args)
+        .filter(([k]) => !['__meta', 'description'].includes(k))
+        .slice(0, 4);
+
+    const str = entries
+        .map(([k, v]) => {
+            const val = typeof v === 'string' ? v : JSON.stringify(v);
+            return val.length > 50 ? `${k}=${val.slice(0, 47)}...` : `${k}=${val}`;
+        })
+        .join(', ');
+
+    return str.length > 150 ? str.slice(0, 147) + '...' : str;
+}
+
+
+export function createUserMessage(content: string): Message {
+    return {
+        id: generateMessageId('user'),
+        role: 'user',
+        content,
+        timestamp: new Date(),
+    };
+}
+
+
+export function createQueuedUserMessage(content: string, queuePosition: number): Message {
+    return {
+        id: generateMessageId('user-queued'),
+        role: 'user',
+        content,
+        timestamp: new Date(),
+        isQueued: true,
+        queuePosition,
+    };
+}
+
+
+export function createSystemMessage(content: string): Message {
+    return {
+        id: generateMessageId('system'),
+        role: 'system',
+        content,
+        timestamp: new Date(),
+    };
+}
+
+
+export function createErrorMessage(error: Error | string): Message {
+    const content = error instanceof Error ? error.message : error;
+    return {
+        id: generateMessageId('error'),
+        role: 'system',
+        content: `Error: ${content}`,
+        timestamp: new Date(),
+    };
+}
+
+
+export function createToolMessage(toolName: string): Message {
+    return {
+        id: generateMessageId('tool'),
+        role: 'tool',
+        content: `⚙ Calling tool: ${toolName}`,
+        timestamp: new Date(),
+    };
+}
+
+
+export function createStreamingMessage(): Message {
+    return {
+        id: generateMessageId('assistant'),
+        role: 'assistant',
+        content: '',
+        timestamp: new Date(),
+        isStreaming: true,
+    };
+}
+
+
+function extractTextContent(content: ContentPart[] | null): string {
+    if (!content) {
+        return '';
+    }
+
+    return content
+        .filter(isTextPart)
+        .map((part) => part.text)
+        .join('\n');
+}
+
+
+export function formatToolResultPreview(result: string): string {
+    try {
+        const parsed = JSON.parse(result) as {
+            status?: string;
+            taskId?: string;
+            count?: number;
+            tasks?: Array<{ status?: string; taskId?: string }>;
+            found?: boolean;
+            result?: string;
+        };
+
+        if (parsed.status === 'running' && parsed.taskId) {
+            return `Background task started (id: ${parsed.taskId})`;
+        }
+
+        if (parsed.found !== undefined && parsed.taskId) {
+            return parsed.found
+                ? `Task ${parsed.taskId} status: ${parsed.status ?? 'unknown'}`
+                : `Task ${parsed.taskId} not found`;
+        }
+
+        if (Array.isArray(parsed.tasks) && typeof parsed.count === 'number') {
+            const running = parsed.tasks.filter((task) => task.status === 'running').length;
+            return `Tasks: ${parsed.count} total${running > 0 ? ` • ${running} running` : ''}`;
+        }
+    } catch {
+        // fall through
+    }
+
+    const maxChars = 200;
+    if (result.length <= maxChars) {
+        return result;
+    }
+    return result.slice(0, maxChars) + '…';
+}
+
+function generateToolResultPreview(content: ContentPart[]): string {
+    const textContent = extractTextContent(content);
+    if (!textContent) return '';
+
+    try {
+        const parsed = JSON.parse(textContent) as {
+            status?: string;
+            taskId?: string;
+            count?: number;
+            tasks?: Array<{ status?: string; taskId?: string }>;
+            found?: boolean;
+        };
+
+        if (parsed.status === 'running' && parsed.taskId) {
+            return `Background task started (id: ${parsed.taskId})`;
+        }
+
+        if (Array.isArray(parsed.tasks) && typeof parsed.count === 'number') {
+            const running = parsed.tasks.filter((task) => task.status === 'running').length;
+            return `Tasks: ${parsed.count} total${running > 0 ? ` • ${running} running` : ''}`;
+        }
+
+        if (parsed.found !== undefined && parsed.taskId) {
+            return parsed.found
+                ? `Task ${parsed.taskId} status: ${parsed.status ?? 'unknown'}`
+                : `Task ${parsed.taskId} not found`;
+        }
+    } catch {
+        // Not JSON; fall through to raw text preview
+    }
+
+    const lines = textContent.split('\n');
+    const previewLines = lines.slice(0, 5);
+    let preview = previewLines.join('\n');
+
+    // Truncate if too long
+    if (preview.length > 400) {
+        preview = preview.slice(0, 397) + '...';
+    } else if (lines.length > 5) {
+        preview += '\n...';
+    }
+
+    return preview;
+}
+
+
+export function convertHistoryToUIMessages(
+    history: InternalMessage[],
+    sessionId: string
+): Message[] {
+    const uiMessages: Message[] = [];
+
+    // Build a map of toolCallId -> ToolCall for looking up tool call args
+    const toolCallMap = new Map<string, ToolCall>();
+    for (const msg of history) {
+        if (isAssistantMessage(msg) && msg.toolCalls) {
+            for (const toolCall of msg.toolCalls) {
+                toolCallMap.set(toolCall.id, toolCall);
+            }
+        }
+    }
+
+    history.forEach((msg, index) => {
+        const timestamp = new Date(msg.timestamp ?? Date.now() - (history.length - index) * 1000);
+
+        // Handle tool messages specially
+        if (isToolMessage(msg)) {
+            if (shouldHideTool(msg.name)) {
+                return;
+            }
+
+            // Look up the original tool call to get args
+            const toolCall = toolCallMap.get(msg.toolCallId);
+
+            // Format tool name
+            const displayName =
+                msg.presentationSnapshot?.header?.title ?? getToolDisplayName(msg.name);
+
+            // Format args if we have them
+            let toolContent = displayName;
+            const snapshotArgsText = msg.presentationSnapshot?.header?.argsText;
+            if (typeof snapshotArgsText === 'string' && snapshotArgsText.length > 0) {
+                toolContent = `${displayName}(${snapshotArgsText})`;
+            }
+            if (!snapshotArgsText && toolCall) {
+                try {
+                    const args = JSON.parse(toolCall.function.arguments || '{}');
+                    const argsFormatted = formatArgsFallback(args);
+                    if (argsFormatted) {
+                        toolContent = `${displayName}(${argsFormatted})`;
+                    }
+                } catch {
+                    // Ignore JSON parse errors
+                }
+            }
+
+            // Add tool type badge (only for MCP tools)
+            const badge = getToolTypeBadge(msg.name);
+            if (badge.startsWith('MCP')) {
+                toolContent = `${toolContent} [${badge}]`;
+            }
+
+            // Generate result preview
+            const resultPreview = generateToolResultPreview(msg.content);
+
+            uiMessages.push({
+                id: `session-${sessionId}-${index}`,
+                role: 'tool',
+                content: toolContent,
+                timestamp,
+                toolStatus: 'finished',
+                toolResult: resultPreview,
+                isError: msg.success === false,
+                // Store content parts for potential rich rendering
+                toolContent: msg.content,
+                // Restore structured display data for rich rendering (diffs, shell output, etc.)
+                ...(msg.displayData !== undefined && {
+                    toolDisplayData: msg.displayData,
+                }),
+            });
+            return;
+        }
+
+        // Handle assistant messages - skip those with only tool calls (no text content)
+        if (isAssistantMessage(msg)) {
+            let textContent = extractTextContent(msg.content);
+            textContent = stripBackgroundCompletion(textContent);
+
+            // Skip if no text content (message was just tool calls)
+            if (!textContent) return;
+
+            uiMessages.push({
+                id: `session-${sessionId}-${index}`,
+                role: 'assistant',
+                content: textContent,
+                timestamp,
+            });
+            return;
+        }
+
+        // Handle other messages (user, system)
+        let textContent = extractTextContent(msg.content);
+        textContent = stripBackgroundCompletion(textContent);
+
+        // Skip empty messages
+        if (!textContent) return;
+
+        const automationTrigger =
+            msg.role === 'user' ? extractAutomationTriggerInfo(textContent) : null;
+
+        if (automationTrigger) {
+            uiMessages.push({
+                id: `session-${sessionId}-${index}-trigger`,
+                role: 'system',
+                content: automationTrigger.label,
+                timestamp,
+                styledType: 'external-trigger',
+                styledData: {
+                    label: automationTrigger.label,
+                    source: automationTrigger.source,
+                    timestamp: automationTrigger.timestamp ?? timestamp,
+                },
+            });
+
+            textContent = stripAutomationTriggerTags(textContent);
+        }
+
+        uiMessages.push({
+            id: `session-${sessionId}-${index}`,
+            role: msg.role,
+            content: textContent,
+            timestamp,
+        });
+    });
+
+    return uiMessages;
+}
+
+
+export async function getStartupInfo(agent: TuiAgentBackend, sessionId: string | null) {
+    if (!supportsStartupInfo(agent)) {
+        return {
+            connectedServers: {
+                count: 0,
+                names: [],
+            },
+            failedConnections: [],
+            toolCount: 0,
+            logFile: null,
+        };
+    }
+
+    const connectedServers = agent.mcpManager.getClients();
+    const failedConnections = agent.mcpManager.getFailedConnections();
+    const tools = await agent.getAllTools();
+    const toolCount = Object.keys(tools).length;
+    // File logging is session-scoped. If a session already exists, show its log file.
+    const logFile = sessionId
+        ? ((await agent.getSession(sessionId))?.logger.getLogFilePath() ?? null)
+        : null;
+
+    return {
+        connectedServers: {
+            count: connectedServers.size,
+            names: Array.from(connectedServers.keys()),
+        },
+        failedConnections: Object.keys(failedConnections),
+        toolCount,
+        logFile,
+    };
+}

@@ -1,0 +1,384 @@
+import React, { useRef, useState } from 'react';
+import { Input } from '../../ui/input';
+import { LabelWithTooltip } from '../../ui/label-with-tooltip';
+import { Collapsible } from '../../ui/collapsible';
+import { Eye, EyeOff } from 'lucide-react';
+import { useModelCapabilities } from '../../hooks/useLLM';
+import { LLM_PROVIDERS } from '@fius/llm';
+import type { AgentConfig } from '@fius/agent-config';
+import { useDebounce } from 'use-debounce';
+
+type LLMConfig = AgentConfig['llm'];
+
+interface LLMConfigSectionProps {
+    value: LLMConfig;
+    onChange: (value: LLMConfig) => void;
+    errors?: Record<string, string>;
+    open?: boolean;
+    onOpenChange?: (open: boolean) => void;
+    errorCount?: number;
+    sectionErrors?: string[];
+}
+
+export function LLMConfigSection({
+    value,
+    onChange,
+    errors = {},
+    open,
+    onOpenChange,
+    errorCount = 0,
+    sectionErrors = [],
+}: LLMConfigSectionProps) {
+    const [showApiKey, setShowApiKey] = useState(false);
+    const modelValueAtFocusRef = useRef('');
+    const [debouncedModel] = useDebounce(value.model ?? '', 300);
+    const { data: capabilities } = useModelCapabilities(
+        value.provider ?? null,
+        debouncedModel ? debouncedModel : null
+    );
+    const reasoningSupport = capabilities?.reasoning;
+    const reasoningVariants = reasoningSupport?.supportedVariants ?? [];
+    const reasoningCapable = reasoningSupport?.capable ?? false;
+    const defaultReasoningVariant = reasoningSupport?.defaultVariant;
+    const reasoningVariantValue =
+        typeof value.reasoning?.variant === 'string' ? value.reasoning.variant : undefined;
+
+    const handleChange = <K extends keyof LLMConfig>(field: K, newValue: LLMConfig[K]) => {
+        onChange({ ...value, [field]: newValue });
+    };
+
+    const maxIterationsValue = typeof value.maxIterations === 'number' ? value.maxIterations : '';
+    const temperatureValue = typeof value.temperature === 'number' ? value.temperature : '';
+    const maxInputTokensValue =
+        typeof value.maxInputTokens === 'number' ? value.maxInputTokens : '';
+    const maxOutputTokensValue =
+        typeof value.maxOutputTokens === 'number' ? value.maxOutputTokens : '';
+
+    return (
+        <Collapsible
+            title="LLM Configuration"
+            defaultOpen={true}
+            open={open}
+            onOpenChange={onOpenChange}
+            errorCount={errorCount}
+            sectionErrors={sectionErrors}
+        >
+            <div className="space-y-4">
+                {/* Provider */}
+                <div>
+                    <LabelWithTooltip
+                        htmlFor="provider"
+                        tooltip="The LLM provider to use (e.g., OpenAI, Anthropic)"
+                    >
+                        Provider *
+                    </LabelWithTooltip>
+                    <select
+                        id="provider"
+                        value={value.provider || ''}
+                        onChange={(e) =>
+                            onChange({
+                                ...value,
+                                provider: e.target.value as LLMConfig['provider'],
+                                reasoning: undefined,
+                            })
+                        }
+                        aria-invalid={!!errors['llm.provider']}
+                        className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive"
+                    >
+                        <option value="">Select provider...</option>
+                        {LLM_PROVIDERS.map((p) => (
+                            <option key={p} value={p}>
+                                {p === 'fius' ? 'Fius' : p}
+                            </option>
+                        ))}
+                    </select>
+                    {errors['llm.provider'] && (
+                        <p className="text-xs text-destructive mt-1">{errors['llm.provider']}</p>
+                    )}
+                </div>
+
+                {/* Model */}
+                <div>
+                    <LabelWithTooltip
+                        htmlFor="model"
+                        tooltip="The specific model identifier (e.g., gpt-5, claude-sonnet-4-5-20250929)"
+                    >
+                        Model *
+                    </LabelWithTooltip>
+                    <Input
+                        id="model"
+                        value={value.model || ''}
+                        onChange={(e) => {
+                            const nextModel = e.target.value;
+                            const shouldClearReasoning =
+                                value.reasoning !== undefined &&
+                                nextModel !== modelValueAtFocusRef.current;
+                            onChange({
+                                ...value,
+                                model: nextModel,
+                                ...(shouldClearReasoning ? { reasoning: undefined } : {}),
+                            });
+                        }}
+                        onFocus={() => {
+                            modelValueAtFocusRef.current = value.model ?? '';
+                        }}
+                        onBlur={(e) => {
+                            if (e.target.value !== modelValueAtFocusRef.current) {
+                                onChange({ ...value, model: e.target.value, reasoning: undefined });
+                            }
+                        }}
+                        placeholder="e.g., gpt-5, claude-sonnet-4-5-20250929"
+                        aria-invalid={!!errors['llm.model']}
+                    />
+                    {errors['llm.model'] && (
+                        <p className="text-xs text-destructive mt-1">{errors['llm.model']}</p>
+                    )}
+                </div>
+
+                {/* API Key */}
+                <div>
+                    <LabelWithTooltip
+                        htmlFor="apiKey"
+                        tooltip="Use $ENV_VAR for environment variables or enter the API key directly"
+                    >
+                        API Key *
+                    </LabelWithTooltip>
+                    <div className="relative">
+                        <Input
+                            id="apiKey"
+                            type={showApiKey ? 'text' : 'password'}
+                            value={value.apiKey ?? ''}
+                            onChange={(e) => handleChange('apiKey', e.target.value)}
+                            placeholder="$OPENAI_API_KEY or direct value"
+                            aria-invalid={!!errors['llm.apiKey']}
+                            className="pr-10"
+                        />
+                        <button
+                            type="button"
+                            onClick={() => setShowApiKey(!showApiKey)}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-accent rounded transition-colors"
+                            aria-label={showApiKey ? 'Hide API key' : 'Show API key'}
+                        >
+                            {showApiKey ? (
+                                <EyeOff className="h-4 w-4 text-muted-foreground" />
+                            ) : (
+                                <Eye className="h-4 w-4 text-muted-foreground" />
+                            )}
+                        </button>
+                    </div>
+                    {errors['llm.apiKey'] && (
+                        <p className="text-xs text-destructive mt-1">{errors['llm.apiKey']}</p>
+                    )}
+                </div>
+
+                {/* Max Iterations */}
+                <div>
+                    <LabelWithTooltip
+                        htmlFor="maxIterations"
+                        tooltip="Maximum number of agent reasoning iterations per turn"
+                    >
+                        Max Iterations
+                    </LabelWithTooltip>
+                    <Input
+                        id="maxIterations"
+                        type="number"
+                        value={maxIterationsValue}
+                        onChange={(e) => {
+                            const val = e.target.value;
+                            if (val === '') {
+                                handleChange('maxIterations', undefined);
+                            } else {
+                                const num = parseInt(val, 10);
+                                if (!isNaN(num)) {
+                                    handleChange('maxIterations', num);
+                                }
+                            }
+                        }}
+                        min="1"
+                        placeholder="50"
+                        aria-invalid={!!errors['llm.maxIterations']}
+                    />
+                    {errors['llm.maxIterations'] && (
+                        <p className="text-xs text-destructive mt-1">
+                            {errors['llm.maxIterations']}
+                        </p>
+                    )}
+                </div>
+
+                {/* Base URL */}
+                <div>
+                    <LabelWithTooltip
+                        htmlFor="baseURL"
+                        tooltip="Custom base URL for the LLM provider (optional, for proxies or custom endpoints)"
+                    >
+                        Base URL
+                    </LabelWithTooltip>
+                    <Input
+                        id="baseURL"
+                        value={value.baseURL || ''}
+                        onChange={(e) => handleChange('baseURL', e.target.value || undefined)}
+                        placeholder="https://api.openai.com/v1"
+                        aria-invalid={!!errors['llm.baseURL']}
+                    />
+                    {errors['llm.baseURL'] && (
+                        <p className="text-xs text-destructive mt-1">{errors['llm.baseURL']}</p>
+                    )}
+                </div>
+
+                {/* Temperature */}
+                <div>
+                    <LabelWithTooltip
+                        htmlFor="temperature"
+                        tooltip="Controls randomness in responses (0.0 = deterministic, 1.0 = creative)"
+                    >
+                        Temperature
+                    </LabelWithTooltip>
+                    <Input
+                        id="temperature"
+                        type="number"
+                        value={temperatureValue}
+                        onChange={(e) =>
+                            handleChange(
+                                'temperature',
+                                e.target.value ? parseFloat(e.target.value) : undefined
+                            )
+                        }
+                        min="0"
+                        max="1"
+                        step="0.1"
+                        placeholder="0.0 - 1.0"
+                        aria-invalid={!!errors['llm.temperature']}
+                    />
+                    {errors['llm.temperature'] && (
+                        <p className="text-xs text-destructive mt-1">{errors['llm.temperature']}</p>
+                    )}
+                </div>
+
+                {/* Max Input/Output Tokens */}
+                <div className="grid grid-cols-2 gap-4">
+                    <div>
+                        <LabelWithTooltip
+                            htmlFor="maxInputTokens"
+                            tooltip="Maximum input tokens to send to the model. If not specified, defaults to model's limit from registry, or 128,000 tokens for custom endpoints"
+                        >
+                            Max Input Tokens
+                        </LabelWithTooltip>
+                        <Input
+                            id="maxInputTokens"
+                            type="number"
+                            value={maxInputTokensValue}
+                            onChange={(e) =>
+                                handleChange(
+                                    'maxInputTokens',
+                                    e.target.value ? parseInt(e.target.value, 10) : undefined
+                                )
+                            }
+                            min="1"
+                            placeholder="Auto (128k fallback)"
+                            aria-invalid={!!errors['llm.maxInputTokens']}
+                        />
+                        {errors['llm.maxInputTokens'] && (
+                            <p className="text-xs text-destructive mt-1">
+                                {errors['llm.maxInputTokens']}
+                            </p>
+                        )}
+                    </div>
+                    <div>
+                        <LabelWithTooltip
+                            htmlFor="maxOutputTokens"
+                            tooltip="Maximum output tokens the model can generate. If not specified, uses provider's default (typically 4,096 tokens)"
+                        >
+                            Max Output Tokens
+                        </LabelWithTooltip>
+                        <Input
+                            id="maxOutputTokens"
+                            type="number"
+                            value={maxOutputTokensValue}
+                            onChange={(e) =>
+                                handleChange(
+                                    'maxOutputTokens',
+                                    e.target.value ? parseInt(e.target.value, 10) : undefined
+                                )
+                            }
+                            min="1"
+                            placeholder="Auto (provider default)"
+                            aria-invalid={!!errors['llm.maxOutputTokens']}
+                        />
+                        {errors['llm.maxOutputTokens'] && (
+                            <p className="text-xs text-destructive mt-1">
+                                {errors['llm.maxOutputTokens']}
+                            </p>
+                        )}
+                    </div>
+                </div>
+
+                {/* Provider-Specific Options */}
+
+                {/* Reasoning tuning (server-resolved; safe for gateway providers). */}
+                {value.provider &&
+                    value.model &&
+                    reasoningCapable &&
+                    reasoningVariants.length > 0 && (
+                        <div>
+                            <LabelWithTooltip
+                                htmlFor="reasoningVariant"
+                                tooltip="Controls reasoning tuning variant. Availability depends on provider+model (resolved by the server)."
+                            >
+                                Reasoning Variant
+                            </LabelWithTooltip>
+                            <select
+                                id="reasoningVariant"
+                                value={
+                                    !reasoningVariantValue ||
+                                    reasoningVariantValue === defaultReasoningVariant
+                                        ? ''
+                                        : reasoningVariantValue
+                                }
+                                onChange={(e) => {
+                                    if (!e.target.value) {
+                                        handleChange('reasoning', undefined);
+                                        return;
+                                    }
+
+                                    const selectedVariant = reasoningVariants.find(
+                                        (variant) => variant === e.target.value
+                                    );
+                                    if (
+                                        !selectedVariant ||
+                                        selectedVariant === defaultReasoningVariant
+                                    ) {
+                                        handleChange('reasoning', undefined);
+                                        return;
+                                    }
+
+                                    handleChange(
+                                        'reasoning',
+                                        value.reasoning
+                                            ? { ...value.reasoning, variant: selectedVariant }
+                                            : { variant: selectedVariant }
+                                    );
+                                }}
+                                className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                            >
+                                <option value="">
+                                    {defaultReasoningVariant
+                                        ? `${defaultReasoningVariant} (Recommended)`
+                                        : 'Provider default (Recommended)'}
+                                </option>
+                                {reasoningVariants
+                                    .filter((variant) => variant !== defaultReasoningVariant)
+                                    .map((variant) => (
+                                        <option key={variant} value={variant}>
+                                            {variant}
+                                        </option>
+                                    ))}
+                            </select>
+                            <p className="text-xs text-muted-foreground mt-1">
+                                Supported variants: {reasoningVariants.join(', ')}
+                            </p>
+                        </div>
+                    )}
+            </div>
+        </Collapsible>
+    );
+}

@@ -1,0 +1,270 @@
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { queryKeys } from '@/lib/queryKeys';
+import { client } from '@/lib/client';
+
+export type LLMCatalogScope = 'curated' | 'all';
+
+export function useLLMCatalog(options?: {
+    enabled?: boolean;
+    mode?: 'grouped' | 'flat';
+    scope?: LLMCatalogScope;
+    includeModels?: boolean;
+    provider?: LLMProvider | LLMProvider[];
+}) {
+    const mode = options?.mode ?? 'grouped';
+    const scope = options?.scope;
+    const includeModels = options?.includeModels;
+    const provider = options?.provider;
+
+    return useQuery({
+        queryKey: [
+            ...queryKeys.llm.catalog,
+            mode,
+            scope ?? 'default',
+            includeModels ?? 'default',
+            provider ? (Array.isArray(provider) ? provider.join(',') : provider) : 'default',
+        ],
+        queryFn: async () => {
+            const response = await client.api.llm.catalog.$get({
+                query: {
+                    mode,
+                    ...(scope ? { scope } : {}),
+                    ...(includeModels != null
+                        ? { includeModels: includeModels ? 'true' : 'false' }
+                        : {}),
+                    ...(provider
+                        ? { provider: Array.isArray(provider) ? provider : String(provider) }
+                        : {}),
+                },
+            });
+            if (!response.ok) {
+                throw new Error(`Failed to fetch LLM catalog: ${response.status}`);
+            }
+            return await response.json();
+        },
+        enabled: options?.enabled ?? true,
+        staleTime: 0, // always fresh — reflects plan changes instantly
+    });
+}
+
+export function useSwitchLLM() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async (payload: SwitchLLMPayload) => {
+            const response = await client.api.llm.switch.$post({ json: payload });
+            if (!response.ok) {
+                throw new Error(`Failed to switch LLM: ${response.status}`);
+            }
+            return await response.json();
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: queryKeys.llm.catalog });
+            queryClient.invalidateQueries({ queryKey: ['llm', 'current'] });
+            queryClient.invalidateQueries({ queryKey: queryKeys.llm.modelPickerState });
+        },
+    });
+}
+
+export function useProviderApiKey(provider: LLMProvider | null, options?: { enabled?: boolean }) {
+    return useQuery({
+        queryKey: [...queryKeys.llm.catalog, 'key', provider],
+        queryFn: async () => {
+            if (!provider) return null;
+            const response = await client.api.llm.key[':provider'].$get({
+                param: { provider },
+            });
+            if (!response.ok) {
+                throw new Error(`Failed to fetch API key: ${response.status}`);
+            }
+            return await response.json();
+        },
+        enabled: (options?.enabled ?? true) && !!provider,
+        staleTime: 30 * 1000, // 30 seconds
+    });
+}
+
+export function useSaveApiKey() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async (payload: SaveApiKeyPayload) => {
+            const response = await client.api.llm.key.$post({ json: payload });
+            if (!response.ok) {
+                throw new Error(`Failed to save API key: ${response.status}`);
+            }
+            return await response.json();
+        },
+        onSuccess: (_data, variables) => {
+            queryClient.invalidateQueries({ queryKey: queryKeys.llm.catalog });
+            queryClient.invalidateQueries({
+                queryKey: [...queryKeys.llm.catalog, 'key', variables.provider],
+            });
+        },
+    });
+}
+
+export function useCustomModels(options?: { enabled?: boolean }) {
+    return useQuery({
+        queryKey: queryKeys.llm.customModels,
+        queryFn: async () => {
+            const response = await client.api.llm['custom-models'].$get();
+            if (!response.ok) {
+                throw new Error(`Failed to fetch custom models: ${response.status}`);
+            }
+            const data = await response.json();
+            return data.models;
+        },
+        enabled: options?.enabled ?? true,
+        staleTime: 60 * 1000, // 1 minute
+    });
+}
+
+export function useCreateCustomModel() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async (payload: CustomModelPayload) => {
+            const response = await client.api.llm['custom-models'].$post({ json: payload });
+            if (!response.ok) {
+                throw new Error(`Failed to create custom model: ${response.status}`);
+            }
+            return await response.json();
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: queryKeys.llm.customModels });
+            queryClient.invalidateQueries({ queryKey: queryKeys.llm.modelPickerState });
+        },
+    });
+}
+
+export function useDeleteCustomModel() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async (name: string) => {
+            const encodedName = encodeURIComponent(name);
+            const response = await client.api.llm['custom-models'][':name'].$delete({
+                param: { name: encodedName },
+            });
+            if (!response.ok) {
+                throw new Error(`Failed to delete custom model: ${response.status}`);
+            }
+            return await response.json();
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: queryKeys.llm.customModels });
+            queryClient.invalidateQueries({ queryKey: queryKeys.llm.modelPickerState });
+        },
+    });
+}
+
+export function useModelPickerState(options?: { enabled?: boolean }) {
+    return useQuery({
+        queryKey: queryKeys.llm.modelPickerState,
+        queryFn: async () => {
+            const response = await client.api.llm['model-picker-state'].$get();
+            if (!response.ok) {
+                throw new Error(`Failed to fetch model picker state: ${response.status}`);
+            }
+            return await response.json();
+        },
+        enabled: options?.enabled ?? true,
+        staleTime: 0,
+    });
+}
+
+export function useRecordRecentModel() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async (payload: ModelPickerModelRefPayload) => {
+            const response = await client.api.llm['model-picker-state'].recents.$post({
+                json: payload,
+            });
+            if (!response.ok) {
+                throw new Error(`Failed to record recent model: ${response.status}`);
+            }
+            return await response.json();
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: queryKeys.llm.modelPickerState });
+        },
+    });
+}
+
+export function useToggleFavoriteModel() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async (payload: ModelPickerModelRefPayload) => {
+            const response = await client.api.llm['model-picker-state'].favorites.toggle.$post({
+                json: payload,
+            });
+            if (!response.ok) {
+                throw new Error(`Failed to toggle favorite model: ${response.status}`);
+            }
+            return await response.json();
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: queryKeys.llm.modelPickerState });
+        },
+    });
+}
+
+export function useSetFavoriteModels() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async (payload: SetFavoriteModelsPayload) => {
+            const response = await client.api.llm['model-picker-state'].favorites.$put({
+                json: payload,
+            });
+            if (!response.ok) {
+                throw new Error(`Failed to set favorite models: ${response.status}`);
+            }
+            return await response.json();
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: queryKeys.llm.modelPickerState });
+        },
+    });
+}
+
+export function useModelCapabilities(
+    provider: LLMProvider | null | undefined,
+    model: string | null | undefined,
+    options?: { enabled?: boolean }
+) {
+    return useQuery({
+        queryKey: [...queryKeys.llm.catalog, 'capabilities', provider, model],
+        queryFn: async () => {
+            if (!provider || !model) return null;
+            const response = await client.api.llm.capabilities.$get({
+                query: { provider, model },
+            });
+            if (!response.ok) {
+                throw new Error(`Failed to fetch model capabilities: ${response.status}`);
+            }
+            return await response.json();
+        },
+        enabled: (options?.enabled ?? true) && !!provider && !!model,
+        staleTime: 5 * 60 * 1000, // 5 minutes - capabilities rarely change
+    });
+}
+
+export type SaveApiKeyPayload = Parameters<typeof client.api.llm.key.$post>[0]['json'];
+export type LLMProvider = SaveApiKeyPayload['provider'];
+export type SwitchLLMPayload = Parameters<typeof client.api.llm.switch.$post>[0]['json'];
+
+type CustomModelsEndpoint = (typeof client.api.llm)['custom-models'];
+export type CustomModelPayload = Parameters<CustomModelsEndpoint['$post']>[0]['json'];
+export type CustomModel = NonNullable<ReturnType<typeof useCustomModels>['data']>[number];
+
+type ModelPickerStateEndpoint = (typeof client.api.llm)['model-picker-state'];
+export type ModelPickerModelRefPayload = Parameters<
+    ModelPickerStateEndpoint['recents']['$post']
+>[0]['json'];
+export type SetFavoriteModelsPayload = Parameters<
+    ModelPickerStateEndpoint['favorites']['$put']
+>[0]['json'];

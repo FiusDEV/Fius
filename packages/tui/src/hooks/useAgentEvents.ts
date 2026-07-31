@@ -1,0 +1,597 @@
+
+
+import type React from 'react';
+import { useEffect, useRef } from 'react';
+import { setMaxListeners } from 'events';
+import { parseCodexBaseURL, type QueuedMessage, type ContentPart } from '@fius/core';
+import { getModelDisplayName } from '@fius/llm';
+import type { Message, UIState, SessionState, InputState } from '../state/types.js';
+import type { ApprovalRequest } from '../components/ApprovalPrompt.js';
+import { generateMessageId } from '../utils/idGenerator.js';
+import type { TextBuffer } from '../components/shared/text-buffer.js';
+import type { TuiAgentBackend } from '../agent-backend.js';
+
+interface UseAgentEventsProps {
+    agent: TuiAgentBackend;
+    setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
+    setPendingMessages: React.Dispatch<React.SetStateAction<Message[]>>;
+    setUi: React.Dispatch<React.SetStateAction<UIState>>;
+    setSession: React.Dispatch<React.SetStateAction<SessionState>>;
+    setInput: React.Dispatch<React.SetStateAction<InputState>>;
+    setApproval: React.Dispatch<React.SetStateAction<ApprovalRequest | null>>;
+    setApprovalQueue: React.Dispatch<React.SetStateAction<ApprovalRequest[]>>;
+    setSteerMessages: React.Dispatch<React.SetStateAction<QueuedMessage[]>>;
+    setQueuedMessages: React.Dispatch<React.SetStateAction<QueuedMessage[]>>;
+    
+    currentSessionId: string | null;
+    
+    buffer: TextBuffer;
+}
+
+
+function extractTextContent(content: ContentPart[]): string {
+    return content
+        .filter((part): part is { type: 'text'; text: string } => part.type === 'text')
+        .map((part) => part.text)
+        .join('\n');
+}
+
+
+export function useAgentEvents({
+    agent,
+    setMessages,
+    setPendingMessages,
+    setUi,
+    setSession,
+    setInput,
+    setApproval,
+    setApprovalQueue,
+    setSteerMessages,
+    setQueuedMessages,
+    currentSessionId,
+    buffer,
+}: UseAgentEventsProps): void {
+    // Track if an external trigger is active (scheduler, A2A, etc.)
+    const externalTriggerRef = useRef<{
+        active: boolean;
+        sessionId: string | null;
+        messageId: string | null;
+    }>({ active: false, sessionId: null, messageId: null });
+
+    useEffect(() => {
+        const controller = new AbortController();
+        const { signal } = controller;
+
+        // Increase listener limit for safety (added more for external trigger events)
+        setMaxListeners(25, signal);
+
+        const syncQueue = (sessionId: string, queue: 'steer' | 'follow-up'): void => {
+            const getMessages =
+                queue === 'steer'
+                    ? agent.getSteerMessages(sessionId)
+                    : agent.getFollowUpMessages(sessionId);
+            void getMessages
+                .then((messages) => {
+                    if (queue === 'steer') {
+                        setSteerMessages(messages);
+                    } else {
+                        setQueuedMessages(messages);
+                    }
+                })
+                .catch(() => {
+                    // Silently ignore - queue state will sync on next event
+                });
+        };
+
+        // NOTE: approval:request is now handled in processStream (via iterator) for proper
+        // event ordering. Direct bus subscription here caused a race condition where
+        // approval UI showed before text messages were added.
+
+        // Handle model switch
+        agent.on(
+            'llm:switched',
+            (payload) => {
+                if (payload.newConfig?.model) {
+                    setSession((prev) => ({
+                        ...prev,
+                        modelName: getModelDisplayName(
+                            payload.newConfig.model,
+                            payload.newConfig.provider
+                        ),
+                    }));
+                }
+
+                const nextIsChatGPTLogin =
+                    payload.newConfig?.provider === 'openai-compatible' &&
+                    parseCodexBaseURL(payload.newConfig?.baseURL)?.authMode === 'chatgpt';
+
+                if (!nextIsChatGPTLogin) {
+                    setUi((prev) => ({
+                        ...prev,
+                        chatgptRateLimitStatus: null,
+                        ...(prev.activeOverlay === 'chatgpt-usage-cap'
+                            ? { activeOverlay: 'none' as const }
+                            : {}),
+                    }));
+                }
+            },
+            { signal }
+        );
+
+        agent.on(
+            'llm:rate-limit-status',
+            (payload) => {
+                if (payload.sessionId !== currentSessionId) {
+                    return;
+                }
+
+                setUi((prev) => ({
+                    ...prev,
+                    chatgptRateLimitStatus: payload.snapshot,
+                    ...(payload.snapshot.exceeded && prev.activeOverlay === 'none'
+                        ? { activeOverlay: 'chatgpt-usage-cap' as const }
+                        : {}),
+                }));
+            },
+            { signal }
+        );
+
+        agent.on(
+            'service:event',
+            (payload) => {
+                if (payload.service !== 'orchestration' || payload.event !== 'tasks-updated') {
+                    return;
+                }
+                if (payload.sessionId && payload.sessionId !== currentSessionId) {
+                    return;
+                }
+
+                const data = payload.data as {
+                    tasks?: Array<{
+                        taskId: string;
+                        status: 'running' | 'completed' | 'failed' | 'cancelled';
+                        description?: string;
+                        toolName?: string;
+                    }>;
+                    runningCount?: number;
+                };
+
+                if (data.tasks) {
+                    setUi((prev) => {
+                        const runningCount =
+                            typeof data.runningCount === 'number'
+                                ? data.runningCount
+                                : prev.backgroundTasksRunning;
+                        return {
+                            ...prev,
+                            backgroundTasks: data.tasks ?? prev.backgroundTasks,
+                            backgroundTasksRunning: runningCount,
+                        };
+                    });
+                } else if (typeof data.runningCount === 'number') {
+                    setUi((prev) => ({
+                        ...prev,
+                        backgroundTasksRunning: data.runningCount ?? prev.backgroundTasksRunning,
+                    }));
+                }
+            },
+            { signal }
+        );
+
+        agent.on(
+            'tool:background',
+            (payload) => {
+                if (payload.sessionId !== currentSessionId) {
+                    return;
+                }
+                const messageId = `tool-${payload.toolCallId}`;
+                setMessages((prev) =>
+                    prev.map((message) => {
+                        if (message.id !== messageId) {
+                            return message;
+                        }
+                        return {
+                            ...message,
+                            toolStatus: 'running',
+                            toolResult: 'Background task started',
+                            isBackground: true,
+                        };
+                    })
+                );
+            },
+            { signal }
+        );
+
+        agent.on(
+            'tool:background-completed',
+            (payload) => {
+                if (payload.sessionId !== currentSessionId) {
+                    return;
+                }
+                const messageId = `tool-${payload.toolCallId}`;
+                setMessages((prev) =>
+                    prev.map((message) => {
+                        if (message.id !== messageId) {
+                            return message;
+                        }
+                        return {
+                            ...message,
+                            toolStatus: 'finished',
+                            toolResult: 'Background task completed',
+                            isBackground: true,
+                        };
+                    })
+                );
+            },
+            { signal }
+        );
+
+        // Handle conversation reset
+        agent.on(
+            'session:reset',
+            () => {
+                setMessages([]);
+                setApproval(null);
+                setApprovalQueue([]);
+                setSteerMessages([]);
+                setQueuedMessages([]);
+                setUi((prev) => ({
+                    ...prev,
+                    activeOverlay: 'none',
+                    chatgptRateLimitStatus: null,
+                    insufficientCredits: null,
+                }));
+            },
+            { signal }
+        );
+
+        // Handle session creation (e.g., from /new command)
+        agent.on(
+            'session:created',
+            (payload) => {
+                if (payload.switchTo) {
+                    // Clear the terminal screen for a fresh start (only in TTY environments)
+                    // \x1B[2J clears visible screen, \x1B[3J clears scrollback, \x1B[H moves cursor to top
+                    if (process.stdout.isTTY) {
+                        process.stdout.write('\x1B[2J\x1B[3J\x1B[H');
+                    }
+
+                    // Clear all message state
+                    setMessages([]);
+                    setPendingMessages([]);
+                    setApproval(null);
+                    setApprovalQueue([]);
+                    setSteerMessages([]);
+                    setQueuedMessages([]);
+
+                    // Reset input state including history (up/down arrow) and Ctrl+R search state
+                    // Clear TextBuffer first (source of truth), then sync React state
+                    buffer.setText('');
+                    setInput((prev) => ({
+                        ...prev,
+                        value: '',
+                        history: [],
+                        historyIndex: -1,
+                        draftBeforeHistory: '',
+                        editingQueuedFollowUp: false,
+                        images: [],
+                        pastedBlocks: [],
+                        pasteCounter: 0,
+                    }));
+
+                    if (payload.sessionId === null) {
+                        setSession((prev) => ({ ...prev, id: null, hasActiveSession: false }));
+                    } else {
+                        setSession((prev) => ({
+                            ...prev,
+                            id: payload.sessionId,
+                            hasActiveSession: true,
+                        }));
+                    }
+
+                    // Reset UI state including history search
+                    setUi((prev) => ({
+                        ...prev,
+                        activeOverlay: 'none',
+                        chatgptRateLimitStatus: null,
+                        insufficientCredits: null,
+                        historySearch: {
+                            isActive: false,
+                            query: '',
+                            matchIndex: 0,
+                            originalInput: '',
+                            lastMatch: '',
+                        },
+                    }));
+                }
+            },
+            { signal }
+        );
+
+        // Handle context cleared (from /clear command)
+        // Keep messages visible for user reference - only context sent to LLM is cleared
+        // Just clean up any pending approvals/overlays/queued messages
+        agent.on(
+            'context:cleared',
+            () => {
+                setApproval(null);
+                setApprovalQueue([]);
+                setSteerMessages([]);
+                setQueuedMessages([]);
+                setUi((prev) => ({
+                    ...prev,
+                    activeOverlay: 'none',
+                    chatgptRateLimitStatus: null,
+                    insufficientCredits: null,
+                }));
+            },
+            { signal }
+        );
+
+        // Handle context compacting (from /compact command or auto-compaction)
+        // Single source of truth - handles both manual /compact and auto-compaction during streaming
+        agent.on(
+            'context:compacting',
+            (payload) => {
+                if (payload.sessionId !== currentSessionId) return;
+                setUi((prev) => ({ ...prev, isCompacting: true }));
+            },
+            { signal }
+        );
+
+        // Handle context compacted
+        // Single source of truth - shows notification for all compaction (manual and auto)
+        agent.on(
+            'context:compacted',
+            (payload) => {
+                if (payload.sessionId !== currentSessionId) return;
+                setUi((prev) => ({ ...prev, isCompacting: false }));
+
+                const reductionPercent =
+                    payload.originalTokens > 0
+                        ? Math.round(
+                              ((payload.originalTokens - payload.compactedTokens) /
+                                  payload.originalTokens) *
+                                  100
+                          )
+                        : 0;
+
+                const compactionContent =
+                    `■ Context compacted\n` +
+                    `   ${payload.originalMessages} messages → ${payload.compactedMessages} messages\n` +
+                    `   ~${payload.originalTokens.toLocaleString()} → ~${payload.compactedTokens.toLocaleString()} tokens (${reductionPercent}% reduction)`;
+
+                setMessages((prev) => [
+                    ...prev,
+                    {
+                        id: generateMessageId('system'),
+                        role: 'system' as const,
+                        content: compactionContent,
+                        timestamp: new Date(),
+                    },
+                ]);
+            },
+            { signal }
+        );
+
+        // Handle message queued - fetch the queue that changed so preview content stays fresh
+        agent.on(
+            'message:queued',
+            (payload) => {
+                if (!payload.sessionId) return;
+                syncQueue(payload.sessionId, payload.queue);
+            },
+            { signal }
+        );
+
+        // Handle message removed from queue
+        agent.on(
+            'message:removed',
+            (payload) => {
+                if (!payload.sessionId) {
+                    if (payload.queue === 'steer') {
+                        setSteerMessages((prev) => prev.filter((m) => m.id !== payload.id));
+                    } else {
+                        setQueuedMessages((prev) => prev.filter((m) => m.id !== payload.id));
+                    }
+                    return;
+                }
+                syncQueue(payload.sessionId, payload.queue);
+            },
+            { signal }
+        );
+
+        // Note: message:dequeued is handled in processStream (via iterator) for proper synchronization
+        // with streaming events. Don't handle it here via event bus.
+
+        // ============================================================================
+        // EXTERNAL TRIGGER HANDLING (scheduler, A2A, API)
+        // When an external source invokes the agent, we receive events here instead of
+        // through processStream (which only handles user-initiated streams).
+        // ============================================================================
+
+        // Handle external trigger invocation (scheduler, A2A, API)
+        agent.on(
+            'run:invoke',
+            (payload) => {
+                // Only handle if this is for the current session
+                if (payload.sessionId !== currentSessionId) {
+                    return;
+                }
+
+                // Mark external trigger as active
+                const messageId = generateMessageId('assistant');
+                externalTriggerRef.current = {
+                    active: true,
+                    sessionId: payload.sessionId,
+                    messageId,
+                };
+
+                // Extract prompt text from content parts
+                const promptText = extractTextContent(payload.content);
+
+                // Add the scheduled prompt as a "user" message with a source indicator
+                const sourceLabel =
+                    payload.source === 'scheduler'
+                        ? '◷ Scheduled Task'
+                        : payload.source === 'a2a'
+                          ? '▤ A2A Request'
+                          : payload.source === 'api'
+                            ? '⊡ API Request'
+                            : '▼ External Request';
+
+                const triggerTimestamp = new Date();
+                const scheduleName =
+                    typeof payload.metadata?.scheduleName === 'string'
+                        ? payload.metadata.scheduleName
+                        : null;
+                const triggerLabel = scheduleName ? `${sourceLabel}: ${scheduleName}` : sourceLabel;
+
+                setMessages((prev) => [
+                    ...prev,
+                    {
+                        id: generateMessageId('system'),
+                        role: 'system' as const,
+                        content: triggerLabel,
+                        timestamp: triggerTimestamp,
+                        styledType: 'external-trigger' as const,
+                        styledData: {
+                            label: triggerLabel,
+                            source: payload.source ?? 'external',
+                            timestamp: triggerTimestamp,
+                        },
+                    },
+                    {
+                        id: generateMessageId('user'),
+                        role: 'user' as const,
+                        content: promptText,
+                        timestamp: new Date(),
+                    },
+                ]);
+
+                // Set processing state
+                setUi((prev) => ({
+                    ...prev,
+                    isProcessing: true,
+                    isThinking: true,
+                }));
+
+                // Add assistant pending message for streaming
+                setPendingMessages([
+                    {
+                        id: messageId,
+                        role: 'assistant' as const,
+                        content: '',
+                        timestamp: new Date(),
+                        isStreaming: true,
+                    },
+                ]);
+            },
+            { signal }
+        );
+
+        // Handle streaming chunks for external triggers
+        agent.on(
+            'llm:chunk',
+            (payload) => {
+                // Only handle if this is for an active external trigger
+                if (
+                    !externalTriggerRef.current.active ||
+                    payload.sessionId !== externalTriggerRef.current.sessionId
+                ) {
+                    return;
+                }
+
+                // Only handle text chunks (not reasoning)
+                if (payload.chunkType !== 'text') {
+                    return;
+                }
+
+                // Update pending message with new content
+                setPendingMessages((prev) =>
+                    prev.map((msg) =>
+                        msg.id === externalTriggerRef.current.messageId
+                            ? { ...msg, content: msg.content + payload.content }
+                            : msg
+                    )
+                );
+
+                // Clear thinking state once we start receiving chunks
+                setUi((prev) => (prev.isThinking ? { ...prev, isThinking: false } : prev));
+            },
+            { signal }
+        );
+
+        // Handle LLM thinking for external triggers
+        agent.on(
+            'llm:thinking',
+            (payload) => {
+                if (
+                    !externalTriggerRef.current.active ||
+                    payload.sessionId !== externalTriggerRef.current.sessionId
+                ) {
+                    return;
+                }
+
+                setUi((prev) => ({ ...prev, isThinking: true }));
+            },
+            { signal }
+        );
+
+        // Handle run completion for external triggers
+        agent.on(
+            'run:complete',
+            (payload) => {
+                // Only handle if this is for an active external trigger
+                if (
+                    !externalTriggerRef.current.active ||
+                    payload.sessionId !== externalTriggerRef.current.sessionId
+                ) {
+                    return;
+                }
+
+                // Finalize the pending message
+                setPendingMessages((prev) => {
+                    const pendingMsg = prev.find(
+                        (m) => m.id === externalTriggerRef.current.messageId
+                    );
+                    if (pendingMsg) {
+                        // Move to finalized messages
+                        setMessages((msgs) => [...msgs, { ...pendingMsg, isStreaming: false }]);
+                    }
+                    // Clear pending
+                    return prev.filter((m) => m.id !== externalTriggerRef.current.messageId);
+                });
+
+                // Clear processing state
+                setUi((prev) => ({
+                    ...prev,
+                    isProcessing: false,
+                    isThinking: false,
+                }));
+
+                // Reset external trigger tracking
+                externalTriggerRef.current = { active: false, sessionId: null, messageId: null };
+            },
+            { signal }
+        );
+
+        // Cleanup: abort controller removes all listeners at once
+        return () => {
+            controller.abort();
+        };
+    }, [
+        agent,
+        setMessages,
+        setPendingMessages,
+        setUi,
+        setSession,
+        setInput,
+        setApproval,
+        setApprovalQueue,
+        setSteerMessages,
+        setQueuedMessages,
+        currentSessionId,
+        buffer,
+    ]);
+}

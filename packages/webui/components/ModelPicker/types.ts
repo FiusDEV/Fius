@@ -1,0 +1,117 @@
+import type { LLMProvider, SupportedFileType } from '@fius/llm';
+
+export type ModelInfo = {
+    name: string;
+    displayName?: string;
+    default?: boolean;
+    maxInputTokens: number;
+    supportedFileTypes: SupportedFileType[];
+    pricing?: {
+        inputPerM: number;
+        outputPerM: number;
+        cacheReadPerM?: number;
+        cacheWritePerM?: number;
+        currency?: 'USD';
+        unit?: 'per_million_tokens';
+    };
+};
+
+export type ProviderCatalog = {
+    name: string;
+    hasApiKey: boolean;
+    primaryEnvVar: string;
+    supportsBaseURL: boolean;
+    models: ModelInfo[];
+    supportedFileTypes: SupportedFileType[];
+};
+
+export type CatalogResponse = { providers: Record<LLMProvider, ProviderCatalog> };
+
+export type CurrentLLMConfigResponse = {
+    config: {
+        provider: string;
+        model: string;
+        displayName?: string;
+        baseURL?: string;
+        apiKey?: string;
+        maxInputTokens?: number;
+    };
+};
+
+export function getModelDisplayName(
+    model: {
+        name?: string | null;
+        displayName?: string | null;
+    },
+    fallback: string = 'Unknown model'
+): string {
+    const displayName =
+        typeof model.displayName === 'string' ? model.displayName.trim() : undefined;
+    if (displayName) {
+        return displayName;
+    }
+
+    const name = typeof model.name === 'string' ? model.name.trim() : undefined;
+    if (name) {
+        return name;
+    }
+
+    return fallback;
+}
+
+export function favKey(provider: string, model: string, baseURL?: string) {
+    const key = `${provider}|${model}`;
+    return baseURL ? `${key}|${baseURL}` : key;
+}
+
+export function parseFavoriteKey(
+    value: string
+): { provider: string; model: string; baseURL?: string } | null {
+    if (typeof value !== 'string') {
+        return null;
+    }
+
+    const [providerRaw, modelRaw, ...baseURLParts] = value.split('|');
+    const provider = providerRaw?.trim();
+    const model = modelRaw?.trim();
+
+    if (!provider || !model) {
+        return null;
+    }
+
+    const baseURL = baseURLParts.join('|').trim();
+    return baseURL ? { provider, model, baseURL } : { provider, model };
+}
+
+export function validateBaseURL(url: string): { isValid: boolean; error?: string } {
+    const str = url.trim();
+    if (!str.length) return { isValid: true };
+    try {
+        const u = new URL(str);
+        if (!['http:', 'https:'].includes(u.protocol)) {
+            return { isValid: false, error: 'URL must use http:// or https://' };
+        }
+        return { isValid: true };
+    } catch {
+        return { isValid: false, error: 'Invalid URL format' };
+    }
+}
+
+export const FAVORITES_STORAGE_KEY = 'fius:modelFavorites';
+export const CUSTOM_MODELS_STORAGE_KEY = 'fius:customModels';
+
+export const DEFAULT_FAVORITES = [
+    'anthropic|claude-sonnet-4-5-20250929',
+    'anthropic|claude-opus-4-5-20251101',
+    'openai|gpt-5.1-chat-latest',
+    'openai|gpt-5.1',
+    'google|gemini-3-pro-preview',
+    'google|gemini-3-pro-image-preview',
+];
+
+export interface CustomModelStorage {
+    name: string;
+    baseURL: string;
+    maxInputTokens?: number;
+    maxOutputTokens?: number;
+}

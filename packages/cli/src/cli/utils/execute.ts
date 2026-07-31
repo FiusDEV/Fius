@@ -1,0 +1,53 @@
+import { spawn } from 'child_process';
+import { logger } from '@fius/core';
+
+const DEFAULT_TIMEOUT_MS = 5 * 60 * 1000;
+
+export function executeWithTimeout(
+    command: string,
+    args: string[],
+    options: { cwd: string; timeoutMs?: number }
+): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
+        const { cwd, timeoutMs: timeout = DEFAULT_TIMEOUT_MS } = options;
+        const child = spawn(command, args, { cwd });
+        let stdout = '';
+        let stderr = '';
+
+        const timer = setTimeout(() => {
+            logger.error(`Process timed out after ${timeout}ms, killing process`);
+            child.kill();
+            reject(new Error(`Process timed out after ${timeout}ms`));
+        }, timeout);
+
+        child.stdout.on('data', (data: Buffer) => {
+            const text = data.toString();
+            stdout += text;
+            logger.debug(text);
+        });
+
+        child.stderr.on('data', (data: Buffer) => {
+            const text = data.toString();
+            stderr += text;
+
+
+        });
+
+        child.on('error', (error: Error) => {
+            clearTimeout(timer);
+            logger.error(`Error spawning process: ${error.message}`);
+            reject(error);
+        });
+
+        child.on('close', (code: number) => {
+            clearTimeout(timer);
+            if (code !== 0) {
+                logger.error(`Process exited with code ${code}\n${stderr}`);
+                reject(new Error(`Process exited with code ${code}`));
+            } else {
+                logger.debug(`${command} ${args.join(' ')} stdout: ${stdout}`);
+                resolve();
+            }
+        });
+    });
+}

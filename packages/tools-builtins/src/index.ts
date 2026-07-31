@@ -1,0 +1,17 @@
+/**
+ * @fius/tools-builtins
+ *
+ * Built-in tools shipped with Fius.
+ * These are always available to an agent and can be enabled/disabled via config.
+ *
+ * Tool IDs:
+ * - ask_user
+ * - delegate_to_url
+ * - list_resources
+ * - get_resource
+ * - invoke_skill
+ * - read_skill
+ */
+export { builtinToolsFactory, BuiltinToolsConfigSchema } from './builtin-tools-factory.js';
+export { BUILTIN_TOOL_NAMES } from './builtin-tools-factory.js';
+export type { BuiltinToolsConfig, BuiltinToolName } from './builtin-tools-factory.js';

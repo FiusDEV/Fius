@@ -1,0 +1,80 @@
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { client } from '@/lib/client.js';
+import { queryKeys } from '@/lib/queryKeys.js';
+
+export function useSessions(enabled: boolean = true) {
+    return useQuery({
+        queryKey: queryKeys.sessions.all,
+        queryFn: async () => {
+            const response = await client.api.sessions.$get();
+            if (!response.ok) {
+                throw new Error(`Failed to fetch sessions: ${response.status}`);
+            }
+            const data = await response.json();
+            return data.sessions;
+        },
+        enabled,
+        staleTime: 30 * 1000, // 30 seconds - sessions can be created frequently
+    });
+}
+
+export function useCreateSession() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async ({ sessionId }: { sessionId?: string }) => {
+            const response = await client.api.sessions.$post({
+                json: { sessionId: sessionId?.trim() || undefined },
+            });
+            if (!response.ok) {
+                throw new Error(`Failed to create session: ${response.status}`);
+            }
+            const data = await response.json();
+            return data.session;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: queryKeys.sessions.all });
+        },
+    });
+}
+
+export function useDeleteSession() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async ({ sessionId }: { sessionId: string }) => {
+            const response = await client.api.sessions[':sessionId'].$delete({
+                param: { sessionId },
+            });
+            if (!response.ok) {
+                throw new Error(`Failed to delete session: ${response.status}`);
+            }
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: queryKeys.sessions.all });
+        },
+    });
+}
+
+export function useRenameSession() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async ({ sessionId, title }: { sessionId: string; title: string }) => {
+            const response = await client.api.sessions[':sessionId'].$patch({
+                param: { sessionId },
+                json: { title },
+            });
+            if (!response.ok) {
+                throw new Error('Failed to rename session');
+            }
+            const data = await response.json();
+            return data.session;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: queryKeys.sessions.all });
+        },
+    });
+}
+
+export type Session = NonNullable<ReturnType<typeof useSessions>['data']>[number];

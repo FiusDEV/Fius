@@ -1,0 +1,64 @@
+{
+  "name": "@fius/server",
+  "version": "1.0.0",
+  "private": false,
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./hono": {
+      "types": "./dist/hono/index.d.ts",
+      "import": "./dist/hono/index.js",
+      "require": "./dist/hono/index.cjs"
+    },
+    "./hono/node": {
+      "types": "./dist/hono/node/index.d.ts",
+      "import": "./dist/hono/node/index.js",
+      "require": "./dist/hono/node/index.cjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "@fius/agent-config": "workspace:*",
+    "@fius/agent-management": "workspace:*",
+    "@fius/core": "workspace:*",
+    "@fius/image-local": "workspace:*",
+    "@fius/llm": "workspace:*",
+    "@fius/storage": "workspace:*",
+    "@fius/tools-scheduler": "workspace:*",
+    "@hono/node-server": "1.19.13",
+    "@hono/zod-openapi": "^1.3.0",
+    "hono": "^4.12.12",
+    "ws": "^8.18.1",
+    "yaml": "^2.8.3",
+    "@modelcontextprotocol/sdk": "^1.28.0"
+  },
+  "scripts": {
+    "build": "cross-env NODE_OPTIONS=--max-old-space-size=8192 tsup && node ../../scripts/clean-tsbuildinfo.mjs && cross-env NODE_OPTIONS=--max-old-space-size=8192 tsc -b tsconfig.json --emitDeclarationOnly",
+    "dev": "tsup --watch",
+    "typecheck": "tsc -p tsconfig.typecheck.json --noEmit",
+    "lint": "eslint . --ext .ts",
+    "test": "vitest run"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "sideEffects": false,
+  "devDependencies": {
+    "@types/ws": "^8.5.11",
+    "zod": "^4.3.6"
+  },
+  "peerDependencies": {
+    "zod": "^4.3.6"
+  }
+}

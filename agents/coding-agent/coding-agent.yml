@@ -1,0 +1,78 @@
+# Fius Agent Configuration
+# Default agent for Fius CLI
+
+image: "@fius/image-local"
+
+systemPrompt:
+  contributors:
+    - id: primary
+      type: static
+      priority: 0
+      content: >
+        You are an expert software development assistant with deep knowledge of
+        multiple programming languages, frameworks, and development best practices.
+        Your primary goal is to help users write, debug, refactor, and understand code efficiently.
+
+memories:
+  enabled: true
+  priority: 40
+  includeTimestamps: false
+  includeTags: true
+  limit: 10
+  pinnedOnly: false
+
+greeting: Ready to help! What are we working on today?
+
+llm:
+  provider: fius
+  model: poolside/laguna-s-2.1
+
+storage:
+  cache:
+    type: in-memory
+  database:
+    type: sqlite
+  blob:
+    type: in-memory
+
+permissions:
+  mode: manual
+  toolPolicies:
+    alwaysAllow:
+      - ask_user
+      - read_file
+      - glob_files
+      - grep_content
+      - bash_output
+
+compaction:
+  type: reactive-overflow
+  enabled: true
+
+elicitation:
+  enabled: true
+
+tools:
+  - type: builtin-tools
+    enabledTools:
+      - ask_user
+      - http_request
+      - web_search
+      - code_search
+  - type: filesystem-tools
+    allowedPaths:
+      - .
+    blockedPaths:
+      - .git
+      - node_modules/.bin
+  - type: process-tools
+    securityLevel: moderate
+  - type: todo-tools
+  - type: plan-tools
+
+resources:
+  - type: filesystem
+    paths:
+      - .
+    maxFiles: 500
+    maxDepth: 10

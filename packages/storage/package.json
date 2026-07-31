@@ -1,0 +1,55 @@
+{
+    "name": "@fius/storage",
+    "version": "1.0.0",
+    "description": "Storage backends and config schemas for Fius agents",
+    "type": "module",
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.js"
+        },
+        "./schemas": {
+            "types": "./dist/schemas.d.ts",
+            "import": "./dist/schemas.js"
+        }
+    },
+    "scripts": {
+        "build": "tsup && node ../../scripts/clean-tsbuildinfo.mjs && tsc -b tsconfig.json --emitDeclarationOnly",
+        "typecheck": "tsc --noEmit",
+        "clean": "rm -rf dist"
+    },
+    "keywords": [
+        "fius",
+        "storage"
+    ],
+    "dependencies": {
+        "@fius/core": "workspace:*",
+        "zod": "^4.3.6"
+    },
+    "peerDependencies": {
+        "better-sqlite3": "^11.10.0",
+        "ioredis": "^5.7.0",
+        "pg": "^8.15.4"
+    },
+    "peerDependenciesMeta": {
+        "better-sqlite3": {
+            "optional": true
+        },
+        "ioredis": {
+            "optional": true
+        },
+        "pg": {
+            "optional": true
+        }
+    },
+    "devDependencies": {
+        "tsup": "^8.0.0",
+        "typescript": "^5.3.3"
+    },
+    "files": [
+        "dist",
+        "README.md"
+    ]
+}

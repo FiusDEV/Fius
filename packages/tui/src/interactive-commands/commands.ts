@@ -1,0 +1,160 @@
+
+
+import type { CommandDefinition, CommandHandlerResult } from './command-parser.js';
+import {
+    isCommandDefinitionSupported,
+    isCommandSupported,
+    supportsPrompts,
+    type TuiAgentBackend,
+} from '../agent-backend.js';
+
+// Import modular command definitions
+import { generalCommands, createHelpCommand } from './general-commands.js';
+import { searchCommand, sessionsCommand, renameCommand, forkCommand } from './session/index.js';
+import { exportCommand } from './export/index.js';
+import { modelCommands } from './model/index.js';
+import { providersCommands } from './providers/index.js';
+import { mcpCommands } from './mcp/index.js';
+import { pluginCommands } from './plugin/index.js';
+import { systemCommands } from './system/index.js';
+import { toolCommands } from './tool-commands.js';
+import { promptCommands } from './prompt-commands.js';
+import { skillCommands } from './skill-commands.js';
+import { documentationCommands } from './documentation-commands.js';
+import { logoutCommand } from './auth/index.js';
+import { webuiCommand } from './webui-command.js';
+
+
+export const CLI_COMMANDS: CommandDefinition[] = [];
+
+// Build the commands array with proper help command that can access all commands
+// All commands here use interactive overlays - no text-based subcommands
+const baseCommands: CommandDefinition[] = [
+    // General commands (without help)
+    ...generalCommands,
+
+    // Session management
+    searchCommand, // /search - opens search overlay
+    sessionsCommand, // /sessions - opens session selector overlay
+    renameCommand, // /rename <title> - rename current session
+    forkCommand, // /fork - creates a forked session from current session
+    exportCommand, // /export - opens export wizard overlay
+
+    // Model management
+    modelCommands, // /models - opens model selector overlay
+    providersCommands, // /providers - opens model selector overlay
+
+    // MCP server management
+    mcpCommands, // /mcp - opens MCP server list overlay
+
+    // Plugin management
+    pluginCommands, // /plugin - manage Claude Code compatible plugins
+
+    // Tool management commands
+    ...toolCommands,
+
+    // Prompt management commands
+    ...promptCommands,
+
+    // Skill management commands
+    ...skillCommands,
+
+    // System commands
+    ...systemCommands,
+
+    // Documentation commands
+    ...documentationCommands,
+
+    // Auth commands
+    logoutCommand,
+
+    // WebUI
+    webuiCommand,
+];
+
+// Add help command that can see all commands
+CLI_COMMANDS.push(createHelpCommand((agent) => getAvailableCommands(agent)));
+
+// Add all other commands
+CLI_COMMANDS.push(...baseCommands);
+
+
+export async function executeCommand(
+    command: string,
+    args: string[],
+    agent: TuiAgentBackend,
+    sessionId?: string,
+    configFilePath?: string | null
+): Promise<CommandHandlerResult> {
+    // Create command context with sessionId
+    const ctx = { sessionId: sessionId ?? null, configFilePath: configFilePath ?? null };
+
+    // Find the command (including aliases)
+    const cmd = CLI_COMMANDS.find(
+        (c) => c.name === command || (c.aliases && c.aliases.includes(command))
+    );
+
+    if (cmd) {
+        if (!isCommandSupported(agent, command, cmd)) {
+            return `⚠  Command /${command} is not available for this chat target.`;
+        }
+
+        try {
+            // Execute the handler with context
+            const result = await cmd.handler(args, agent, ctx);
+            // If handler returns a string, it's formatted output for ink-cli
+            // If it returns boolean, it's the old behavior (handled or not)
+            return result;
+        } catch (error) {
+            const errorMsg = `✗ Error executing command /${command}:\n${error instanceof Error ? error.message : String(error)}`;
+            agent.logger.error(
+                `Error executing command /${command}: ${error instanceof Error ? error.message : String(error)}`
+            );
+            return errorMsg; // Return for ink-cli
+        }
+    }
+
+    // Command not found in static commands - check if it's a dynamic prompt command
+    // Dynamic commands use displayName (e.g., "quick-start" instead of "config:quick-start")
+    try {
+        if (supportsPrompts(agent)) {
+            // Import prompt command creation dynamically to avoid circular dependencies
+            const { getDynamicPromptCommands } = await import('./prompt-commands.js');
+            const dynamicCommands = await getDynamicPromptCommands(agent);
+            // Commands are registered by displayName, so search by command name directly
+            const promptCmd = dynamicCommands.find((c) => c.name === command);
+
+            if (promptCmd) {
+                try {
+                    const result = await promptCmd.handler(args, agent, ctx);
+                    // Return the result directly - can be string, boolean, StyledOutput, or SendMessageMarker
+                    return result;
+                } catch (error) {
+                    const errorMsg = `✗ Error executing prompt /${command}:\n${error instanceof Error ? error.message : String(error)}`;
+                    agent.logger.error(
+                        `Error executing prompt /${command}: ${error instanceof Error ? error.message : String(error)}`
+                    );
+                    return errorMsg;
+                }
+            }
+        }
+    } catch (error) {
+        // If loading dynamic commands fails, continue to unknown command error
+        agent.logger.debug(
+            `Failed to check dynamic commands for ${command}: ${error instanceof Error ? error.message : String(error)}`
+        );
+    }
+
+    // Command not found and not a prompt
+    const errorMsg = `✗ Unknown command: /${command}\nType / to see available commands, /prompts to add new ones`;
+    return errorMsg; // Return for ink-cli
+}
+
+
+export function getAllCommands(): CommandDefinition[] {
+    return CLI_COMMANDS;
+}
+
+export function getAvailableCommands(agent: TuiAgentBackend): CommandDefinition[] {
+    return CLI_COMMANDS.filter((command) => isCommandDefinitionSupported(agent, command));
+}

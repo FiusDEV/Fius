@@ -1,0 +1,60 @@
+{
+  "name": "fius",
+  "version": "1.0.0",
+  "type": "module",
+  "bin": {
+    "fius": "./dist/index.js"
+  },
+  "dependencies": {
+    "@clack/prompts": "^0.10.1",
+    "@fius/agent-config": "workspace:*",
+    "@fius/agent-management": "workspace:*",
+    "@fius/analytics": "workspace:*",
+    "@fius/client-sdk": "workspace:*",
+    "@fius/core": "workspace:*",
+    "@fius/image-local": "workspace:*",
+    "@fius/image-logger-agent": "workspace:*",
+    "@fius/llm": "workspace:*",
+    "@fius/registry": "workspace:*",
+    "@fius/server": "workspace:*",
+    "@fius/storage": "workspace:*",
+    "@fius/tui": "workspace:*",
+    "@modelcontextprotocol/sdk": "^1.28.0",
+    "better-sqlite3": "^11.10.0",
+    "boxen": "^7.1.1",
+    "chalk": "^5.6.0",
+    "commander": "^11.1.0",
+    "dotenv": "^16.4.7",
+    "fs-extra": "^11.3.0",
+    "hono": "^4.12.12",
+    "ioredis": "^5.7.0",
+    "minimatch": "^10.2.3",
+    "open": "^10.2.0",
+    "pg": "^8.15.4",
+    "posthog-node": "^4.2.1",
+    "tar": "^7.5.11",
+    "tsx": "^4.19.2",
+    "ws": "^8.18.1",
+    "yaml": "^2.8.3",
+    "zod": "^4.3.6"
+  },
+  "scripts": {
+    "build": "cross-env NODE_OPTIONS=--max-old-space-size=4096 tsc -p tsconfig.json && pnpm run copy-agents && pnpm run copy-assets",
+    "copy-agents": "tsx scripts/copy-agents.ts",
+    "copy-assets": "tsx scripts/copy-assets.ts",
+    "start": "node dist/index.js",
+    "typecheck": "tsc -p tsconfig.typecheck.json --noEmit",
+    "lint": "eslint . --ext .ts"
+  },
+  "devDependencies": {
+    "@types/ws": "^8.5.11",
+    "type-fest": "^4.26.1"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
+}
