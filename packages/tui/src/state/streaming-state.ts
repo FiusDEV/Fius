@@ -25,7 +25,6 @@ async function loadSettings(): Promise<void> {
             buildMode = settings.buildMode;
         }
     } catch {
-        // File doesn't exist or invalid — use defaults
     }
 }
 
@@ -67,7 +66,6 @@ async function saveStreamingSettings(): Promise<void> {
             const data = await fs.readFile(SETTINGS_PATH, 'utf-8');
             settings = JSON.parse(data);
         } catch {
-            // File doesn't exist, start fresh
         }
         settings.streaming = streamingEnabled;
         const dir = path.dirname(SETTINGS_PATH);
@@ -85,14 +83,12 @@ async function saveBuildModeSettings(): Promise<void> {
             const data = await fs.readFile(SETTINGS_PATH, 'utf-8');
             settings = JSON.parse(data);
         } catch {
-            // File doesn't exist, start fresh
         }
         settings.buildMode = buildMode;
         const dir = path.dirname(SETTINGS_PATH);
         await fs.mkdir(dir, { recursive: true });
         await fs.writeFile(SETTINGS_PATH, JSON.stringify(settings, null, 2));
     } catch {
-        // Ignore write errors
     }
 }
 

@@ -165,5 +165,4 @@ export type CLIAction =
     | ExitWarningClearAction
     | CopyModeEnableAction
     | CopyModeDisableAction
-    // Build mode
     | SetBuildModeAction;

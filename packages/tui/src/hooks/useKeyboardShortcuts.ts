@@ -90,7 +90,6 @@ export function useKeyboardShortcuts({ state, dispatch, agent }: UseKeyboardShor
                 }
             }
 
-            // Ctrl+B: Toggle Build/Plan mode
             if (key.ctrl && inputChar === 'b') {
                 const newMode = state.ui.buildMode === 'build' ? 'plan' : 'build';
                 dispatch({ type: 'SET_BUILD_MODE', payload: newMode });

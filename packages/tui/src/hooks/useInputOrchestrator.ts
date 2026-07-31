@@ -493,7 +493,6 @@ export function useInputOrchestrator({
                 return;
             }
 
-            // Ctrl+B: Toggle Build/Plan mode
             if (key.ctrl && inputStr === 'b') {
                 const newMode = uiRef.current.buildMode === 'build' ? 'plan' : 'build';
                 setUi((prev) => ({ ...prev, buildMode: newMode }));
