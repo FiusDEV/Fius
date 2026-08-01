@@ -15,7 +15,7 @@ import {
     pullOllamaModel,
     isNodeLlamaCppInstalled,
     type ModelDownloadProgress,
-} from '@fius/core';
+} from '@fiusdev/core';
 import { spawn } from 'child_process';
 import {
     getAllInstalledModels,
@@ -28,7 +28,7 @@ import {
     saveCustomModel,
     getFiusGlobalPath,
     type InstalledModel,
-} from '@fius/agent-management';
+} from '@fiusdev/agent-management';
 
 export interface LocalModelSetupResult {
     success: boolean;

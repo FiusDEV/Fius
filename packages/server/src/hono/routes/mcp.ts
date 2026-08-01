@@ -6,8 +6,8 @@ import {
     MCPError,
     McpServerConfigSchema,
     MCP_CONNECTION_STATUSES,
-} from '@fius/core';
-import { updateAgentConfigFile } from '@fius/agent-management';
+} from '@fiusdev/core';
+import { updateAgentConfigFile } from '@fiusdev/agent-management';
 import {
     ApiErrorResponseSchema,
     BadRequestErrorResponse,

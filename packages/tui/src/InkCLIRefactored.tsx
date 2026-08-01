@@ -192,7 +192,7 @@ export async function startInkCliRefactored(
         | null = null;
 
     try {
-        const agentManagement = await import('@fius/agent-management');
+        const agentManagement = await import('@fiusdev/agent-management');
         globalPreferencesExistFn = agentManagement.globalPreferencesExist;
         loadGlobalPreferencesFn = agentManagement.loadGlobalPreferences;
         agentPreferencesExistFn = agentManagement.agentPreferencesExist;

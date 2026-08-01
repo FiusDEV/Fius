@@ -1,7 +1,7 @@
 import os from 'node:os';
 import type { Context } from 'hono';
-import type { AgentCard } from '@fius/core';
-import { FiusAgent, createAgentCard, logger, AgentError } from '@fius/core';
+import type { AgentCard } from '@fiusdev/core';
+import { FiusAgent, createAgentCard, logger, AgentError } from '@fiusdev/core';
 import {
     loadAgentConfig,
     deriveDisplayName,
@@ -10,7 +10,7 @@ import {
     globalPreferencesExist,
     loadGlobalPreferences,
     createFiusAgentFromConfig,
-} from '@fius/agent-management';
+} from '@fiusdev/agent-management';
 import { applyUserPreferences } from '../config/cli-overrides.js';
 import { createFileSessionLoggerFactory } from '../utils/session-logger-factory.js';
 import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
@@ -28,7 +28,7 @@ import {
     wireApprovalCoordinatorToAgent,
     type McpTransportType,
     type WebUIRuntimeConfig,
-} from '@fius/server';
+} from '@fiusdev/server';
 import { registerGracefulShutdown } from '../utils/graceful-shutdown.js';
 import { applyWorkspaceToAgent } from '../utils/workspace.js';
 

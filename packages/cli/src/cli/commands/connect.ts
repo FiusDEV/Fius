@@ -1,7 +1,7 @@
 import chalk from 'chalk';
 import * as p from '@clack/prompts';
 import open from 'open';
-import { getDefaultModelForProvider, LLM_PROVIDERS, type LLMProvider } from '@fius/llm';
+import { getDefaultModelForProvider, LLM_PROVIDERS, type LLMProvider } from '@fiusdev/llm';
 import {
     deleteModelAuthProfile,
     getDefaultModelAuthProfileIdForProvider,
@@ -16,7 +16,7 @@ import {
     type AuthMethodDefinition,
     type ModelAuthProfile,
     type ProviderAuthDefinition,
-} from '@fius/agent-management';
+} from '@fiusdev/agent-management';
 import { interactiveApiKeySetup } from '../utils/api-key-setup.js';
 import { getProviderDisplayName } from '../utils/provider-setup.js';
 

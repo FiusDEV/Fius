@@ -5,7 +5,7 @@ import { Button } from './ui/button';
 import { Checkbox } from './ui/checkbox';
 import type { ApprovalEvent } from './ApprovalRequestHandler';
 import type { JSONSchema7 } from 'json-schema';
-import { ApprovalType } from '@fius/core';
+import { ApprovalType } from '@fiusdev/core';
 
 interface ApprovalTimelineProps {
     approval: ApprovalEvent;

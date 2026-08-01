@@ -1,6 +1,6 @@
 
 
-import type { SessionMetadata } from '@fius/core';
+import type { SessionMetadata } from '@fiusdev/core';
 
 type ExitTokenUsage = NonNullable<SessionMetadata['tokenUsage']>;
 

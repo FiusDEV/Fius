@@ -1,4 +1,4 @@
-import type { LLMProvider, SupportedFileType } from '@fius/llm';
+import type { LLMProvider, SupportedFileType } from '@fiusdev/llm';
 
 export type ModelInfo = {
     name: string;

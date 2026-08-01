@@ -10,7 +10,7 @@ import React, {
 import { Box, Text } from 'ink';
 import path from 'path';
 import type { Key } from '../hooks/useInputOrchestrator.js';
-import type { ResourceMetadata } from '@fius/core';
+import type { ResourceMetadata } from '@fiusdev/core';
 import { centerTruncatePath } from '../utils/messageFormatting.js';
 import { useTerminalSize } from '../hooks/useTerminalSize.js';
 import { getMaxVisibleItemsForTerminalRows } from '../utils/overlaySizing.js';

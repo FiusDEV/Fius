@@ -6,7 +6,7 @@ import {
     type NoOpCompactionConfig,
     ReactiveOverflowCompactionConfigSchema,
     type ReactiveOverflowCompactionConfig,
-} from '@fius/agent-config';
+} from '@fiusdev/agent-config';
 import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -33,7 +33,7 @@ import {
     NoOpCompactionStrategy,
     ReactiveOverflowCompactionStrategy,
     type Logger,
-} from '@fius/core';
+} from '@fiusdev/core';
 import {
     StorageSchema,
     type ValidatedStorageConfig,
@@ -51,20 +51,20 @@ import {
     MemoryDatabaseStore,
     RedisStore,
     MemoryCacheStore,
-} from '@fius/storage';
-import { builtinToolsFactory } from '@fius/tools-builtins';
-import { fileSystemToolsFactory } from '@fius/tools-filesystem';
-import { processToolsFactory } from '@fius/tools-process';
-import { todoToolsFactory } from '@fius/tools-todo';
-import { planToolsFactory } from '@fius/tools-plan';
-import { schedulerToolsFactory } from '@fius/tools-scheduler';
-import { lifecycleToolsFactory } from '@fius/tools-lifecycle';
+} from '@fiusdev/storage';
+import { builtinToolsFactory } from '@fiusdev/tools-builtins';
+import { fileSystemToolsFactory } from '@fiusdev/tools-filesystem';
+import { processToolsFactory } from '@fiusdev/tools-process';
+import { todoToolsFactory } from '@fiusdev/tools-todo';
+import { planToolsFactory } from '@fiusdev/tools-plan';
+import { schedulerToolsFactory } from '@fiusdev/tools-scheduler';
+import { lifecycleToolsFactory } from '@fiusdev/tools-lifecycle';
 import {
     agentSpawnerToolsFactory,
     createLocalSkillSources,
     creatorToolsFactory,
     getFiusPackageRoot,
-} from '@fius/agent-management';
+} from '@fiusdev/agent-management';
 import { LocalWorkspaceHandleProvider } from './local-workspace-handle-provider.js';
 
 function readPackageJson(packageJsonPath: string): { name?: string; version?: string } | null {
@@ -125,7 +125,7 @@ function resolveImageMetadata(defaultName: string): { name: string; version: str
     };
 }
 
-const imageMetadata = resolveImageMetadata('@fius/image-local');
+const imageMetadata = resolveImageMetadata('@fiusdev/image-local');
 
 const contentPolicyConfigSchema = z
     .object({

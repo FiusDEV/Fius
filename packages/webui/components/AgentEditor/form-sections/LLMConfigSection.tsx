@@ -4,8 +4,8 @@ import { LabelWithTooltip } from '../../ui/label-with-tooltip';
 import { Collapsible } from '../../ui/collapsible';
 import { Eye, EyeOff } from 'lucide-react';
 import { useModelCapabilities } from '../../hooks/useLLM';
-import { LLM_PROVIDERS } from '@fius/llm';
-import type { AgentConfig } from '@fius/agent-config';
+import { LLM_PROVIDERS } from '@fiusdev/llm';
+import type { AgentConfig } from '@fiusdev/agent-config';
 import { useDebounce } from 'use-debounce';
 
 type LLMConfig = AgentConfig['llm'];

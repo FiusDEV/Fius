@@ -2,7 +2,7 @@
  * Error classes for scheduler operations
  */
 
-import { FiusRuntimeError, ErrorType } from '@fius/core';
+import { FiusRuntimeError, ErrorType } from '@fiusdev/core';
 import { SchedulerErrorCode } from './error-codes.js';
 
 /**

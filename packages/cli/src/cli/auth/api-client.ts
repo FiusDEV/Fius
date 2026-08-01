@@ -1,4 +1,4 @@
-import { logger } from '@fius/core';
+import { logger } from '@fiusdev/core';
 import { FIUS_PLATFORM_URL, SUPABASE_ANON_KEY, SUPABASE_URL } from './constants.js';
 import type { AuthenticatedUser } from './types.js';
 

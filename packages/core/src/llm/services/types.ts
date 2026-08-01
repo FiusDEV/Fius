@@ -4,7 +4,7 @@ import type { CodexRateLimitSnapshot } from '../providers/codex-app-server.js';
 import type { ValidatedLLMConfig } from '../schemas.js';
 import type { LlmAuthResolver } from '../auth/types.js';
 import type { Logger } from '../../logger/v2/types.js';
-import type { LLMProvider } from '@fius/llm';
+import type { LLMProvider } from '@fiusdev/llm';
 import type { MessageQueueService } from '../../session/message-queue.js';
 import type { AgentRunContext } from '../../runtime/run-context.js';
 import type { TurnDriverState } from '../executor/turn-executor.js';

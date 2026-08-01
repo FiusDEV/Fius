@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Box, Text } from 'ink';
-import type { ShellDisplayData } from '@fius/core';
+import type { ShellDisplayData } from '@fiusdev/core';
 
 interface ShellRendererProps {
     

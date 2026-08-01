@@ -1,5 +1,5 @@
 import type { Cache } from './types.js';
-import { StorageError } from '@fius/core';
+import { StorageError } from '@fiusdev/core';
 
 /**
  * In-memory cache store for development and testing.

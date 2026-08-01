@@ -1,39 +1,42 @@
 {
-    "name": "@fius/tools-process",
-    "version": "1.0.0",
-    "description": "Process tools factory for Fius agents",
-    "type": "module",
-    "main": "./dist/index.js",
-    "types": "./dist/index.d.ts",
-    "exports": {
-        ".": {
-            "types": "./dist/index.d.ts",
-            "import": "./dist/index.js"
-        }
-    },
-    "scripts": {
-        "build": "tsup && node ../../scripts/clean-tsbuildinfo.mjs && tsc -b tsconfig.json --emitDeclarationOnly",
-        "typecheck": "tsc --noEmit",
-        "clean": "rm -rf dist"
-    },
-    "keywords": [
-        "fius",
-        "tools",
-        "process",
-        "bash",
-        "shell"
-    ],
-    "dependencies": {
-        "@fius/agent-config": "workspace:*",
-        "@fius/core": "workspace:*",
-        "zod": "^4.3.6"
-    },
-    "devDependencies": {
-        "tsup": "^8.0.0",
-        "typescript": "^5.3.3"
-    },
-    "files": [
-        "dist",
-        "README.md"
-    ]
+  "name": "@fiusdev/tools-process",
+  "version": "0.3.2",
+  "description": "Process tools factory for Fius agents",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsup && node ../../scripts/clean-tsbuildinfo.mjs && tsc -b tsconfig.json --emitDeclarationOnly",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "keywords": [
+    "fius",
+    "tools",
+    "process",
+    "bash",
+    "shell"
+  ],
+  "dependencies": {
+    "@fiusdev/agent-config": "workspace:*",
+    "@fiusdev/core": "workspace:*",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "tsup": "^8.0.0",
+    "typescript": "^5.3.3"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
 }

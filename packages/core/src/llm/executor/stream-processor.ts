@@ -7,8 +7,8 @@ import type { Logger } from '../../logger/v2/types.js';
 import { FiusLogComponent } from '../../logger/v2/types.js';
 import type { ModelToolCall } from './types.js';
 import { getUsagePricingMetadata } from '../usage-metadata.js';
-import type { TokenUsageCostBreakdown } from '@fius/llm';
-import type { LLMProvider, LLMPricingStatus, ReasoningVariant, TokenUsage } from '@fius/llm';
+import type { TokenUsageCostBreakdown } from '@fiusdev/llm';
+import type { LLMProvider, LLMPricingStatus, ReasoningVariant, TokenUsage } from '@fiusdev/llm';
 import { extractProviderErrorDetails, mapProviderError } from './provider-error.js';
 
 type UsageLike = {

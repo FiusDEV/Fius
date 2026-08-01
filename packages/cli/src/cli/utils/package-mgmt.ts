@@ -1,4 +1,4 @@
-import { findPackageRoot, logger } from '@fius/core';
+import { findPackageRoot, logger } from '@fiusdev/core';
 import fsExtra from 'fs-extra';
 import path from 'path';
 import { PackageJson } from 'type-fest';

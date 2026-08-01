@@ -4,8 +4,8 @@ import {
     FiusLogger,
     FileTransport,
     type SessionLoggerFactory,
-} from '@fius/core';
-import { getFiusPath } from '@fius/agent-management';
+} from '@fiusdev/core';
+import { getFiusPath } from '@fiusdev/agent-management';
 
 export function createFileSessionLoggerFactory(): SessionLoggerFactory {
     return ({ baseLogger, agentId, sessionId }) => {

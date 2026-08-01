@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect, forwardRef, useImperativeHandle, useCallback } from 'react';
 import { Box, Text } from 'ink';
-import { addMarketplace } from '@fius/agent-management';
-import { logger } from '@fius/core';
+import { addMarketplace } from '@fiusdev/agent-management';
+import { logger } from '@fiusdev/core';
 import type { Key } from '../../hooks/useInputOrchestrator.js';
 
 interface MarketplaceAddPromptProps {

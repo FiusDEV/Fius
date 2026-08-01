@@ -1,4 +1,4 @@
-import { setImageImporter } from '@fius/agent-config';
+import { setImageImporter } from '@fiusdev/agent-config';
 import { importImageModule } from './image-store.js';
 
 let imageImporterConfigured = false;

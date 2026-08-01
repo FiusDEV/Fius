@@ -1,4 +1,4 @@
-import type { Hook, Logger, Tool } from '@fius/core';
+import type { Hook, Logger, Tool } from '@fiusdev/core';
 import type { ToolFactoryEntry, ValidatedAgentConfig } from '../schemas/agent-config.js';
 import type { FiusHostContext, FiusImage, ImageResolutionContext } from '../image/types.js';
 import type { ResolvedServices } from './types.js';

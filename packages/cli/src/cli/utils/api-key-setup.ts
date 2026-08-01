@@ -1,6 +1,6 @@
 import * as p from '@clack/prompts';
 import chalk from 'chalk';
-import type { LLMProvider } from '@fius/llm';
+import type { LLMProvider } from '@fiusdev/llm';
 
 export interface ApiKeySetupResult {
     success: boolean;

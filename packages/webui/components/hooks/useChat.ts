@@ -1,12 +1,12 @@
 import React, { useRef, useEffect, useCallback } from 'react';
-import type { SanitizedToolResult } from '@fius/core';
+import type { SanitizedToolResult } from '@fiusdev/core';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAnalytics } from '@/lib/analytics/index.js';
 import { getApiUrl } from '@/lib/api-url.js';
 import { client } from '@/lib/client.js';
 import { queryKeys } from '@/lib/queryKeys.js';
-import { createMessageStream } from '@fius/client-sdk';
-import type { MessageStreamEvent } from '@fius/client-sdk';
+import { createMessageStream } from '@fiusdev/client-sdk';
+import type { MessageStreamEvent } from '@fiusdev/client-sdk';
 import { eventBus } from '@/lib/events/EventBus.js';
 import { useChatStore } from '@/lib/stores/chatStore.js';
 import type { Session } from './useSessions.js';

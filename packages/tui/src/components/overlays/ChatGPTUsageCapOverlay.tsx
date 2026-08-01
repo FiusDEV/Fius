@@ -1,6 +1,6 @@
 import React, { forwardRef, useImperativeHandle } from 'react';
 import { Box, Text } from 'ink';
-import type { CodexRateLimitSnapshot } from '@fius/core';
+import type { CodexRateLimitSnapshot } from '@fiusdev/core';
 import type { Key } from '../../hooks/useInputOrchestrator.js';
 import { getChatGPTRateLimitHint } from '../../utils/chatgpt-rate-limit.js';
 

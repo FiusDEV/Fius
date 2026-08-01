@@ -1,5 +1,5 @@
-import type { Logger } from '@fius/core';
-import type { ToolStateStore } from '@fius/core/storage';
+import type { Logger } from '@fiusdev/core';
+import type { ToolStateStore } from '@fiusdev/core/storage';
 import { SchedulerToolsConfigSchema, type SchedulerToolsConfig } from './schemas.js';
 import type { ScheduleExecutorFn } from './types.js';
 import { SchedulerManager } from './manager.js';

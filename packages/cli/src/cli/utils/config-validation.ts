@@ -5,11 +5,11 @@ import {
     AgentConfigSchema,
     type AgentConfig,
     type ValidatedAgentConfig,
-} from '@fius/agent-config';
-import { getPrimaryApiKeyEnvVar, resolveApiKeyForProvider } from '@fius/agent-management';
-import { requiresApiKey, requiresBaseURL } from '@fius/llm';
-import { logger } from '@fius/core';
-import { getGlobalPreferencesPath } from '@fius/agent-management';
+} from '@fiusdev/agent-config';
+import { getPrimaryApiKeyEnvVar, resolveApiKeyForProvider } from '@fiusdev/agent-management';
+import { requiresApiKey, requiresBaseURL } from '@fiusdev/llm';
+import { logger } from '@fiusdev/core';
+import { getGlobalPreferencesPath } from '@fiusdev/agent-management';
 import {
     getBundledSyncTargetForAgentPath,
     handleSyncAgentsCommand,

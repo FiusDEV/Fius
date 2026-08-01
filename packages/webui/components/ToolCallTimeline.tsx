@@ -19,7 +19,7 @@ import {
 import { cn } from '@/lib/utils';
 import { Button } from './ui/button';
 import { CodePreview } from './CodePreview';
-import type { ToolDisplayData, ToolPresentationSnapshotV1 } from '@fius/core';
+import type { ToolDisplayData, ToolPresentationSnapshotV1 } from '@fiusdev/core';
 
 /**
  * Sub-agent progress data for spawn_agent tool calls

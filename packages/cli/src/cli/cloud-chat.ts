@@ -11,8 +11,8 @@ import {
     type SearchResult,
     type SessionMetadata,
     type StreamingEvent,
-} from '@fius/core';
-import { startInkCliRefactored, type TuiAgentBackend } from '@fius/tui';
+} from '@fiusdev/core';
+import { startInkCliRefactored, type TuiAgentBackend } from '@fiusdev/tui';
 import { createDeployClient } from './commands/deploy/client.js';
 import { loadWorkspaceDeployLink } from './commands/deploy/state.js';
 

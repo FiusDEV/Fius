@@ -2,9 +2,9 @@
 
 import React from 'react';
 import { Box, Text } from 'ink';
-import { getProviderKeyStatus } from '@fius/agent-management';
-import type { LLMProvider } from '@fius/llm';
-import type { CustomModelProvider } from '@fius/agent-management';
+import { getProviderKeyStatus } from '@fiusdev/agent-management';
+import type { LLMProvider } from '@fiusdev/llm';
+import type { CustomModelProvider } from '@fiusdev/agent-management';
 
 interface ApiKeyStepProps {
     

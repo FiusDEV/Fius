@@ -1,4 +1,4 @@
-import type { LLMProvider } from '@fius/llm';
+import type { LLMProvider } from '@fiusdev/llm';
 
 export interface VerificationResult {
     success: boolean;

@@ -6,12 +6,11 @@ import {
     findFiusSourceRoot,
     findFiusProjectRoot,
 } from './utils/execution-context.js';
-import { logger } from '@fius/core';
+import { logger } from '@fiusdev/core';
 import { loadGlobalPreferences, globalPreferencesExist } from './preferences/loader.js';
 import { ConfigError } from './config/index.js';
 import { RegistryError } from './registry/errors.js';
 import { AgentManager } from './AgentManager.js';
-import { installBundledAgent } from './installation.js';
 import {
     isProjectRegistryError,
     resolveDefaultProjectRegistryAgentPath,
@@ -71,7 +70,7 @@ export async function resolveAgentPath(
 /**
  * Resolve agent by name from installed or bundled registry
  */
-async function resolveAgentByName(agentId: string, autoInstall: boolean): Promise<string> {
+async function resolveAgentByName(agentId: string, _autoInstall: boolean): Promise<string> {
     const agentsDir = getFiusGlobalPath('agents');
     const installedRegistryPath = path.join(agentsDir, 'registry.json');
 
@@ -86,18 +85,7 @@ async function resolveAgentByName(agentId: string, autoInstall: boolean): Promis
         logger.debug(`Agent '${agentId}' not found in installed registry: ${error}`);
     }
 
-    if (autoInstall) {
-        try {
-            logger.info(`Auto-installing agent '${agentId}' from bundled registry`);
-            const configPath = await installBundledAgent(agentId);
-            return configPath;
-        } catch (error) {
-            logger.debug(`Failed to auto-install agent '${agentId}': ${error}`);
-            throw RegistryError.agentNotFound(agentId, []);
-        }
-    }
-
-    throw RegistryError.agentNotInstalledAutoInstallDisabled(agentId, []);
+    throw RegistryError.agentNotFound(agentId, []);
 }
 
 /**
@@ -246,27 +234,24 @@ async function resolveDefaultAgentForFiusProject(autoInstall: boolean = true): P
         }
     }
 
-    return await resolveAgentByName('fius', autoInstall);
+    throw ConfigError.bundledNotFound('No agent configuration found. Run "fius" to set up, or pass --agent <path> to specify an agent config.');
 }
 
 /**
  * Resolution for Global CLI context - preferences default REQUIRED
  */
-async function resolveDefaultAgentForGlobalCLI(autoInstall: boolean = true): Promise<string> {
+async function resolveDefaultAgentForGlobalCLI(_autoInstall: boolean = true): Promise<string> {
     logger.debug('Resolving default agent for global CLI context');
-    if (globalPreferencesExist()) {
-        try {
-            const preferences = await loadGlobalPreferences();
-            if (preferences.setup.completed && preferences.defaults.defaultAgent) {
-                const preferredAgentName = preferences.defaults.defaultAgent;
-                return await resolveAgentByName(preferredAgentName, autoInstall);
-            }
-        } catch (error) {
-            logger.debug(`Could not load global preferences for CLI fallback: ${error}`);
-        }
+
+    const bundledAgentPath = resolveBundledScript('agents/coding-agent/coding-agent.yml');
+    try {
+        await fs.access(bundledAgentPath);
+        return bundledAgentPath;
+    } catch {
+        logger.debug(`Bundled agent not found at ${bundledAgentPath}`);
     }
 
-    return await resolveAgentByName('fius', autoInstall);
+    throw ConfigError.bundledNotFound('No agent configuration found. Run "fius" to set up, or pass --agent <path> to specify an agent config.');
 }
 
 /**
@@ -275,31 +260,5 @@ async function resolveDefaultAgentForGlobalCLI(autoInstall: boolean = true): Pro
  * @throws {RegistryError} If the agent is not found in installed or bundled registry
  */
 export async function updateDefaultAgentPreference(agentName: string): Promise<void> {
-    const agentsDir = getFiusGlobalPath('agents');
-    const installedRegistryPath = path.join(agentsDir, 'registry.json');
-    const bundledRegistryPath = resolveBundledScript('agents/agent-registry.json');
-
-    const registriesToCheck = [
-        { path: installedRegistryPath, name: 'installed' },
-        { path: bundledRegistryPath, name: 'bundled' },
-    ];
-
-    for (const registry of registriesToCheck) {
-        try {
-            const manager = new AgentManager(registry.path);
-            await manager.loadRegistry();
-            if (manager.hasAgent(agentName)) {
-                const { updateGlobalPreferences } = await import('./preferences/loader.js');
-                await updateGlobalPreferences({
-                    defaults: { defaultAgent: agentName },
-                });
-                logger.info(`Updated default agent preference to: ${agentName}`);
-                return;
-            }
-        } catch (error) {
-            logger.debug(`Agent '${agentName}' not found in ${registry.name} registry: ${error}`);
-        }
-    }
-
     throw RegistryError.agentNotFound(agentName, []);
 }

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import type { ServerRegistryEntry } from '@fius/registry';
+import type { ServerRegistryEntry } from '@fiusdev/registry';
 import {
     Dialog,
     DialogContent,

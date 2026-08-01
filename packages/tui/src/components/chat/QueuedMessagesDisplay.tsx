@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Box, Text } from 'ink';
-import type { QueuedMessage } from '@fius/core';
+import type { QueuedMessage } from '@fiusdev/core';
 import { previewQueuedContent } from '../../utils/queuedComposerContent.js';
 
 const isMac = process.platform === 'darwin';

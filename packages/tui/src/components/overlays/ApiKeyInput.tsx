@@ -3,8 +3,8 @@
 import React, { useState, useEffect, forwardRef, useImperativeHandle, useCallback } from 'react';
 import { Box, Text } from 'ink';
 import type { Key } from '../../hooks/useInputOrchestrator.js';
-import type { LLMProvider } from '@fius/llm';
-import { getPrimaryApiKeyEnvVar, saveProviderApiKey } from '@fius/agent-management';
+import type { LLMProvider } from '@fiusdev/llm';
+import { getPrimaryApiKeyEnvVar, saveProviderApiKey } from '@fiusdev/agent-management';
 import { applyLayeredEnvironmentLoading } from '../../host/index.js';
 import {
     getProviderDisplayName,

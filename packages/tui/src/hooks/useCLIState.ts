@@ -2,9 +2,9 @@
 
 import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { useStdout } from 'ink';
-import { getModelDisplayName } from '@fius/llm';
-import { loadModelPickerState } from '@fius/agent-management';
-import { isUserMessage, type QueuedMessage } from '@fius/core';
+import { getModelDisplayName } from '@fiusdev/llm';
+import { loadModelPickerState } from '@fiusdev/agent-management';
+import { isUserMessage, type QueuedMessage } from '@fiusdev/core';
 import { subscribeToBuildMode } from '../state/streaming-state.js';
 import type {
     Message,
@@ -177,7 +177,7 @@ export function useCLIState({
             try {
                 const [pickerState, customModels] = await Promise.all([
                     loadModelPickerState(),
-                    import('@fius/agent-management').then((m) => m.loadCustomModels()).catch(() => []),
+                    import('@fiusdev/agent-management').then((m) => m.loadCustomModels()).catch(() => []),
                 ]);
 
                 if (cancelled) return;

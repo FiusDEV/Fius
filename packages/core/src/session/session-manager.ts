@@ -10,7 +10,7 @@ import type { ValidatedLLMConfig } from '../llm/schemas.js';
 import type { HookManager } from '../hooks/manager.js';
 import type { ApprovalManager } from '../approval/manager.js';
 import { SessionError } from './errors.js';
-import type { TokenUsage } from '@fius/llm';
+import type { TokenUsage } from '@fiusdev/llm';
 import { normalizeTokenUsageForAccounting } from '../llm/usage-metadata.js';
 import type { LLMExecutionControl, LanguageModelFactory } from '../llm/services/types.js';
 import type { LlmAuthResolver } from '../llm/auth/index.js';

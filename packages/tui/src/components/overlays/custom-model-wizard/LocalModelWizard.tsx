@@ -18,7 +18,7 @@ import {
     getFiusGlobalPath,
     type InstalledModel,
     type CustomModel,
-} from '@fius/agent-management';
+} from '@fiusdev/agent-management';
 import { promises as fsPromises } from 'fs';
 import {
     getAllLocalModels,
@@ -28,7 +28,7 @@ import {
     isNodeLlamaCppInstalled,
     type LocalModelInfo,
     type ModelDownloadProgress,
-} from '@fius/core';
+} from '@fiusdev/core';
 import { SetupInfoBanner } from './shared/index.js';
 
 type WizardStep =

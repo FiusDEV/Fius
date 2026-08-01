@@ -27,10 +27,10 @@ import {
     ChevronDown,
     Server,
 } from 'lucide-react';
-import type { AgentConfig, ToolFactoryEntry } from '@fius/agent-config';
-import type { ContributorConfig } from '@fius/core';
-import { MCP_SERVER_TYPES } from '@fius/core';
-import { LLM_PROVIDERS } from '@fius/llm';
+import type { AgentConfig, ToolFactoryEntry } from '@fiusdev/agent-config';
+import type { ContributorConfig } from '@fiusdev/core';
+import { MCP_SERVER_TYPES } from '@fiusdev/core';
+import { LLM_PROVIDERS } from '@fiusdev/llm';
 import { cn } from '@/lib/utils';
 import { useDiscovery } from '../hooks/useDiscovery';
 import { useLLMCatalog, type LLMProvider } from '../hooks/useLLM';

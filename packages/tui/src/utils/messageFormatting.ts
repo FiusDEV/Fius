@@ -7,8 +7,8 @@ import type {
     ContentPart,
     ToolCall,
     ToolPresentationSnapshotV1,
-} from '@fius/core';
-import { isTextPart, isAssistantMessage, isToolMessage } from '@fius/core';
+} from '@fiusdev/core';
+import { isTextPart, isAssistantMessage, isToolMessage } from '@fiusdev/core';
 import type { Message, ExternalTriggerStyledData } from '../state/types.js';
 import { supportsStartupInfo, type TuiAgentBackend } from '../agent-backend.js';
 

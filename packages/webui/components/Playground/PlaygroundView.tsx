@@ -15,7 +15,7 @@ import {
 } from './ToolInputForm';
 import { ToolResult } from './ToolResult';
 import { ExecutionHistory, type ExecutionHistoryItem } from './ExecutionHistory';
-import type { ToolResult as ToolResultType } from '@fius/core';
+import type { ToolResult as ToolResultType } from '@fiusdev/core';
 import { cn } from '@/lib/utils';
 import { client } from '@/lib/client';
 import { useServers, useServerTools } from '../hooks/useServers';

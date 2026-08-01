@@ -12,7 +12,7 @@ import {
     LLMUpdatesSchema,
     getFiusGlobalPath,
     getModelDisplayName,
-} from '@fius/core';
+} from '@fiusdev/core';
 import {
     LLM_REGISTRY,
     LLM_PROVIDERS,
@@ -22,7 +22,7 @@ import {
     type LLMProvider,
     type ProviderInfo,
     type SupportedFileType,
-} from '@fius/llm';
+} from '@fiusdev/llm';
 import {
     getProviderKeyStatus,
     loadCustomModels,
@@ -37,7 +37,7 @@ import {
     toModelPickerKey,
     getAllInstalledModels,
     CustomModelSchema,
-} from '@fius/agent-management';
+} from '@fiusdev/agent-management';
 import {
     BadRequestErrorResponse,
     ConflictErrorResponse,

@@ -1,5 +1,5 @@
 /**
- * @fius/tools-builtins
+ * @fiusdev/tools-builtins
  *
  * Built-in tools shipped with Fius.
  * These are always available to an agent and can be enabled/disabled via config.

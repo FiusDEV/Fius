@@ -1,8 +1,8 @@
 import { Pool, PoolClient } from 'pg';
 import type { Database } from './types.js';
 import type { PostgresDatabaseConfig } from './schemas.js';
-import type { Logger } from '@fius/core';
-import { FiusLogComponent, StorageError } from '@fius/core';
+import type { Logger } from '@fiusdev/core';
+import { FiusLogComponent, StorageError } from '@fiusdev/core';
 
 /**
  * PostgreSQL database store for production database operations.

@@ -7,7 +7,7 @@
 
 import { existsSync, promises as fs } from 'fs';
 import { z } from 'zod';
-import { getFiusGlobalPath } from '@fius/core';
+import { getFiusGlobalPath } from '@fiusdev/core';
 
 const AUTH_CONFIG_FILE = 'auth.json';
 

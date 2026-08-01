@@ -2,13 +2,13 @@ import React from 'react';
 import { Input } from '../../ui/input';
 import { LabelWithTooltip } from '../../ui/label-with-tooltip';
 import { Collapsible } from '../../ui/collapsible';
-import type { AgentConfig } from '@fius/agent-config';
+import type { AgentConfig } from '@fiusdev/agent-config';
 import {
     PERMISSIONS_MODES,
     ALLOWED_TOOLS_STORAGE_TYPES,
     DEFAULT_PERMISSIONS_MODE,
     DEFAULT_ALLOWED_TOOLS_STORAGE,
-} from '@fius/core';
+} from '@fiusdev/core';
 
 type PermissionsConfig = NonNullable<AgentConfig['permissions']>;
 

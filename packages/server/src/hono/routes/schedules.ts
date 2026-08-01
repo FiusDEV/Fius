@@ -6,12 +6,12 @@ import {
     ScheduleSchema,
     type ErrorResponse,
 } from '../schemas/responses.js';
-import { SchedulerErrorCode } from '@fius/tools-scheduler';
+import { SchedulerErrorCode } from '@fiusdev/tools-scheduler';
 import {
     ensureSchedulerManagerForAgent,
     getSchedulerManager,
-} from '@fius/tools-scheduler/service';
-import { FiusRuntimeError, ErrorType } from '@fius/core';
+} from '@fiusdev/tools-scheduler/service';
+import { FiusRuntimeError, ErrorType } from '@fiusdev/core';
 
 const CreateScheduleSchema = z
     .object({

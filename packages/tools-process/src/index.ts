@@ -1,5 +1,5 @@
 /**
- * @fius/tools-process
+ * @fiusdev/tools-process
  *
  * Process tools factory for Fius agents.
  * Provides process operation tools: bash exec, output, kill.

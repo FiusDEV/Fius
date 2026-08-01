@@ -8,12 +8,12 @@ import {
     DEFAULT_OLLAMA_URL,
     checkOllamaStatus,
     logger,
-} from '@fius/core';
+} from '@fiusdev/core';
 import {
     getAllInstalledModels,
     getInstalledModel,
     removeInstalledModel,
-} from '@fius/agent-management';
+} from '@fiusdev/agent-management';
 import { BadRequestErrorResponse, InternalErrorResponse } from '../schemas/responses.js';
 import type { OpenAPIRouteSchema } from '../types.js';
 

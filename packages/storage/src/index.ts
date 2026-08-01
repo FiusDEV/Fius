@@ -1,5 +1,5 @@
 /**
- * @fius/storage
+ * @fiusdev/storage
  *
  * Concrete storage backends + config schemas.
  *

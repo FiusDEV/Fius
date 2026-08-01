@@ -1,6 +1,6 @@
 import React from 'react';
 import { Sparkles, FlaskConical, Zap } from 'lucide-react';
-import type { LLMProvider } from '@fius/llm';
+import type { LLMProvider } from '@fiusdev/llm';
 
 export const PROVIDER_LOGOS: Record<string, string> = {
     fius: '/favicon.png',

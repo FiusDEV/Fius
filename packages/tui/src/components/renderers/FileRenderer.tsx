@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Box, Text } from 'ink';
-import type { FileDisplayData } from '@fius/core';
+import type { FileDisplayData } from '@fiusdev/core';
 import { makeRelativePath } from '../../utils/messageFormatting.js';
 import { formatLineNum, getLineNumWidth } from './diff-shared.js';
 

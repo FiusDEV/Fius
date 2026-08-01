@@ -1,52 +1,55 @@
 {
-    "name": "@fius/image-local",
-    "version": "1.0.0",
-    "description": "Local development base image for Fius agents with filesystem and process tools",
-    "type": "module",
-    "main": "./dist/index.js",
-    "types": "./dist/index.d.ts",
-    "exports": {
-        ".": {
-            "types": "./dist/index.d.ts",
-            "import": "./dist/index.js"
-        }
-    },
-    "scripts": {
-        "build": "tsup && node ../../scripts/clean-tsbuildinfo.mjs && tsc -b tsconfig.json --emitDeclarationOnly",
-        "test": "vitest run",
-        "test:integ": "vitest run",
-        "typecheck": "tsc --noEmit",
-        "clean": "rm -rf dist"
-    },
-    "keywords": [
-        "fius",
-        "image",
-        "local-development",
-        "base-image",
-        "filesystem",
-        "process"
-    ],
-    "dependencies": {
-        "@fius/agent-config": "workspace:*",
-        "@fius/agent-management": "workspace:*",
-        "@fius/core": "workspace:*",
-        "@fius/storage": "workspace:*",
-        "@fius/tools-builtins": "workspace:*",
-        "@fius/tools-filesystem": "workspace:*",
-        "@fius/tools-lifecycle": "workspace:*",
-        "@fius/tools-plan": "workspace:*",
-        "@fius/tools-process": "workspace:*",
-        "@fius/tools-scheduler": "workspace:*",
-        "@fius/tools-todo": "workspace:*",
-        "glob": "^12.0.0",
-        "zod": "^4.3.6"
-    },
-    "devDependencies": {
-        "tsup": "^8.0.0",
-        "typescript": "^5.3.3"
-    },
-    "files": [
-        "dist",
-        "README.md"
-    ]
+  "name": "@fiusdev/image-local",
+  "version": "0.3.2",
+  "description": "Local development base image for Fius agents with filesystem and process tools",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsup && node ../../scripts/clean-tsbuildinfo.mjs && tsc -b tsconfig.json --emitDeclarationOnly",
+    "test": "vitest run",
+    "test:integ": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "keywords": [
+    "fius",
+    "image",
+    "local-development",
+    "base-image",
+    "filesystem",
+    "process"
+  ],
+  "dependencies": {
+    "@fiusdev/agent-config": "workspace:*",
+    "@fiusdev/agent-management": "workspace:*",
+    "@fiusdev/core": "workspace:*",
+    "@fiusdev/storage": "workspace:*",
+    "@fiusdev/tools-builtins": "workspace:*",
+    "@fiusdev/tools-filesystem": "workspace:*",
+    "@fiusdev/tools-lifecycle": "workspace:*",
+    "@fiusdev/tools-plan": "workspace:*",
+    "@fiusdev/tools-process": "workspace:*",
+    "@fiusdev/tools-scheduler": "workspace:*",
+    "@fiusdev/tools-todo": "workspace:*",
+    "glob": "^12.0.0",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "tsup": "^8.0.0",
+    "typescript": "^5.3.3"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
 }

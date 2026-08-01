@@ -1,49 +1,52 @@
 {
-    "name": "@fius/tools-scheduler",
-    "version": "1.0.0",
-    "description": "Scheduler tools provider for Fius agents - enables proactive task scheduling",
-    "type": "module",
-    "main": "./dist/index.js",
-    "types": "./dist/index.d.ts",
-    "exports": {
-        ".": {
-            "types": "./dist/index.d.ts",
-            "import": "./dist/index.js"
-        },
-        "./service": {
-            "types": "./dist/service/index.d.ts",
-            "import": "./dist/service/index.js"
-        },
-        "./tools": {
-            "types": "./dist/tools/index.d.ts",
-            "import": "./dist/tools/index.js"
-        }
+  "name": "@fiusdev/tools-scheduler",
+  "version": "0.3.2",
+  "description": "Scheduler tools provider for Fius agents - enables proactive task scheduling",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
     },
-    "scripts": {
-        "build": "tsup && node ../../scripts/clean-tsbuildinfo.mjs && tsc -b tsconfig.json --emitDeclarationOnly",
-        "typecheck": "tsc --noEmit",
-        "clean": "rm -rf dist"
+    "./service": {
+      "types": "./dist/service/index.d.ts",
+      "import": "./dist/service/index.js"
     },
-    "keywords": [
-        "fius",
-        "tools",
-        "scheduler",
-        "cron",
-        "automation"
-    ],
-    "dependencies": {
-        "@fius/agent-config": "workspace:*",
-        "@fius/core": "workspace:*",
-        "cron-parser": "^4.9.0",
-        "node-cron": "^4.2.1",
-        "zod": "^4.3.6"
-    },
-    "devDependencies": {
-        "tsup": "^8.0.0",
-        "typescript": "^5.3.3"
-    },
-    "files": [
-        "dist",
-        "README.md"
-    ]
+    "./tools": {
+      "types": "./dist/tools/index.d.ts",
+      "import": "./dist/tools/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsup && node ../../scripts/clean-tsbuildinfo.mjs && tsc -b tsconfig.json --emitDeclarationOnly",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "keywords": [
+    "fius",
+    "tools",
+    "scheduler",
+    "cron",
+    "automation"
+  ],
+  "dependencies": {
+    "@fiusdev/agent-config": "workspace:*",
+    "@fiusdev/core": "workspace:*",
+    "cron-parser": "^4.9.0",
+    "node-cron": "^4.2.1",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "tsup": "^8.0.0",
+    "typescript": "^5.3.3"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
 }

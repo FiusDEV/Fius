@@ -2,7 +2,7 @@
  * Tool for getting schedule execution history
  */
 
-import type { Tool, ToolExecutionContext } from '@fius/core';
+import type { Tool, ToolExecutionContext } from '@fiusdev/core';
 import { GetScheduleHistoryInputSchema } from '../schemas.js';
 import type { SchedulerManagerGetter } from '../tool-types.js';
 

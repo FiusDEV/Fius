@@ -1,5 +1,5 @@
 /**
- * @fius/tools-todo
+ * @fiusdev/tools-todo
  *
  * Todo/task tracking tools factory for Fius agents.
  * Provides the todo_write tool for managing task lists.

@@ -12,12 +12,12 @@ import {
     supportsCustomModels,
     hasAllRegistryModelsSupport,
     getProviderFromModel,
-} from '@fius/llm';
+} from '@fiusdev/llm';
 import { getEffectiveMaxInputTokens } from './registry/index.js';
 import {
     lookupOpenRouterModel,
 } from './providers/model-registry.js';
-import type { LLMUpdateContext } from '@fius/llm';
+import type { LLMUpdateContext } from '@fiusdev/llm';
 import { resolveApiKeyForProvider } from '../utils/api-key-resolver.js';
 import type { Logger } from '../logger/v2/types.js';
 

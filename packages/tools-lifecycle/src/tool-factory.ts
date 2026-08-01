@@ -1,5 +1,5 @@
-import type { ToolFactory } from '@fius/agent-config';
-import type { Tool } from '@fius/core/tools';
+import type { ToolFactory } from '@fiusdev/agent-config';
+import type { Tool } from '@fiusdev/core/tools';
 import {
     LifecycleToolsConfigSchema,
     type LifecycleToolsConfig,

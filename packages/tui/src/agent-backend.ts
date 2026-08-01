@@ -5,7 +5,7 @@ import type {
     EventListener,
     SessionMetadata,
     SkillManager,
-} from '@fius/core';
+} from '@fiusdev/core';
 import type { CommandDefinition } from './interactive-commands/command-parser.js';
 
 export interface TuiAgentCapabilities {

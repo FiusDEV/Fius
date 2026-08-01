@@ -7,7 +7,7 @@ import type {
     Tool,
     WorkspaceHandleProvider,
     SkillSource,
-} from '@fius/core';
+} from '@fiusdev/core';
 import type { z } from 'zod';
 import type { AgentConfig, ValidatedAgentConfig } from '../schemas/agent-config.js';
 

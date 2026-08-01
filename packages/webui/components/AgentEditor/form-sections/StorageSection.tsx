@@ -2,9 +2,9 @@ import React from 'react';
 import { Input } from '../../ui/input';
 import { LabelWithTooltip } from '../../ui/label-with-tooltip';
 import { Collapsible } from '../../ui/collapsible';
-import type { AgentConfig } from '@fius/agent-config';
-import type { CacheType, DatabaseType } from '@fius/storage/schemas';
-import { CACHE_TYPES, DATABASE_TYPES } from '@fius/storage/schemas';
+import type { AgentConfig } from '@fiusdev/agent-config';
+import type { CacheType, DatabaseType } from '@fiusdev/storage/schemas';
+import { CACHE_TYPES, DATABASE_TYPES } from '@fiusdev/storage/schemas';
 
 type StorageConfig = NonNullable<AgentConfig['storage']>;
 

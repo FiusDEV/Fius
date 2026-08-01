@@ -1,5 +1,5 @@
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
-import { CreateMemoryInputSchema, UpdateMemoryInputSchema } from '@fius/core';
+import { CreateMemoryInputSchema, UpdateMemoryInputSchema } from '@fiusdev/core';
 import {
     BadRequestErrorResponse,
     InternalErrorResponse,

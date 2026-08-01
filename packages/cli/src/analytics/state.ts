@@ -7,7 +7,7 @@ const requireCJS = createRequire(import.meta.url);
 const { machineIdSync } = requireCJS('node-machine-id') as {
     machineIdSync: (original?: boolean) => string;
 };
-import { getFiusGlobalPath } from '@fius/agent-management';
+import { getFiusGlobalPath } from '@fiusdev/agent-management';
 
 /**
  * Shape of the persisted analytics state written to

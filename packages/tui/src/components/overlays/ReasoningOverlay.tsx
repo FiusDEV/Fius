@@ -10,7 +10,7 @@ import React, {
 } from 'react';
 import { Box, Text } from 'ink';
 import type { Key } from '../../hooks/useInputOrchestrator.js';
-import { getModelDisplayName, getReasoningProfile } from '@fius/llm';
+import { getModelDisplayName, getReasoningProfile } from '@fiusdev/llm';
 import { getLLMProviderDisplayName } from '../../utils/llm-provider-display.js';
 import type { TuiAgentBackend } from '../../agent-backend.js';
 

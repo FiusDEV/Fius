@@ -1,5 +1,5 @@
-import { resolveAgentPath } from '@fius/agent-management';
-import type { FiusAgent } from '@fius/core';
+import { resolveAgentPath } from '@fiusdev/agent-management';
+import type { FiusAgent } from '@fiusdev/core';
 import { withAnalytics, safeExit, ExitSignal } from '../../../analytics/wrapper.js';
 import type { RuntimeCommandRegisterContext } from '../register-context.js';
 

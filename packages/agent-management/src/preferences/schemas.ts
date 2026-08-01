@@ -8,8 +8,8 @@ import {
     getReasoningProfile,
     supportsReasoningVariant,
     LLM_PROVIDERS,
-} from '@fius/llm';
-import { NonEmptyTrimmed, OptionalURL, ErrorType } from '@fius/core';
+} from '@fiusdev/llm';
+import { NonEmptyTrimmed, OptionalURL, ErrorType } from '@fiusdev/core';
 import { PreferenceErrorCode } from './error-codes.js';
 
 export const PreferenceLLMSchema = z

@@ -5,14 +5,14 @@ import path from 'path';
 import { realpathSync } from 'fs';
 import chalk from 'chalk';
 import * as p from '@clack/prompts';
-import { logger } from '@fius/core';
+import { logger } from '@fiusdev/core';
 import {
     getFiusGlobalPath,
     resolveBundledScript,
     copyDirectory,
     loadBundledRegistryAgents,
     type AgentRegistryEntry,
-} from '@fius/agent-management';
+} from '@fiusdev/agent-management';
 
 export interface SyncAgentsCommandOptions {
     /** Just list status without updating */

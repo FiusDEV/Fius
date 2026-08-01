@@ -1,7 +1,7 @@
-import type { McpAuthProviderFactory, ValidatedMcpServerConfig } from '@fius/core';
+import type { McpAuthProviderFactory, ValidatedMcpServerConfig } from '@fiusdev/core';
 import { createMcpOAuthProvider } from './oauth-provider.js';
 import { getMcpRedirectUrl } from './oauth-redirect.js';
-import { logger as coreLogger } from '@fius/core';
+import { logger as coreLogger } from '@fiusdev/core';
 
 const DEFAULT_CLIENT_METADATA = {
     client_name: 'Fius MCP Client',

@@ -1,5 +1,5 @@
 import { getPrimaryApiKeyEnvVar, resolveApiKeyForProvider } from './api-key-resolver.js';
-import { LLM_PROVIDERS, type LLMProvider } from '@fius/llm';
+import { LLM_PROVIDERS, type LLMProvider } from '@fiusdev/llm';
 import { getFiusEnvPath } from './path.js';
 import { updateEnvFile } from './env-file.js';
 

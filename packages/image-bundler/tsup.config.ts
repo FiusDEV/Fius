@@ -14,6 +14,6 @@ export default defineConfig({
     sourcemap: true,
     splitting: false,
     shims: true,
-    external: ['typescript', '@fius/core', 'picocolors', 'commander'],
+    external: ['typescript', '@fiusdev/core', 'picocolors', 'commander'],
     noExternal: [],
 });

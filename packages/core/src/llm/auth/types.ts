@@ -1,4 +1,4 @@
-import type { LLMProvider } from '@fius/llm';
+import type { LLMProvider } from '@fiusdev/llm';
 
 export type LlmRuntimeAuthOverrides = {
     apiKey?: string | undefined;

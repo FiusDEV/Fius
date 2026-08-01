@@ -8,9 +8,9 @@ import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import { glob } from 'glob';
 import safeRegex from 'safe-regex';
-import { FiusRuntimeError } from '@fius/core/errors';
-import { FiusLogComponent, type Logger } from '@fius/core/logger';
-import { getFiusPath } from '@fius/core/utils/path.js';
+import { FiusRuntimeError } from '@fiusdev/core/errors';
+import { FiusLogComponent, type Logger } from '@fiusdev/core/logger';
+import { getFiusPath } from '@fiusdev/core/utils/path.js';
 import {
     FileSystemConfig,
     FileContent,

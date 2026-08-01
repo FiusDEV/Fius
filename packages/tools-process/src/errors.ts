@@ -4,7 +4,7 @@
  * Error classes for process execution and management
  */
 
-import { FiusRuntimeError, ErrorType } from '@fius/core/errors';
+import { FiusRuntimeError, ErrorType } from '@fiusdev/core/errors';
 
 /** Error scope for process operations */
 const PROCESS_SCOPE = 'process';

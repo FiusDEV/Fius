@@ -1,6 +1,6 @@
 import { randomUUID } from 'crypto';
 import { VercelMessageFormatter } from '../llm/formatters/vercel.js';
-import type { LLMContext } from '@fius/llm';
+import type { LLMContext } from '@fiusdev/llm';
 import type { InternalMessage, AssistantMessage, ToolCall } from './types.js';
 import { isSystemMessage, isUserMessage, isAssistantMessage, isToolMessage } from './types.js';
 import type { Logger } from '../logger/v2/types.js';
@@ -851,7 +851,7 @@ export class ContextManager<TMessage = unknown> {
         let allowedMediaTypes: string[] | undefined = this.llmConfig.allowedMediaTypes;
         if (!allowedMediaTypes) {
             try {
-                const { getSupportedFileTypesForModel } = await import('@fius/llm');
+                const { getSupportedFileTypesForModel } = await import('@fiusdev/llm');
                 const { fileTypesToMimePatterns } = await import('./utils.js');
                 const supportedFileTypes = getSupportedFileTypesForModel(
                     llmContext.provider,

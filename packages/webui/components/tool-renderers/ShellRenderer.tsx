@@ -8,7 +8,7 @@
 import { useState } from 'react';
 import { Terminal, ChevronDown, ChevronRight, Copy, Check, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { ShellDisplayData } from '@fius/core';
+import type { ShellDisplayData } from '@fiusdev/core';
 
 interface ShellRendererProps {
     /** Shell display data from tool result */

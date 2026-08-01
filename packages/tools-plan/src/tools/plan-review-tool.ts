@@ -13,8 +13,8 @@
  */
 
 import { z } from 'zod';
-import { createLocalToolCallHeader, defineTool, truncateForHeader } from '@fius/core/tools';
-import type { Tool, ToolExecutionContext, FileDisplayData } from '@fius/core/tools';
+import { createLocalToolCallHeader, defineTool, truncateForHeader } from '@fiusdev/core/tools';
+import type { Tool, ToolExecutionContext, FileDisplayData } from '@fiusdev/core/tools';
 import type { PlanServiceGetter } from '../plan-service-getter.js';
 import { PlanError } from '../errors.js';
 

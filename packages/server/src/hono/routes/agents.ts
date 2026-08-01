@@ -1,7 +1,7 @@
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
-import { AgentConfigSchema } from '@fius/agent-config';
-import { AgentError, logger, safeStringify, zodToIssues } from '@fius/core';
-import type { LLMProvider } from '@fius/llm';
+import { AgentConfigSchema } from '@fiusdev/agent-config';
+import { AgentError, logger, safeStringify, zodToIssues } from '@fiusdev/core';
+import type { LLMProvider } from '@fiusdev/llm';
 import {
     getPrimaryApiKeyEnvVar,
     saveProviderApiKey,
@@ -9,12 +9,12 @@ import {
     enrichAgentConfig,
     deriveDisplayName,
     AgentFactory,
-} from '@fius/agent-management';
+} from '@fiusdev/agent-management';
 import { stringify as yamlStringify, parse as yamlParse } from 'yaml';
 import os from 'os';
 import path from 'path';
 import { promises as fs } from 'fs';
-import { FiusValidationError, AgentErrorCode, ErrorScope, ErrorType } from '@fius/core';
+import { FiusValidationError, AgentErrorCode, ErrorScope, ErrorType } from '@fiusdev/core';
 import {
     AgentRegistryEntrySchema,
     BadRequestErrorResponse,

@@ -3,7 +3,7 @@ import type {
     OAuthClientInformationMixed,
     OAuthTokens,
 } from '@modelcontextprotocol/sdk/shared/auth.js';
-import type { McpAuthProvider } from '@fius/core';
+import type { McpAuthProvider } from '@fiusdev/core';
 import { loadMcpAuthStore, saveMcpAuthStore } from './oauth-store.js';
 import { createMcpCallbackServer } from './oauth-server.js';
 import { openAuthUrl } from './oauth-ui.js';

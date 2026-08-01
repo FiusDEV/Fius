@@ -1,5 +1,5 @@
 import type { MiddlewareHandler } from 'hono';
-import { logger } from '@fius/core';
+import { logger } from '@fiusdev/core';
 
 const PUBLIC_ROUTES = ['/health', '/.well-known/agent-card.json', '/openapi.json'];
 

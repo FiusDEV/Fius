@@ -1,6 +1,6 @@
 import React from 'react';
 import { Image as ImageIcon, Loader2 } from 'lucide-react';
-import type { ResourceMetadata } from '@fius/core';
+import type { ResourceMetadata } from '@fiusdev/core';
 import { useResourceContent } from './hooks/useResourceContent';
 import type { NormalizedResourceItem, ResourceState } from './hooks/useResourceContent';
 import { filterAndSortResources } from '../lib/utils.js';

@@ -8,8 +8,8 @@ let configuredImageImporter: ImageImporter | undefined;
 /**
  * Configure how images are dynamically imported.
  *
- * Why: In strict package manager layouts (pnpm), a helper inside `@fius/agent-config`
- * cannot reliably `import('@fius/image-local')` because that image is not a dependency
+ * Why: In strict package manager layouts (pnpm), a helper inside `@fiusdev/agent-config`
+ * cannot reliably `import('@fiusdev/image-local')` because that image is not a dependency
  * of agent-config. Hosts (CLI/server/apps) should call `setImageImporter((s) => import(s))`
  * from their entrypoint so the import resolves relative to the host package.
  */

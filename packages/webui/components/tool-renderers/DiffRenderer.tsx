@@ -8,7 +8,7 @@
 import { useState } from 'react';
 import { FileEdit, ChevronDown, ChevronRight, Copy, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { DiffDisplayData } from '@fius/core';
+import type { DiffDisplayData } from '@fiusdev/core';
 
 interface DiffRendererProps {
     /** Diff display data from tool result */

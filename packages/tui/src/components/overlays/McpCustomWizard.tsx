@@ -3,7 +3,7 @@
 import React, { useState, useEffect, forwardRef, useImperativeHandle, useCallback } from 'react';
 import { Box, Text } from 'ink';
 import type { Key } from '../../hooks/useInputOrchestrator.js';
-import type { McpServerType } from '@fius/core';
+import type { McpServerType } from '@fiusdev/core';
 
 export interface McpCustomConfig {
     serverType: McpServerType;

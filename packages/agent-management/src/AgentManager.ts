@@ -18,8 +18,8 @@
 
 import { promises as fs } from 'fs';
 import path from 'path';
-import { logger, FiusValidationError, zodToIssues } from '@fius/core';
-import type { FiusAgent } from '@fius/core';
+import { logger, FiusValidationError, zodToIssues } from '@fiusdev/core';
+import type { FiusAgent } from '@fiusdev/core';
 import { loadAgentConfig } from './config/index.js';
 import { RegistryError } from './registry/errors.js';
 import { z, ZodError } from 'zod';

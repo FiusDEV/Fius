@@ -5,8 +5,8 @@ import {
     INTEGRATION_EVENTS,
     type AgentEventMap,
     type AgentEventName,
-} from '@fius/core';
-import { logger } from '@fius/core';
+} from '@fiusdev/core';
+import { logger } from '@fiusdev/core';
 import { EventSubscriber } from './types.js';
 import {
     type WebhookConfig,

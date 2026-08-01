@@ -1,4 +1,14 @@
 {
   "version": 1,
-  "agents": []
+  "agents": {
+    "fius": {
+      "id": "fius",
+      "name": "Fius",
+      "description": "Fius default assistant",
+      "author": "FiusDEV",
+      "tags": ["default"],
+      "source": "fius/",
+      "main": "fius.yml"
+    }
+  }
 }

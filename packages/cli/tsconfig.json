@@ -7,7 +7,9 @@
     "noEmit": false,
     "jsx": "react-jsx",
     "noImplicitAny": false,
-    "noEmitOnError": false
+    "noEmitOnError": false,
+    "typeRoots": [],
+    "types": []
   },
   "include": ["src/**/*"],
   "exclude": ["**/*.test.ts", "**/*.spec.ts", "dist", "node_modules"]

@@ -1,4 +1,4 @@
-import type { LLMProvider } from '@fius/llm';
+import type { LLMProvider } from '@fiusdev/llm';
 
 export const CURATED_MODEL_IDS_BY_PROVIDER: Partial<Record<LLMProvider, string[]>> = {
     openai: [

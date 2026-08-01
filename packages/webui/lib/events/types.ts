@@ -1,11 +1,11 @@
 /**
  * Event types for the WebUI client event bus
  *
- * Uses StreamingEvent from @fius/core as the source of truth.
+ * Uses StreamingEvent from @fiusdev/core as the source of truth.
  * Only client-only events (like connection status) are defined locally.
  */
 
-import type { StreamingEvent, StreamingEventName } from '@fius/core';
+import type { StreamingEvent, StreamingEventName } from '@fiusdev/core';
 
 export type { StreamingEvent, StreamingEventName };
 

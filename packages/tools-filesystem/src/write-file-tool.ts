@@ -13,14 +13,14 @@ import {
     ToolError,
     defineTool,
     truncateForHeader,
-} from '@fius/core/tools';
-import { FiusRuntimeError } from '@fius/core/errors';
+} from '@fiusdev/core/tools';
+import { FiusRuntimeError } from '@fiusdev/core/errors';
 import type {
     DiffDisplayData,
     FileDisplayData,
     Tool,
     ToolExecutionContext,
-} from '@fius/core/tools';
+} from '@fiusdev/core/tools';
 import { FileSystemErrorCode } from './error-codes.js';
 import { BufferEncoding } from './types.js';
 import type { FileSystemServiceGetter } from './file-tool-types.js';

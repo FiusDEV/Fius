@@ -12,8 +12,8 @@ import {
     supportsCustomModels,
     type LLMProvider,
     type ReasoningVariant,
-} from '@fius/llm';
-import { getCuratedModelsForProvider, logger, resolveApiKeyForProvider } from '@fius/core';
+} from '@fiusdev/llm';
+import { getCuratedModelsForProvider, logger, resolveApiKeyForProvider } from '@fiusdev/core';
 import {
     createInitialPreferences,
     saveGlobalPreferences,
@@ -29,7 +29,7 @@ import {
     loadModelAuthProfilesSync,
     type CustomModel,
     type CreatePreferencesOptions,
-} from '@fius/agent-management';
+} from '@fiusdev/agent-management';
 import { interactiveApiKeySetup, hasApiKeyConfigured } from '../utils/api-key-setup.js';
 import {
     selectProvider,

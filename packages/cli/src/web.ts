@@ -7,7 +7,7 @@
 import { existsSync } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { getFiusPackageRoot } from '@fius/agent-management';
+import { getFiusPackageRoot } from '@fiusdev/agent-management';
 
 function isValidWebRoot(webRootPath: string): boolean {
     if (!existsSync(webRootPath)) {

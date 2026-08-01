@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 /**
- * Built-in blob store types shipped by `@fius/storage`.
+ * Built-in blob store types shipped by `@fiusdev/storage`.
  * Custom backends shipped via images are not included in this list.
  */
 export const BLOB_STORE_TYPES = ['in-memory', 'local'] as const;
@@ -77,7 +77,7 @@ export type LocalBlobStoreConfig = z.output<typeof LocalBlobStoreSchema>;
  * This schema uses `.passthrough()` to accept any backend-specific configuration.
  * It only validates that a `type` field exists as a string.
  *
- * Detailed validation happens in the product-layer resolver (`@fius/agent-config`) via
+ * Detailed validation happens in the product-layer resolver (`@fiusdev/agent-config`) via
  * each image factory's `configSchema`. Built-in backends are validated by their factory schemas.
  *
  * This approach allows:

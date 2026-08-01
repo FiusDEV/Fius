@@ -1,5 +1,5 @@
 /**
- * @fius/bundler
+ * @fiusdev/bundler
  *
  * Bundles Fius base images from fius.image.ts definitions
  * into importable packages exporting a typed `FiusImage` (no side effects).

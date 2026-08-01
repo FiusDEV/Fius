@@ -1,6 +1,6 @@
 
 import { z } from 'zod';
-import { getAgentRegistry } from '@fius/agent-management';
+import { getAgentRegistry } from '@fiusdev/agent-management';
 import { capture } from '../../../analytics/index.js';
 
 

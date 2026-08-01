@@ -1,43 +1,46 @@
 {
-    "name": "@fius/image-logger-agent",
-    "version": "1.0.0",
-    "description": "Example image for the Logger Agent (adds request-logger hook)",
-    "type": "module",
-    "main": "./dist/index.js",
-    "types": "./dist/index.d.ts",
-    "exports": {
-        ".": {
-            "types": "./dist/index.d.ts",
-            "import": "./dist/index.js"
-        }
-    },
-    "scripts": {
-        "build": "tsup && node ../../scripts/clean-tsbuildinfo.mjs && tsc -b tsconfig.json --emitDeclarationOnly",
-        "test": "vitest run",
-        "test:integ": "vitest run",
-        "typecheck": "tsc --noEmit",
-        "clean": "rm -rf dist"
-    },
-    "keywords": [
-        "fius",
-        "image",
-        "hooks",
-        "logging",
-        "examples"
-    ],
-    "dependencies": {
-        "@fius/agent-config": "workspace:*",
-        "@fius/agent-management": "workspace:*",
-        "@fius/core": "workspace:*",
-        "@fius/image-local": "workspace:*",
-        "zod": "^4.3.6"
-    },
-    "devDependencies": {
-        "tsup": "^8.0.0",
-        "typescript": "^5.3.3"
-    },
-    "files": [
-        "dist",
-        "README.md"
-    ]
+  "name": "@fiusdev/image-logger-agent",
+  "version": "0.3.2",
+  "description": "Example image for the Logger Agent (adds request-logger hook)",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsup && node ../../scripts/clean-tsbuildinfo.mjs && tsc -b tsconfig.json --emitDeclarationOnly",
+    "test": "vitest run",
+    "test:integ": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "keywords": [
+    "fius",
+    "image",
+    "hooks",
+    "logging",
+    "examples"
+  ],
+  "dependencies": {
+    "@fiusdev/agent-config": "workspace:*",
+    "@fiusdev/agent-management": "workspace:*",
+    "@fiusdev/core": "workspace:*",
+    "@fiusdev/image-local": "workspace:*",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "tsup": "^8.0.0",
+    "typescript": "^5.3.3"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
 }

@@ -3,7 +3,7 @@
 import React, { useState, useEffect, forwardRef, useRef, useImperativeHandle } from 'react';
 import { Text } from 'ink';
 import type { Key } from '../../hooks/useInputOrchestrator.js';
-import { serverRegistry, type ServerRegistryEntry } from '@fius/registry';
+import { serverRegistry, type ServerRegistryEntry } from '@fiusdev/registry';
 import { BaseSelector, type BaseSelectorHandle } from '../base/BaseSelector.js';
 
 export type McpAddResult = { type: 'preset'; entry: ServerRegistryEntry };

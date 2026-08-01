@@ -2,7 +2,7 @@
  * Tool for deleting schedules
  */
 
-import type { Tool, ToolExecutionContext } from '@fius/core';
+import type { Tool, ToolExecutionContext } from '@fiusdev/core';
 import { DeleteScheduleInputSchema } from '../schemas.js';
 import type { SchedulerManagerGetter } from '../tool-types.js';
 

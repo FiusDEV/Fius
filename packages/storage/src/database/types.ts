@@ -1,1 +1,1 @@
-export type { Database } from '@fius/core';
+export type { Database } from '@fiusdev/core';

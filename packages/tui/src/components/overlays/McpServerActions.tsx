@@ -10,7 +10,7 @@ import React, {
 } from 'react';
 import { Box, Text } from 'ink';
 import type { Key } from '../../hooks/useInputOrchestrator.js';
-import type { McpServerStatus } from '@fius/core';
+import type { McpServerStatus } from '@fiusdev/core';
 import { BaseSelector, type BaseSelectorHandle } from '../base/BaseSelector.js';
 
 export type McpServerActionType = 'enable' | 'disable' | 'authenticate' | 'delete' | 'back';

@@ -1,7 +1,7 @@
 import { readFileSync } from 'fs';
 import chalk from 'chalk';
 import { z } from 'zod';
-import { resolveAgentPath, resolveBundledScript } from '@fius/agent-management';
+import { resolveAgentPath, resolveBundledScript } from '@fiusdev/agent-management';
 
 const WhichCommandSchema = z
     .object({

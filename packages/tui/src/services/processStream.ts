@@ -1,9 +1,9 @@
 
 
 import type React from 'react';
-import type { StreamingEvent, SanitizedToolResult } from '@fius/core';
+import type { StreamingEvent, SanitizedToolResult } from '@fiusdev/core';
 import { createDebugLogger } from '../utils/debugLog.js';
-import { ApprovalType as ApprovalTypeEnum, ApprovalStatus, LLMErrorCode } from '@fius/core';
+import { ApprovalType as ApprovalTypeEnum, ApprovalStatus, LLMErrorCode } from '@fiusdev/core';
 import type { Message, UIState, ToolStatus } from '../state/types.js';
 import type { ApprovalRequest } from '../components/ApprovalPrompt.js';
 import { generateMessageId } from '../utils/idGenerator.js';
@@ -83,9 +83,9 @@ export interface ProcessStreamSetters {
     
     setSession: React.Dispatch<React.SetStateAction<import('../state/types.js').SessionState>>;
     
-    setSteerMessages: React.Dispatch<React.SetStateAction<import('@fius/core').QueuedMessage[]>>;
+    setSteerMessages: React.Dispatch<React.SetStateAction<import('@fiusdev/core').QueuedMessage[]>>;
     
-    setQueuedMessages: React.Dispatch<React.SetStateAction<import('@fius/core').QueuedMessage[]>>;
+    setQueuedMessages: React.Dispatch<React.SetStateAction<import('@fiusdev/core').QueuedMessage[]>>;
     
     setApproval: React.Dispatch<React.SetStateAction<ApprovalRequest | null>>;
     
@@ -101,7 +101,7 @@ export interface ProcessStreamOptions {
     
     bypassPermissionsRef: { current: boolean };
     
-    eventBus: Pick<import('@fius/core').AgentEventBus, 'emit'>;
+    eventBus: Pick<import('@fiusdev/core').AgentEventBus, 'emit'>;
     
     soundService?: import('../utils/soundNotification.js').SoundNotificationService;
     
@@ -192,7 +192,7 @@ export async function processStream(
     let localPending: Message[] = [];
 
     
-    const extractTextContent = (content: import('@fius/core').ContentPart[]): string => {
+    const extractTextContent = (content: import('@fiusdev/core').ContentPart[]): string => {
         return content
             .filter((part): part is { type: 'text'; text: string } => part.type === 'text')
             .map((part) => part.text)
@@ -200,7 +200,7 @@ export async function processStream(
     };
 
     const formatQueuedMessagesForDisplay = (
-        messages: import('@fius/core').QueuedMessage[]
+        messages: import('@fiusdev/core').QueuedMessage[]
     ): string => {
         const userMessages = messages.filter((message) => message.kind !== 'background');
         if (userMessages.length === 0) {

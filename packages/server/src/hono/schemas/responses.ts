@@ -3,8 +3,8 @@ import {
     LLMConfigBaseSchema as CoreLLMConfigBaseSchema,
     type ContentPart as CoreContentPart,
     type InternalMessage as CoreInternalMessage,
-} from '@fius/core';
-import { LLM_PRICING_STATUSES, LLM_PROVIDERS, SUPPORTED_FILE_TYPES } from '@fius/llm';
+} from '@fiusdev/core';
+import { LLM_PRICING_STATUSES, LLM_PROVIDERS, SUPPORTED_FILE_TYPES } from '@fiusdev/llm';
 
 type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue };
 
@@ -191,9 +191,9 @@ export const UpstreamErrorResponse = {
     },
 } as const;
 
-export { MemorySchema } from '@fius/core';
+export { MemorySchema } from '@fiusdev/core';
 
-export { LLMConfigBaseSchema, type ValidatedLLMConfig } from '@fius/core';
+export { LLMConfigBaseSchema, type ValidatedLLMConfig } from '@fiusdev/core';
 
 export const TextPartSchema = z
     .object({
@@ -545,7 +545,7 @@ export const LLMConfigSchema = CoreLLMConfigBaseSchema.describe('LLM configurati
 
 export type LLMConfigResponse = z.output<typeof LLMConfigResponseSchema>;
 
-export { AgentCardSchema, type AgentCard } from '@fius/core';
+export { AgentCardSchema, type AgentCard } from '@fiusdev/core';
 
 export {
     McpServerConfigSchema,
@@ -554,11 +554,11 @@ export {
     HttpServerConfigSchema,
     type McpServerConfig,
     type ValidatedMcpServerConfig,
-} from '@fius/core';
+} from '@fiusdev/core';
 
-export { PermissionsConfigSchema } from '@fius/core';
+export { PermissionsConfigSchema } from '@fiusdev/core';
 
-export { ResourceConfigSchema } from '@fius/core';
+export { ResourceConfigSchema } from '@fiusdev/core';
 
 export const SessionTokenUsageSchema = TokenUsageSchema.required().describe(
     'Session-level token usage (all fields required for cumulative totals)'

@@ -71,7 +71,7 @@ import { getApiUrl } from '@/lib/api-url';
 
 import { Tooltip, TooltipTrigger, TooltipContent } from './ui/tooltip';
 import { serverRegistry } from '@/lib/serverRegistry';
-import type { McpServerConfig } from '@fius/core';
+import type { McpServerConfig } from '@fiusdev/core';
 import type { Attachment } from '../lib/attachment-types.js';
 
 interface ChatAppProps {

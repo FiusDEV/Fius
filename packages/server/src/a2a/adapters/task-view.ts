@@ -1,4 +1,4 @@
-import type { ChatSession } from '@fius/core';
+import type { ChatSession } from '@fiusdev/core';
 import type { Task, TaskStatus } from '../types.js';
 import { internalMessagesToA2A } from './message.js';
 import { deriveTaskState } from './state.js';

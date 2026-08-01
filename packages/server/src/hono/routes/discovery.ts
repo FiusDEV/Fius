@@ -1,10 +1,10 @@
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import { InternalErrorResponse } from '../schemas/responses.js';
 import type { Context } from 'hono';
-import type { FiusImage } from '@fius/agent-config';
-import { loadImage } from '@fius/agent-config';
-import { loadAgentConfig } from '@fius/agent-management';
-import imageLocal from '@fius/image-local';
+import type { FiusImage } from '@fiusdev/agent-config';
+import { loadImage } from '@fiusdev/agent-config';
+import { loadAgentConfig } from '@fiusdev/agent-management';
+import imageLocal from '@fiusdev/image-local';
 import type { OpenAPIRouteSchema } from '../types.js';
 
 export type GetAgentConfigPathFn = (
@@ -89,9 +89,9 @@ async function resolveImage(options: {
             ? rawConfig.image
             : undefined) ??
         process.env.FIUS_IMAGE ??
-        '@fius/image-local';
+        '@fiusdev/image-local';
 
-    if (imageName === '@fius/image-local') {
+    if (imageName === '@fiusdev/image-local') {
         return imageLocal;
     }
 

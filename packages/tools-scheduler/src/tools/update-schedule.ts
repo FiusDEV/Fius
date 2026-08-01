@@ -2,7 +2,7 @@
  * Tool for updating schedules
  */
 
-import type { Tool, ToolExecutionContext } from '@fius/core';
+import type { Tool, ToolExecutionContext } from '@fiusdev/core';
 import { UpdateScheduleInputSchema, type UpdateScheduleInput } from '../schemas.js';
 import type { SchedulerManagerGetter } from '../tool-types.js';
 

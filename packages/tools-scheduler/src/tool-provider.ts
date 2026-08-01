@@ -5,9 +5,9 @@
  * When a scheduled task triggers, it invokes the agent with the task instruction.
  */
 
-import type { ToolFactory } from '@fius/agent-config';
-import type { Tool, ToolExecutionContext, Logger } from '@fius/core';
-import { ToolError } from '@fius/core';
+import type { ToolFactory } from '@fiusdev/agent-config';
+import type { Tool, ToolExecutionContext, Logger } from '@fiusdev/core';
+import { ToolError } from '@fiusdev/core';
 import { SchedulerToolsConfigSchema, type SchedulerToolsConfig } from './schemas.js';
 import { SchedulerManager } from './manager.js';
 import { SchedulerError } from './errors.js';

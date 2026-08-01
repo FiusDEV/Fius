@@ -4,8 +4,8 @@ import {
     globalPreferencesExist,
     loadGlobalPreferences,
     type GlobalPreferences,
-} from '@fius/agent-management';
-import { getExecutionContext } from '@fius/core';
+} from '@fiusdev/agent-management';
+import { getExecutionContext } from '@fiusdev/core';
 import { existsSync, statSync } from 'node:fs';
 import path from 'node:path';
 

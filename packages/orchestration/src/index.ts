@@ -1,5 +1,5 @@
 /**
- * @fius/orchestration
+ * @fiusdev/orchestration
  *
  * Agent orchestration layer for background task management,
  * event-driven completion handling, and async workflows.
@@ -11,7 +11,7 @@
  *
  * Example usage:
  * ```typescript
- * import { ConditionEngine, SignalBus, TaskRegistry } from '@fius/orchestration';
+ * import { ConditionEngine, SignalBus, TaskRegistry } from '@fiusdev/orchestration';
  *
  * const signalBus = new SignalBus();
  * const taskRegistry = new TaskRegistry(signalBus);

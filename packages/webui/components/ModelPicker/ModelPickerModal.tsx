@@ -56,7 +56,7 @@ import {
     validateBaseURL,
 } from './types';
 import { cn } from '../../lib/utils';
-import { LLM_PROVIDERS, type LLMProvider } from '@fius/llm';
+import { LLM_PROVIDERS, type LLMProvider } from '@fiusdev/llm';
 import { PROVIDER_LOGOS, needsDarkModeInversion, hasLogo } from './constants';
 import { useAnalytics } from '@/lib/analytics/index.js';
 

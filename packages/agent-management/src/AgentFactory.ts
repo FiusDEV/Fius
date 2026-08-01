@@ -25,8 +25,8 @@
  */
 
 import { promises as fs } from 'fs';
-import type { AgentConfig, FiusHostContext } from '@fius/agent-config';
-import type { FiusAgent, FiusAgentConfigInput } from '@fius/core';
+import type { AgentConfig, FiusHostContext } from '@fiusdev/agent-config';
+import type { FiusAgent, FiusAgentConfigInput } from '@fiusdev/core';
 import { getFiusGlobalPath } from './utils/path.js';
 import { deriveDisplayName } from './registry/types.js';
 import { getAgentRegistry, loadBundledRegistryAgents } from './registry/registry.js';

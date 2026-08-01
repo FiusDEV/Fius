@@ -71,7 +71,7 @@ function readPackageName(dirPath: string): string | null {
 
 function isInternalFiusPackage(dirPath: string): boolean {
     const packageName = readPackageName(dirPath);
-    return packageName === 'fius' || packageName?.startsWith('@fius/') === true;
+    return packageName === 'fius' || packageName?.startsWith('@fiusdev/') === true;
 }
 
 function hasProjectRootMarker(dirPath: string): boolean {
@@ -138,7 +138,7 @@ function isFiusProjectDirectory(dirPath: string): boolean {
             ...(pkg.peerDependencies ?? {}),
         };
 
-        return 'fius' in allDeps || '@fius/core' in allDeps;
+        return 'fius' in allDeps || '@fiusdev/core' in allDeps;
     } catch {
         return false;
     }

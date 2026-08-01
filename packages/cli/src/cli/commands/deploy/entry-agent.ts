@@ -2,7 +2,7 @@ import {
     findProjectRegistryPath,
     getDefaultProjectRegistryEntry,
     readProjectRegistry,
-} from '@fius/agent-management';
+} from '@fiusdev/agent-management';
 import { existsSync, promises as fs } from 'fs';
 import path from 'path';
 import { normalizeWorkspaceRelativePath } from './config.js';

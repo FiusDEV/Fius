@@ -25,8 +25,8 @@ import {
     type AuthMethodDefinition,
     type ModelAuthProfile,
     type ProviderAuthDefinition,
-} from '@fius/agent-management';
-import { LLM_PROVIDERS, type LLMProvider } from '@fius/llm';
+} from '@fiusdev/agent-management';
+import { LLM_PROVIDERS, type LLMProvider } from '@fiusdev/llm';
 import { applyLayeredEnvironmentLoading, isValidApiKeyFormat } from '../../host/index.js';
 
 type ConnectStep =

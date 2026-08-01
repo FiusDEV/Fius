@@ -1,4 +1,4 @@
-import { FiusRuntimeError, FiusValidationError, ErrorType } from '@fius/core';
+import { FiusRuntimeError, FiusValidationError, ErrorType } from '@fiusdev/core';
 import { type ZodError } from 'zod';
 import { PreferenceErrorCode } from './error-codes.js';
 

@@ -5,8 +5,8 @@ import { Button } from '../../ui/button';
 import { Collapsible } from '../../ui/collapsible';
 import { Plus, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
 
-import type { AgentConfig } from '@fius/agent-config';
-import { MCP_SERVER_TYPES, MCP_CONNECTION_MODES, DEFAULT_MCP_CONNECTION_MODE } from '@fius/core';
+import type { AgentConfig } from '@fiusdev/agent-config';
+import { MCP_SERVER_TYPES, MCP_CONNECTION_MODES, DEFAULT_MCP_CONNECTION_MODE } from '@fiusdev/core';
 
 type McpServersConfig = NonNullable<AgentConfig['mcpServers']>;
 

@@ -1,6 +1,6 @@
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
-import type { SkillDocument, SkillSource, SkillSummary } from '@fius/core';
+import type { SkillDocument, SkillSource, SkillSummary } from '@fiusdev/core';
 
 export interface LocalSkillRoot {
     id: string;

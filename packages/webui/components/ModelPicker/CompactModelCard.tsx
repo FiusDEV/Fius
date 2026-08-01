@@ -2,7 +2,7 @@ import React from 'react';
 import { Star, HelpCircle } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
-import type { LLMProvider } from '@fius/llm';
+import type { LLMProvider } from '@fiusdev/llm';
 import { PROVIDER_LOGOS, needsDarkModeInversion, formatPricingLines } from './constants';
 import { CapabilityIcons } from './CapabilityIcons';
 import { getModelDisplayName, type ModelInfo, type ProviderCatalog } from './types';

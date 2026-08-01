@@ -3,8 +3,8 @@
 import React, { useState, useEffect, forwardRef, useRef, useImperativeHandle } from 'react';
 import { Text } from 'ink';
 import type { Key } from '../../hooks/useInputOrchestrator.js';
-import type { SessionMetadata } from '@fius/core';
-import { logger } from '@fius/core';
+import type { SessionMetadata } from '@fiusdev/core';
+import { logger } from '@fiusdev/core';
 import { BaseSelector, type BaseSelectorHandle } from '../base/BaseSelector.js';
 import type { TuiAgentBackend } from '../../agent-backend.js';
 

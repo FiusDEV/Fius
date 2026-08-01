@@ -1,4 +1,4 @@
-import { FiusRuntimeError, ErrorType } from '@fius/core';
+import { FiusRuntimeError, ErrorType } from '@fiusdev/core';
 import { RegistryErrorCode } from './error-codes.js';
 
 /**

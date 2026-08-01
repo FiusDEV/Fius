@@ -10,7 +10,7 @@ import React, {
 } from 'react';
 import { Box, Text } from 'ink';
 import type { Key } from '../../hooks/useInputOrchestrator.js';
-import type { McpServerStatus, McpConnectionStatus } from '@fius/core';
+import type { McpServerStatus, McpConnectionStatus } from '@fiusdev/core';
 import { BaseSelector, type BaseSelectorHandle } from '../base/BaseSelector.js';
 import type { TuiAgentBackend } from '../../agent-backend.js';
 

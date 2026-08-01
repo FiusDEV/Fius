@@ -1,8 +1,8 @@
 import { promises as fs } from 'fs';
 import path from 'path';
 import { parse as parseYaml } from 'yaml';
-import type { AgentConfig } from '@fius/agent-config';
-import type { Logger } from '@fius/core';
+import type { AgentConfig } from '@fiusdev/agent-config';
+import type { Logger } from '@fiusdev/core';
 import { ConfigError } from './errors.js';
 import { getFiusPath } from '../utils/path.js';
 

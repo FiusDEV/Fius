@@ -1,5 +1,5 @@
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
-import { FiusRuntimeError, ErrorType } from '@fius/core';
+import { FiusRuntimeError, ErrorType } from '@fiusdev/core';
 import { WebhookEventSubscriber } from '../../events/webhook-subscriber.js';
 import type { WebhookConfig } from '../../events/webhook-types.js';
 import {

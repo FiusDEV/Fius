@@ -1,7 +1,7 @@
 import { promises as fs } from 'fs';
 import path from 'path';
-import { createMessageStream } from '@fius/client-sdk';
-import type { StreamingEvent } from '@fius/core';
+import { createMessageStream } from '@fiusdev/client-sdk';
+import type { StreamingEvent } from '@fiusdev/core';
 import { z } from 'zod';
 import { getAuthToken, getFiusApiKey, loadAuth } from '../../auth/service.js';
 import type { DeployAgent } from './config.js';

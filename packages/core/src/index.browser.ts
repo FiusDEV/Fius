@@ -35,8 +35,8 @@ export {
 
 export { getFileMediaKind, getResourceKind } from './context/media-helpers.js';
 
-export type { LLMProvider } from '@fius/llm';
-export { LLM_PROVIDERS } from '@fius/llm';
+export type { LLMProvider } from '@fiusdev/llm';
+export { LLM_PROVIDERS } from '@fiusdev/llm';
 
 export type { McpServerType, McpConnectionMode } from './mcp/schemas.js';
 export {
@@ -84,8 +84,8 @@ export type { AgentEventMap, SessionEventMap } from './events/index.js';
 export type { ToolCallMetadata } from './tools/tool-call-metadata.js';
 export type { HostRuntimeContext, HostRuntimeIds } from './runtime/host-runtime.js';
 
-export type { ModelInfo, ProviderInfo } from '@fius/llm';
-export type { SupportedFileType } from '@fius/llm';
+export type { ModelInfo, ProviderInfo } from '@fiusdev/llm';
+export type { SupportedFileType } from '@fiusdev/llm';
 
 export type { ResourceMetadata } from './resources/types.js';
 export type { ResourceReference } from './resources/reference-parser.js';

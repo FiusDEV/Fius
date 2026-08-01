@@ -6,7 +6,7 @@
  */
 
 import { create } from 'zustand';
-import type { StreamingEventName } from '@fius/core';
+import type { StreamingEventName } from '@fiusdev/core';
 
 export type EventCategory = 'agent' | 'tool' | 'system' | 'user' | 'approval';
 

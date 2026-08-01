@@ -2,8 +2,8 @@ import { existsSync, readFileSync } from 'node:fs';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { parse as parseYaml, stringify as stringifyYaml } from 'yaml';
-import type { LLMProvider } from '@fius/llm';
-import { getFiusGlobalPath, getPrimaryApiKeyEnvVar } from '@fius/core';
+import type { LLMProvider } from '@fiusdev/llm';
+import { getFiusGlobalPath, getPrimaryApiKeyEnvVar } from '@fiusdev/core';
 
 const MODEL_AUTH_PROFILES_FILE = 'model-auth.yml';
 

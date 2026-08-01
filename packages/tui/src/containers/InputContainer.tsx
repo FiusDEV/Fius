@@ -1,7 +1,7 @@
 
 
 import React, { useCallback, useRef, useEffect, useImperativeHandle, forwardRef } from 'react';
-import type { ContentPart, ImagePart, TextPart, QueuedMessage } from '@fius/core';
+import type { ContentPart, ImagePart, TextPart, QueuedMessage } from '@fiusdev/core';
 import { InputArea, type OverlayTrigger } from '../components/input/InputArea.js';
 import { InputService, processStream } from '../services/index.js';
 import { useSoundService } from '../contexts/index.js';
@@ -377,7 +377,7 @@ export const InputContainer = forwardRef<InputContainerHandle, InputContainerPro
                     // Get custom models for this provider
                     // For openai-compatible/litellm: match by baseURL (since provider is always "openai-compatible")
                     // For named providers: match by displayProvider
-                    const { loadCustomModels } = await import('@fius/agent-management');
+                    const { loadCustomModels } = await import('@fiusdev/agent-management');
                     const allCustomModels = await loadCustomModels().catch(() => []);
                     const isGenericProvider = currentProvider === 'openai-compatible' || currentProvider === 'litellm';
                     const customModels = allCustomModels

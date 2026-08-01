@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Box, Text } from 'ink';
-import { logger } from '@fius/core';
+import { logger } from '@fiusdev/core';
 
 interface ErrorBoundaryProps {
     children: React.ReactNode;

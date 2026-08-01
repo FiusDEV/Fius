@@ -1,7 +1,7 @@
 import { createHash } from 'crypto';
 import { Readable } from 'stream';
-import type { Logger } from '@fius/core';
-import { FiusLogComponent, StorageError } from '@fius/core';
+import type { Logger } from '@fiusdev/core';
+import { FiusLogComponent, StorageError } from '@fiusdev/core';
 import type {
     BlobStore,
     BlobInput,

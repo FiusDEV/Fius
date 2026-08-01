@@ -12,8 +12,8 @@ import {
     resolveFileLikeImageSpecifierToPath,
     resolveImageEntryFileFromStore,
     saveImageRegistry,
-} from '@fius/agent-management';
-import { loadImage } from '@fius/agent-config';
+} from '@fiusdev/agent-management';
+import { loadImage } from '@fiusdev/agent-config';
 import { executeWithTimeout } from './execute.js';
 
 export interface InstallImageOptions {

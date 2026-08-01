@@ -19,9 +19,9 @@ import {
     getProviderKeyStatus,
     resolveApiKeyForProvider,
     determineApiKeyStorage,
-} from '@fius/agent-management';
-import { logger } from '@fius/core';
-import type { LLMProvider } from '@fius/llm';
+} from '@fiusdev/agent-management';
+import { logger } from '@fiusdev/core';
+import type { LLMProvider } from '@fiusdev/llm';
 
 // Import from new modular architecture
 import {

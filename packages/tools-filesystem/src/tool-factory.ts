@@ -1,6 +1,6 @@
-import type { ToolFactory } from '@fius/agent-config';
-import type { ToolExecutionContext } from '@fius/core/tools';
-import { ToolError } from '@fius/core/tools';
+import type { ToolFactory } from '@fiusdev/agent-config';
+import type { ToolExecutionContext } from '@fiusdev/core/tools';
+import { ToolError } from '@fiusdev/core/tools';
 import { FileSystemService } from './filesystem-service.js';
 import type { FileSystemConfig } from './types.js';
 import { createReadFileTool } from './read-file-tool.js';
@@ -15,7 +15,7 @@ import {
     FileSystemToolsConfigSchema,
     type FileSystemToolsConfig,
 } from './tool-factory-config.js';
-import type { Tool } from '@fius/core/tools';
+import type { Tool } from '@fiusdev/core/tools';
 
 type FileSystemToolName = (typeof FILESYSTEM_TOOL_NAMES)[number];
 

@@ -1,5 +1,5 @@
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
-import { PromptError } from '@fius/core';
+import { PromptError } from '@fiusdev/core';
 import {
     ApiErrorResponseSchema,
     BadRequestErrorResponse,

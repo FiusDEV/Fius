@@ -1,5 +1,5 @@
 import type { ModelMessage, AssistantContent, ToolContent, ToolResultPart } from 'ai';
-import type { LLMContext } from '@fius/llm';
+import type { LLMContext } from '@fiusdev/llm';
 import type {
     InternalMessage,
     AssistantMessage,

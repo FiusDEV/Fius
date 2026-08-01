@@ -39,7 +39,7 @@ const CustomPluginInstallPrompt = forwardRef<CustomPluginInstallPromptHandle, Cu
             setIsInstalling(true);
 
             try {
-                const { installPluginFromPath } = await import('@fius/agent-management');
+                const { installPluginFromPath } = await import('@fiusdev/agent-management');
                 const result = await installPluginFromPath(sourcePath, { scope: 'user' });
                 onComplete(result.pluginName);
             } catch (err) {

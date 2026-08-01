@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { EnvExpandedString, ErrorScope, ErrorType, StorageErrorCode } from '@fius/core/config';
+import { EnvExpandedString, ErrorScope, ErrorType, StorageErrorCode } from '@fiusdev/core/config';
 
 export const DATABASE_TYPES = ['in-memory', 'sqlite', 'postgres'] as const;
 export type DatabaseType = (typeof DATABASE_TYPES)[number];

@@ -1,5 +1,5 @@
 import { spawn } from 'child_process';
-import { logger } from '@fius/core';
+import { logger } from '@fiusdev/core';
 
 const DEFAULT_TIMEOUT_MS = 5 * 60 * 1000;
 

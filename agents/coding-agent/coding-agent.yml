@@ -1,7 +1,7 @@
 # Fius Agent Configuration
 # Default agent for Fius CLI
 
-image: "@fius/image-local"
+image: "@fiusdev/image-local"
 
 systemPrompt:
   contributors:

@@ -6,8 +6,8 @@
  */
 
 import { z } from 'zod';
-import { createLocalToolCallHeader, defineTool } from '@fius/core/tools';
-import type { Tool, ToolExecutionContext } from '@fius/core/tools';
+import { createLocalToolCallHeader, defineTool } from '@fiusdev/core/tools';
+import type { Tool, ToolExecutionContext } from '@fiusdev/core/tools';
 import type { PlanServiceGetter } from '../plan-service-getter.js';
 import { PlanError } from '../errors.js';
 

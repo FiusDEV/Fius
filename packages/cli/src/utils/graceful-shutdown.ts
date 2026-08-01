@@ -1,4 +1,4 @@
-import { logger } from '@fius/core';
+import { logger } from '@fiusdev/core';
 
 interface ShutdownTarget {
     stop?: (() => Promise<void>) | undefined;

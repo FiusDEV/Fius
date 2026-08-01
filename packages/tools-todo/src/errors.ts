@@ -4,7 +4,7 @@
  * Error factory for todo list management operations
  */
 
-import { FiusRuntimeError, ErrorScope, ErrorType } from '@fius/core/errors';
+import { FiusRuntimeError, ErrorScope, ErrorType } from '@fiusdev/core/errors';
 import { TodoErrorCode } from './error-codes.js';
 
 /**

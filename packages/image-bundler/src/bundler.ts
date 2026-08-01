@@ -159,12 +159,12 @@ async function loadImageDefinition(imagePath: string): Promise<ImageDefinition> 
 }
 
 /**
- * Get @fius/core version
+ * Get @fiusdev/core version
  */
 function getCoreVersion(): string {
     try {
         const require = createRequire(import.meta.url);
-        const pkg = require('@fius/core/package.json') as { version?: unknown };
+        const pkg = require('@fiusdev/core/package.json') as { version?: unknown };
         return typeof pkg.version === 'string' ? pkg.version : '1.0.0';
     } catch {
         return '1.0.0';

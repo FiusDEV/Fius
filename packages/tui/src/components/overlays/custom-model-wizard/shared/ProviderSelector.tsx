@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Box, Text } from 'ink';
-import type { CustomModelProvider } from '@fius/agent-management';
+import type { CustomModelProvider } from '@fiusdev/agent-management';
 import { getProviderLabel, getAvailableProviders } from '../provider-config.js';
 
 interface ProviderSelectorProps {

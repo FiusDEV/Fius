@@ -4,7 +4,7 @@
  * Zod schemas for the agent spawner tools factory configuration and inputs.
  */
 
-import type { ReasoningVariant } from '@fius/llm';
+import type { ReasoningVariant } from '@fiusdev/llm';
 import { z } from 'zod';
 
 export const DEFAULT_SUB_AGENT_MAX_ITERATIONS = 100;

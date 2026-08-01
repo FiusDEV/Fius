@@ -19,16 +19,16 @@
  * - Merge strategy configuration for non-LLM fields
  */
 
-import type { AgentConfig } from '@fius/agent-config';
+import type { AgentConfig } from '@fiusdev/agent-config';
 import {
     LLM_PROVIDERS,
     getDefaultModelForProvider,
     requiresApiKey,
     requiresBaseURL,
     type LLMProvider,
-} from '@fius/llm';
-import { EnvExpandedString, resolveApiKeyForProvider, type LLMConfig } from '@fius/core';
-import type { GlobalPreferences } from '@fius/agent-management';
+} from '@fiusdev/llm';
+import { EnvExpandedString, resolveApiKeyForProvider, type LLMConfig } from '@fiusdev/core';
+import type { GlobalPreferences } from '@fiusdev/agent-management';
 
 /**
  * CLI config override type for fields that can be overridden via CLI

@@ -1,8 +1,8 @@
 import { setMaxListeners } from 'events';
 import { TextEncoder } from 'node:util';
 import { ReadableStream, type ReadableStreamDefaultController } from 'node:stream/web';
-import type { AgentEventBus, AgentEventMap, EventArgs, EventListener } from '@fius/core';
-import { logger } from '@fius/core';
+import type { AgentEventBus, AgentEventMap, EventArgs, EventListener } from '@fiusdev/core';
+import { logger } from '@fiusdev/core';
 
 const SESSION_EVENT_NAMES = [
     'llm:thinking',

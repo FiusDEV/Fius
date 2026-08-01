@@ -1,4 +1,4 @@
-import type { FiusAgentOptions, InitializeServicesOptions } from '@fius/core';
+import type { FiusAgentOptions, InitializeServicesOptions } from '@fiusdev/core';
 import type { FiusHostContext, FiusImage } from '../image/types.js';
 import type { ValidatedAgentConfig } from '../schemas/agent-config.js';
 import type { ResolvedServices } from './types.js';

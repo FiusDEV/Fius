@@ -1,6 +1,6 @@
 {
-  "name": "@fius/analytics",
-  "version": "1.0.0",
+  "name": "@fiusdev/analytics",
+  "version": "0.3.2",
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
@@ -13,8 +13,8 @@
     "./package.json": "./package.json"
   },
   "dependencies": {
-    "@fius/agent-management": "workspace:*",
-    "@fius/core": "workspace:*",
+    "@fiusdev/agent-management": "workspace:*",
+    "@fiusdev/core": "workspace:*",
     "node-machine-id": "^1.1.12"
   },
   "scripts": {

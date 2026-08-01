@@ -3,10 +3,10 @@
 import React, { useCallback, useRef, useImperativeHandle, forwardRef, useState } from 'react';
 import { Box } from 'ink';
 import path from 'path';
-import type { McpServerConfig, McpServerStatus, McpServerType } from '@fius/core';
+import type { McpServerConfig, McpServerStatus, McpServerType } from '@fiusdev/core';
 import type { TextBuffer } from '../components/shared/text-buffer.js';
 import type { Key } from '../hooks/useInputOrchestrator.js';
-import { ApprovalStatus, DenialReason, isUserMessage } from '@fius/core';
+import { ApprovalStatus, DenialReason, isUserMessage } from '@fiusdev/core';
 import type { Message, UIState, InputState, SessionState } from '../state/types.js';
 import {
     ApprovalPrompt,
@@ -96,7 +96,7 @@ import {
     updateGlobalPreferences,
     type CustomModel,
     type ListedPlugin,
-} from '@fius/agent-management';
+} from '@fiusdev/agent-management';
 import ApiKeyInput, { type ApiKeyInputHandle } from '../components/overlays/ApiKeyInput.js';
 import SearchOverlay, { type SearchOverlayHandle } from '../components/overlays/SearchOverlay.js';
 import PromptList, {
@@ -171,10 +171,10 @@ import SkillActions, {
     type SkillActionResult,
 } from '../components/overlays/SkillActions.js';
 import type { PromptAddScope } from '../state/types.js';
-import type { PromptInfo, ResourceMetadata, SearchResult } from '@fius/core';
-import type { LLMProvider, ReasoningVariant } from '@fius/llm';
-import { LLM_PROVIDERS, getModelDisplayName, getReasoningProfile } from '@fius/llm';
-import { FiusValidationError, LLMErrorCode } from '@fius/core';
+import type { PromptInfo, ResourceMetadata, SearchResult } from '@fiusdev/core';
+import type { LLMProvider, ReasoningVariant } from '@fiusdev/llm';
+import { LLM_PROVIDERS, getModelDisplayName, getReasoningProfile } from '@fiusdev/llm';
+import { FiusValidationError, LLMErrorCode } from '@fiusdev/core';
 import { InputService } from '../services/InputService.js';
 import { createUserMessage, convertHistoryToUIMessages } from '../utils/messageFormatting.js';
 import { generateMessageId } from '../utils/idGenerator.js';
@@ -1742,7 +1742,7 @@ export const OverlayContainer = forwardRef<OverlayContainerHandle, OverlayContai
                 setInput((prev) => ({ ...prev, historyIndex: -1 }));
 
                 try {
-                    const { setBuildMode } = await import('@fius/tui');
+                    const { setBuildMode } = await import('@fiusdev/tui');
                     await setBuildMode(mode);
                 } catch {}
 
@@ -1908,7 +1908,7 @@ export const OverlayContainer = forwardRef<OverlayContainerHandle, OverlayContai
                         }
 
                         // Import persistence utilities
-                        const { updateMcpServerField } = await import('@fius/agent-management');
+                        const { updateMcpServerField } = await import('@fiusdev/agent-management');
 
                         // Persist to config file AFTER successful enable/disable
                         const agentPath = getConfigFilePathOrWarn('persist MCP server settings');
@@ -1995,7 +1995,7 @@ export const OverlayContainer = forwardRef<OverlayContainerHandle, OverlayContai
                     try {
                         // Import persistence utilities
                         const { removeMcpServerFromConfig } = await import(
-                            '@fius/agent-management'
+                            '@fiusdev/agent-management'
                         );
 
                         // Persist to config file using surgical removal
@@ -2385,7 +2385,7 @@ export const OverlayContainer = forwardRef<OverlayContainerHandle, OverlayContai
 
                     try {
                         const { uninstallPlugin, reloadAgentConfigFromFile, enrichAgentConfig } =
-                            await import('@fius/agent-management');
+                            await import('@fiusdev/agent-management');
                         await uninstallPlugin(action.plugin.name);
 
                         setMessages((prev) => [
@@ -2436,7 +2436,7 @@ export const OverlayContainer = forwardRef<OverlayContainerHandle, OverlayContai
             async (result: PluginGithubBrowserResult) => {
                 setUi((prev) => ({ ...prev, activeOverlay: 'none', isProcessing: true }));
                 try {
-                    const { installPluginFromMarketplace, addMarketplace, marketplaceExists } = await import('@fius/agent-management');
+                    const { installPluginFromMarketplace, addMarketplace, marketplaceExists } = await import('@fiusdev/agent-management');
                     const marketplaceName = 'anthropics/claude-plugins-official';
 
                     // Register marketplace if not already registered
@@ -2458,7 +2458,7 @@ export const OverlayContainer = forwardRef<OverlayContainerHandle, OverlayContai
                     ]);
 
                     try {
-                        const { reloadAgentConfigFromFile, enrichAgentConfig } = await import('@fius/agent-management');
+                        const { reloadAgentConfigFromFile, enrichAgentConfig } = await import('@fiusdev/agent-management');
                         const agentPath = getConfigFilePathOrWarn('refresh prompts after plugin install');
                         if (agentPath) {
                             const newConfig = await reloadAgentConfigFromFile(agentPath);
@@ -2500,7 +2500,7 @@ export const OverlayContainer = forwardRef<OverlayContainerHandle, OverlayContai
                 ]);
 
                 try {
-                    const { reloadAgentConfigFromFile, enrichAgentConfig } = await import('@fius/agent-management');
+                    const { reloadAgentConfigFromFile, enrichAgentConfig } = await import('@fiusdev/agent-management');
                     const agentPath = getConfigFilePathOrWarn('refresh prompts after plugin install');
                     if (agentPath) {
                         const newConfig = await reloadAgentConfigFromFile(agentPath);
@@ -2534,7 +2534,7 @@ export const OverlayContainer = forwardRef<OverlayContainerHandle, OverlayContai
                     // Refresh prompts to include new plugin commands.
                     try {
                         const { reloadAgentConfigFromFile, enrichAgentConfig } = await import(
-                            '@fius/agent-management'
+                            '@fiusdev/agent-management'
                         );
                         const agentPath = getConfigFilePathOrWarn(
                             'refresh prompts after plugin install'
@@ -2778,7 +2778,7 @@ export const OverlayContainer = forwardRef<OverlayContainerHandle, OverlayContai
                             findFiusSourceRoot,
                             findFiusProjectRoot,
                             getFiusGlobalPath,
-                        } = await import('@fius/agent-management');
+                        } = await import('@fiusdev/agent-management');
 
                         const context = getExecutionContext();
                         let commandsDir: string;
@@ -2809,7 +2809,7 @@ export const OverlayContainer = forwardRef<OverlayContainerHandle, OverlayContai
 
                         // Re-discover commands and refresh with enriched prompts
                         const { reloadAgentConfigFromFile, enrichAgentConfig } = await import(
-                            '@fius/agent-management'
+                            '@fiusdev/agent-management'
                         );
                         const agentPath = getConfigFilePathOrWarn(
                             'refresh prompts after creating shared prompt'
@@ -2839,7 +2839,7 @@ export const OverlayContainer = forwardRef<OverlayContainerHandle, OverlayContai
                             addPromptToAgentConfig,
                             reloadAgentConfigFromFile,
                             enrichAgentConfig,
-                        } = await import('@fius/agent-management');
+                        } = await import('@fiusdev/agent-management');
                         await addPromptToAgentConfig(agentPath, {
                             type: 'file',
                             file: `\${{fius.agent_dir}}/prompts/${data.name}.md`,
@@ -2900,7 +2900,7 @@ export const OverlayContainer = forwardRef<OverlayContainerHandle, OverlayContai
 
                 try {
                     const { deletePromptByMetadata, reloadAgentConfigFromFile, enrichAgentConfig } =
-                        await import('@fius/agent-management');
+                        await import('@fiusdev/agent-management');
 
                     const agentPath = getConfigFilePathOrWarn('delete prompt');
                     if (!agentPath) {

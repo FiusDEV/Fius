@@ -1,24 +1,24 @@
 {
   "name": "@fiusdev/fius",
-  "version": "1.0.0",
+  "version": "1.0.10",
   "type": "module",
   "bin": {
     "fius": "./dist/index.js"
   },
   "dependencies": {
     "@clack/prompts": "^0.10.1",
-    "@fius/agent-config": "workspace:*",
-    "@fius/agent-management": "workspace:*",
-    "@fius/analytics": "workspace:*",
-    "@fius/client-sdk": "workspace:*",
-    "@fius/core": "workspace:*",
-    "@fius/image-local": "workspace:*",
-    "@fius/image-logger-agent": "workspace:*",
-    "@fius/llm": "workspace:*",
-    "@fius/registry": "workspace:*",
-    "@fius/server": "workspace:*",
-    "@fius/storage": "workspace:*",
-    "@fius/tui": "workspace:*",
+    "@fiusdev/agent-config": "workspace:*",
+    "@fiusdev/agent-management": "workspace:*",
+    "@fiusdev/analytics": "workspace:*",
+    "@fiusdev/client-sdk": "workspace:*",
+    "@fiusdev/core": "workspace:*",
+    "@fiusdev/image-local": "workspace:*",
+    "@fiusdev/image-logger-agent": "workspace:*",
+    "@fiusdev/llm": "workspace:*",
+    "@fiusdev/registry": "workspace:*",
+    "@fiusdev/server": "workspace:*",
+    "@fiusdev/storage": "workspace:*",
+    "@fiusdev/tui": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.28.0",
     "better-sqlite3": "^11.10.0",
     "boxen": "^7.1.1",
@@ -42,6 +42,7 @@
     "build": "cross-env NODE_OPTIONS=--max-old-space-size=4096 tsc -p tsconfig.json && pnpm run copy-agents && pnpm run copy-assets",
     "copy-agents": "tsx scripts/copy-agents.ts",
     "copy-assets": "tsx scripts/copy-assets.ts",
+    "postinstall": "node postinstall.cjs",
     "start": "node dist/index.js",
     "typecheck": "tsc -p tsconfig.typecheck.json --noEmit",
     "lint": "eslint . --ext .ts"
@@ -52,7 +53,8 @@
   },
   "files": [
     "dist",
-    "README.md"
+    "README.md",
+    "postinstall.cjs"
   ],
   "publishConfig": {
     "access": "public"

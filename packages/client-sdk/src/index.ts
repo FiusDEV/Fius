@@ -12,4 +12,4 @@ export type { SSEEvent, MessageStreamEvent } from './streaming.js';
 
 export type { ClientConfig } from './types.js';
 
-export type { AppType } from '@fius/server';
+export type { AppType } from '@fiusdev/server';

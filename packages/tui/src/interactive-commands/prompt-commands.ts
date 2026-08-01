@@ -1,6 +1,6 @@
 
 
-import type { PromptInfo } from '@fius/core';
+import type { PromptInfo } from '@fiusdev/core';
 import type { CommandDefinition, CommandContext, CommandHandlerResult } from './command-parser.js';
 import { formatForInkCli } from './utils/format-output.js';
 import { createSendMessageMarker, type StyledOutput } from '../services/index.js';

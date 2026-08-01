@@ -1,6 +1,6 @@
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
-import type { FiusAgent } from '@fius/core';
-import { FiusRuntimeError, ErrorScope, ErrorType } from '@fius/core';
+import type { FiusAgent } from '@fiusdev/core';
+import { FiusRuntimeError, ErrorScope, ErrorType } from '@fiusdev/core';
 import { BadRequestErrorResponse, InternalErrorResponse } from '../schemas/responses.js';
 import type { Context } from 'hono';
 import type { OpenAPIRouteSchema } from '../types.js';

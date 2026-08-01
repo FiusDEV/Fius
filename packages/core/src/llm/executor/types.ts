@@ -1,4 +1,4 @@
-import type { TokenUsage } from '@fius/llm';
+import type { TokenUsage } from '@fiusdev/llm';
 import { LLMFinishReason } from '../../events/index.js';
 
 export type ModelToolCall = {

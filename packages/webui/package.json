@@ -1,6 +1,6 @@
 {
-  "name": "@fius/webui",
-  "version": "1.0.0",
+  "name": "@fiusdev/webui",
+  "version": "0.1.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -11,13 +11,13 @@
     "typecheck": "tsc -p tsconfig.typecheck.json --noEmit"
   },
   "dependencies": {
-    "@fius/analytics": "workspace:*",
-    "@fius/agent-config": "workspace:*",
-    "@fius/client-sdk": "workspace:*",
-    "@fius/core": "workspace:*",
-    "@fius/llm": "workspace:*",
-    "@fius/storage": "workspace:*",
-    "@fius/registry": "workspace:*",
+    "@fiusdev/analytics": "workspace:*",
+    "@fiusdev/agent-config": "workspace:*",
+    "@fiusdev/client-sdk": "workspace:*",
+    "@fiusdev/core": "workspace:*",
+    "@fiusdev/llm": "workspace:*",
+    "@fiusdev/storage": "workspace:*",
+    "@fiusdev/registry": "workspace:*",
     "@mcp-ui/client": "^5.14.1",
     "@monaco-editor/react": "^4.7.0",
     "@radix-ui/react-checkbox": "^1.3.1",
@@ -67,5 +67,8 @@
     "tw-animate-css": "^1.2.9",
     "typescript": "^5",
     "vite": "^7.3.2"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

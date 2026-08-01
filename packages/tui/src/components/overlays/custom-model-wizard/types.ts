@@ -1,6 +1,6 @@
 
 
-import type { CustomModel, CustomModelProvider } from '@fius/agent-management';
+import type { CustomModel, CustomModelProvider } from '@fiusdev/agent-management';
 import type { Key } from '../../../hooks/useInputOrchestrator.js';
 
 

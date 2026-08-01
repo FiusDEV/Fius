@@ -2,7 +2,7 @@
 
 import type { ContentPart } from '../context/types.js';
 import type { LLMTokenUsage } from '../llm/services/types.js';
-import type { LLMProvider, LLMPricingStatus } from '@fius/llm';
+import type { LLMProvider, LLMPricingStatus } from '@fiusdev/llm';
 import type { HostRuntimeContext } from '../runtime/index.js';
 
 

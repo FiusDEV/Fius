@@ -9,7 +9,7 @@ import React, {
 } from 'react';
 import { Box, Text } from 'ink';
 import type { Key } from '../hooks/useInputOrchestrator.js';
-import type { PromptInfo } from '@fius/core';
+import type { PromptInfo } from '@fiusdev/core';
 import { getAvailableCommands } from '../interactive-commands/commands.js';
 import type { CommandDefinition } from '../interactive-commands/command-parser.js';
 import { useTerminalSize } from '../hooks/useTerminalSize.js';

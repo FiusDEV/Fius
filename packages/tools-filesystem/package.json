@@ -1,43 +1,46 @@
 {
-    "name": "@fius/tools-filesystem",
-    "version": "1.0.0",
-    "description": "FileSystem tools factory for Fius agents",
-    "type": "module",
-    "main": "./dist/index.js",
-    "types": "./dist/index.d.ts",
-    "exports": {
-        ".": {
-            "types": "./dist/index.d.ts",
-            "import": "./dist/index.js"
-        }
-    },
-    "scripts": {
-        "build": "tsup && node ../../scripts/clean-tsbuildinfo.mjs && tsc -b tsconfig.json --emitDeclarationOnly",
-        "typecheck": "tsc --noEmit",
-        "clean": "rm -rf dist"
-    },
-    "keywords": [
-        "fius",
-        "tools",
-        "filesystem",
-        "file-operations"
-    ],
-    "dependencies": {
-        "@fius/agent-config": "workspace:*",
-        "@fius/core": "workspace:*",
-        "diff": "^8.0.3",
-        "glob": "^12.0.0",
-        "safe-regex": "^2.1.1",
-        "zod": "^4.3.6"
-    },
-    "devDependencies": {
-        "@types/diff": "^5.2.3",
-        "@types/safe-regex": "^1.1.6",
-        "tsup": "^8.0.0",
-        "typescript": "^5.3.3"
-    },
-    "files": [
-        "dist",
-        "README.md"
-    ]
+  "name": "@fiusdev/tools-filesystem",
+  "version": "0.3.2",
+  "description": "FileSystem tools factory for Fius agents",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsup && node ../../scripts/clean-tsbuildinfo.mjs && tsc -b tsconfig.json --emitDeclarationOnly",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "keywords": [
+    "fius",
+    "tools",
+    "filesystem",
+    "file-operations"
+  ],
+  "dependencies": {
+    "@fiusdev/agent-config": "workspace:*",
+    "@fiusdev/core": "workspace:*",
+    "diff": "^8.0.3",
+    "glob": "^12.0.0",
+    "safe-regex": "^2.1.1",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/diff": "^5.2.3",
+    "@types/safe-regex": "^1.1.6",
+    "tsup": "^8.0.0",
+    "typescript": "^5.3.3"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
 }

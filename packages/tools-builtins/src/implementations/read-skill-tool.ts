@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import { ToolError, createLocalToolCallHeader, defineTool } from '@fius/core/tools';
-import type { Tool, ToolExecutionContext } from '@fius/core/tools';
+import { ToolError, createLocalToolCallHeader, defineTool } from '@fiusdev/core/tools';
+import type { Tool, ToolExecutionContext } from '@fiusdev/core/tools';
 
 type ReadableSkill = {
     id: string;

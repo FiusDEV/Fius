@@ -1,7 +1,7 @@
 import * as path from 'node:path';
 import type { z, ZodTypeAny } from 'zod';
-import { ToolError } from '@fius/core/tools';
-import type { ToolExecutionContext } from '@fius/core/tools';
+import { ToolError } from '@fiusdev/core/tools';
+import type { ToolExecutionContext } from '@fiusdev/core/tools';
 import type { FileSystemService } from './filesystem-service.js';
 import type { FileSystemServiceGetter } from './file-tool-types.js';
 import { resolveUserPath } from './path-utils.js';

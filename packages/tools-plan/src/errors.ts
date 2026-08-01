@@ -4,7 +4,7 @@
  * Provides typed errors for plan operations following the FiusRuntimeError pattern.
  */
 
-import { FiusRuntimeError, ErrorType } from '@fius/core/errors';
+import { FiusRuntimeError, ErrorType } from '@fiusdev/core/errors';
 
 /**
  * Error codes for plan operations

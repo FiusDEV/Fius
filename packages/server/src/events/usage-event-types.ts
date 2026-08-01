@@ -1,4 +1,4 @@
-import type { LLMProvider, TokenUsage } from '@fius/llm';
+import type { LLMProvider, TokenUsage } from '@fiusdev/llm';
 
 export interface UsageEventCostBreakdown {
     inputUsd: number;

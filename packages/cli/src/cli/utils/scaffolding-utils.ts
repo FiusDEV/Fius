@@ -4,7 +4,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import chalk from 'chalk';
 import * as p from '@clack/prompts';
-import { getFiusPackageRoot } from '@fius/agent-management';
+import { getFiusPackageRoot } from '@fiusdev/agent-management';
 import { executeWithTimeout } from './execute.js';
 import { textOrExit } from './prompt-helpers.js';
 import { getPackageManager, getPackageManagerInstallCommand } from './package-mgmt.js';
@@ -86,7 +86,7 @@ export function hasVersionInPackageSpecifier(specifier: string): boolean {
 
 export function pinFiusPackageIfUnversioned(specifier: string, versionRange: string): string {
     if (isLocalDependencySpecifier(specifier)) return specifier;
-    if (!specifier.startsWith('@fius/')) return specifier;
+    if (!specifier.startsWith('@fiusdev/')) return specifier;
     if (hasVersionInPackageSpecifier(specifier)) return specifier;
     return `${specifier}@${versionRange}`;
 }

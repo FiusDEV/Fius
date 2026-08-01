@@ -29,7 +29,7 @@ import {
     globalPreferencesExist,
     loadGlobalPreferences,
     updateGlobalPreferences,
-} from '@fius/agent-management';
+} from '@fiusdev/agent-management';
 
 interface SoundsSelectorProps {
     isVisible: boolean;

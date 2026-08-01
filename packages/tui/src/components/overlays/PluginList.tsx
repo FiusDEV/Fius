@@ -9,7 +9,7 @@ import React, {
     useMemo,
 } from 'react';
 import { Box, Text } from 'ink';
-import { listInstalledPlugins, type ListedPlugin } from '@fius/agent-management';
+import { listInstalledPlugins, type ListedPlugin } from '@fiusdev/agent-management';
 import type { Key } from '../../hooks/useInputOrchestrator.js';
 import { BaseSelector, type BaseSelectorHandle } from '../base/BaseSelector.js';
 

@@ -3,7 +3,7 @@
  */
 
 import { randomUUID } from 'crypto';
-import type { Logger } from '@fius/core';
+import type { Logger } from '@fiusdev/core';
 import type { Schedule, ExecutionLog, ScheduleExecutorFn } from './types.js';
 import { SchedulerError } from './errors.js';
 

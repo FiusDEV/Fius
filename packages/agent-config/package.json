@@ -1,6 +1,6 @@
 {
-  "name": "@fius/agent-config",
-  "version": "1.0.0",
+  "name": "@fiusdev/agent-config",
+  "version": "0.3.2",
   "private": false,
   "type": "module",
   "main": "./dist/index.js",
@@ -15,8 +15,8 @@
     "./package.json": "./package.json"
   },
   "dependencies": {
-    "@fius/core": "workspace:*",
-    "@fius/storage": "workspace:*",
+    "@fiusdev/core": "workspace:*",
+    "@fiusdev/storage": "workspace:*",
     "zod": "^4.3.6"
   },
   "devDependencies": {

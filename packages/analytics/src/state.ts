@@ -3,7 +3,7 @@ import * as path from 'path';
 import os from 'os';
 import { randomUUID, createHash } from 'crypto';
 import { createRequire } from 'module';
-import { getFiusGlobalPath } from '@fius/core/utils/path.js';
+import { getFiusGlobalPath } from '@fiusdev/core/utils/path.js';
 
 /**
  * Shape of the persisted analytics state written to

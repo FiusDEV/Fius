@@ -1,7 +1,7 @@
 import { z } from 'zod';
-import type { Tool, ToolExecutionContext } from '@fius/core/tools';
-import { FiusRuntimeError, ErrorScope, ErrorType } from '@fius/core/errors';
-import { createLocalToolCallHeader, defineTool, truncateForHeader } from '@fius/core/tools';
+import type { Tool, ToolExecutionContext } from '@fiusdev/core/tools';
+import { FiusRuntimeError, ErrorScope, ErrorType } from '@fiusdev/core/errors';
+import { createLocalToolCallHeader, defineTool, truncateForHeader } from '@fiusdev/core/tools';
 import { promises as dns, type LookupAddress, type LookupOptions } from 'node:dns';
 import { isIP } from 'node:net';
 import { TextDecoder } from 'node:util';

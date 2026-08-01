@@ -3,8 +3,8 @@
 import { useEffect, useState } from 'react';
 import path from 'node:path';
 import { Box, Text } from 'ink';
-import { getModelDisplayName, getReasoningProfile } from '@fius/llm';
-import { parseCodexBaseURL, type CodexRateLimitSnapshot } from '@fius/core';
+import { getModelDisplayName, getReasoningProfile } from '@fiusdev/llm';
+import { parseCodexBaseURL, type CodexRateLimitSnapshot } from '@fiusdev/core';
 import { getLLMProviderDisplayName } from '../utils/llm-provider-display.js';
 import {
     getChatGPTRateLimitHint,

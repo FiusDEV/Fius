@@ -3,14 +3,14 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { promisify } from 'node:util';
 import { glob } from 'glob';
-import { WorkspaceError } from '@fius/core/workspace';
+import { WorkspaceError } from '@fiusdev/core/workspace';
 import type {
     OpenWorkspaceInput,
     WorkspaceCapability,
     WorkspaceContext,
     WorkspaceHandle,
     WorkspaceHandleProvider,
-} from '@fius/core/workspace';
+} from '@fiusdev/core/workspace';
 
 const exec = promisify(execCallback);
 

@@ -9,7 +9,7 @@ import {
     globalPreferencesExist,
     loadGlobalPreferences,
     loadBundledRegistryAgents,
-} from '@fius/agent-management';
+} from '@fiusdev/agent-management';
 import { getProviderDisplayName } from '../../utils/provider-setup.js';
 
 

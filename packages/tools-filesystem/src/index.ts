@@ -1,5 +1,5 @@
 /**
- * @fius/tools-filesystem
+ * @fiusdev/tools-filesystem
  *
  * FileSystem tools factory for Fius agents.
  * Provides file operation tools: read text, read media, write, edit, glob, grep.

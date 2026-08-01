@@ -6,7 +6,7 @@
  */
 
 import { useCallback } from 'react';
-import type { StreamingEvent } from '@fius/core';
+import type { StreamingEvent } from '@fiusdev/core';
 import { useEventBus } from '@/components/providers/EventBusProvider.js';
 
 /**

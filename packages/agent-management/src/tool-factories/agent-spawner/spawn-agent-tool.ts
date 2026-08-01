@@ -5,8 +5,8 @@
  * The sub-agent will execute the task and return the result.
  */
 
-import { createLocalToolCallHeader, truncateForHeader } from '@fius/core';
-import type { Tool, ToolExecutionContext } from '@fius/core';
+import { createLocalToolCallHeader, truncateForHeader } from '@fiusdev/core';
+import type { Tool, ToolExecutionContext } from '@fiusdev/core';
 import { SpawnAgentInputSchema } from './schemas.js';
 import type { AgentSpawnerRuntime } from './runtime.js';
 

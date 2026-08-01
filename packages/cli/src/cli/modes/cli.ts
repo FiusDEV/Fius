@@ -1,7 +1,7 @@
 import chalk from 'chalk';
 import * as p from '@clack/prompts';
-import type { FiusAgent } from '@fius/core';
-import { logger } from '@fius/core';
+import type { FiusAgent } from '@fiusdev/core';
+import { logger } from '@fiusdev/core';
 import { safeExit, ExitSignal } from '../../analytics/wrapper.js';
 import { hasUsableCredentials } from '../../config/cli-overrides.js';
 import type { MainModeContext } from './context.js';
@@ -57,7 +57,7 @@ export async function runCliMode(context: MainModeContext): Promise<void> {
         const llmConfig = agent.getCurrentLLMConfig();
         if (!hasUsableCredentials(llmConfig.provider, llmConfig)) {
             const { globalPreferencesExist, loadGlobalPreferences } = await import(
-                '@fius/agent-management'
+                '@fiusdev/agent-management'
             );
             const { interactiveApiKeySetup } = await import('../utils/api-key-setup.js');
             const { getProviderDisplayName, getProviderEnvVar } = await import(
@@ -229,7 +229,7 @@ export async function runCliMode(context: MainModeContext): Promise<void> {
                 {},
                 { capture },
             ] = await Promise.all([
-                import('@fius/tui'),
+                import('@fiusdev/tui'),
                 import('../../utils/graceful-shutdown.js'),
                 import('../../utils/env.js'),
                 import('../utils/provider-setup.js'),
@@ -241,7 +241,7 @@ export async function runCliMode(context: MainModeContext): Promise<void> {
 
             let buildMode: 'build' | 'plan' = 'build';
             try {
-                const { getBuildModeAsync } = await import('@fius/tui');
+                const { getBuildModeAsync } = await import('@fiusdev/tui');
                 buildMode = await getBuildModeAsync();
             } catch {}
 
@@ -315,7 +315,7 @@ export async function runCliMode(context: MainModeContext): Promise<void> {
                     buildMode,
                 });
 
-                const { wasLogoutRequested } = await import('@fius/tui');
+                const { wasLogoutRequested } = await import('@fiusdev/tui');
                 if (!wasLogoutRequested()) break;
 
                 const { handleLoginCommand } = await import('../commands/auth/login.js');

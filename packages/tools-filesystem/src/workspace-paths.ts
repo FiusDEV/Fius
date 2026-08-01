@@ -1,7 +1,7 @@
 import path from 'node:path';
-import { FiusRuntimeError } from '@fius/core/errors';
-import { WorkspaceErrorCodes } from '@fius/core/workspace';
-import { ToolError } from '@fius/core/tools';
+import { FiusRuntimeError } from '@fiusdev/core/errors';
+import { WorkspaceErrorCodes } from '@fiusdev/core/workspace';
+import { ToolError } from '@fiusdev/core/tools';
 
 export function toWorkspaceRelativePath(
     toolName: string,

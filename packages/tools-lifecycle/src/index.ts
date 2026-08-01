@@ -1,5 +1,5 @@
 /**
- * @fius/tools-lifecycle
+ * @fiusdev/tools-lifecycle
  *
  * Lifecycle and self-observation tools factory for Fius agents.
  */

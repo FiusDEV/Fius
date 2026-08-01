@@ -1,7 +1,7 @@
 
 
 import React from 'react';
-import type { ContentPart, ToolDisplayData } from '@fius/core';
+import type { ContentPart, ToolDisplayData } from '@fiusdev/core';
 import { DiffRenderer } from './DiffRenderer.js';
 import { ShellRenderer } from './ShellRenderer.js';
 import { SearchRenderer } from './SearchRenderer.js';

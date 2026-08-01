@@ -3,7 +3,7 @@ import { Star, HelpCircle, ChevronDown, ChevronRight, ExternalLink } from 'lucid
 import { getModelDisplayName, type ProviderCatalog, type ModelInfo } from './types';
 import { cn } from '../../lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
-import type { LLMProvider } from '@fius/llm';
+import type { LLMProvider } from '@fiusdev/llm';
 import {
     PROVIDER_LOGOS,
     needsDarkModeInversion,

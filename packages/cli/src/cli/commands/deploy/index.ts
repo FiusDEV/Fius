@@ -1,7 +1,7 @@
 import { existsSync } from 'fs';
 import path from 'path';
 import * as p from '@clack/prompts';
-import { findFiusProjectRoot, loadAgentConfig } from '@fius/agent-management';
+import { findFiusProjectRoot, loadAgentConfig } from '@fiusdev/agent-management';
 import chalk from 'chalk';
 import open from 'open';
 import { confirmOrExit } from '../../utils/prompt-helpers.js';

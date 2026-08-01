@@ -7,7 +7,7 @@ import {
     removeFiusApiKeyFromEnv,
 } from '../../auth/index.js';
 import { clearUserInfoCache } from '../../utils/user-info-cache.js';
-import { logger } from '@fius/core';
+import { logger } from '@fiusdev/core';
 
 export async function handleLogoutCommand(
     options: {

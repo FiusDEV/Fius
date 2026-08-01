@@ -1,8 +1,8 @@
 import type { Server } from 'node:http';
 import type { Context } from 'hono';
-import type { FiusAgent, AgentCard } from '@fius/core';
-import { createAgentCard, logger, startLlmRegistryAutoUpdate } from '@fius/core';
-import { getFiusGlobalPath } from '@fius/core/utils/path.js';
+import type { FiusAgent, AgentCard } from '@fiusdev/core';
+import { createAgentCard, logger, startLlmRegistryAutoUpdate } from '@fiusdev/core';
+import { getFiusGlobalPath } from '@fiusdev/core/utils/path.js';
 import { readFileSync, existsSync } from 'node:fs';
 import { createFiusApp } from './index.js';
 import { createNodeServer } from './node/index.js';

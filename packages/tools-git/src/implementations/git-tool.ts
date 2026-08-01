@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import { createLocalToolCallHeader, defineTool } from '@fius/core/tools';
-import type { Tool, ToolExecutionContext } from '@fius/core/tools';
+import { createLocalToolCallHeader, defineTool } from '@fiusdev/core/tools';
+import type { Tool, ToolExecutionContext } from '@fiusdev/core/tools';
 import { runGit, isGitRepo } from '../git-runner.js';
 
 const GitInputSchema = z

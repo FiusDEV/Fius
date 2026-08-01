@@ -55,8 +55,8 @@ const cliVersion = resolveCliVersion();
 
 process.env.FIUS_CLI_VERSION = cliVersion;
 
-import { logger, startLlmRegistryAutoUpdate, FiusAgent, isPath } from '@fius/core';
-import { getSupportedModels, getProviderFromModel, type LLMProvider } from '@fius/llm';
+import { logger, startLlmRegistryAutoUpdate, FiusAgent, isPath } from '@fiusdev/core';
+import { getSupportedModels, getProviderFromModel, type LLMProvider } from '@fiusdev/llm';
 import {
     applyImageDefaults,
     cleanNullValues,
@@ -66,7 +66,7 @@ import {
     toFiusAgentOptions,
     type FiusImage,
     type ValidatedAgentConfig,
-} from '@fius/agent-config';
+} from '@fiusdev/agent-config';
 import {
     getFiusPackageRoot,
     resolveAgentPath,
@@ -79,7 +79,7 @@ import {
     createModelAuthResolver,
     resolveApiKeyForProvider,
     getPrimaryApiKeyEnvVar,
-} from '@fius/agent-management';
+} from '@fiusdev/agent-management';
 import { validateCliOptions, handleCliOptionsError } from './cli/utils/options.js';
 import { validateAgentConfig } from './cli/utils/config-validation.js';
 import {
@@ -205,7 +205,7 @@ program
     .option('--no-auto-install', 'Disable automatic installation of missing agents from registry')
     .option(
         '--image <package>',
-        'Image package to load (e.g., @fius/image-local). Overrides config image field.'
+        'Image package to load (e.g., @fiusdev/image-local). Overrides config image field.'
     )
     .option(
         '--dev',
@@ -216,7 +216,7 @@ program
 program
     .command('create-app [name]')
     .description('Create a Fius application (CLI, web, bot, etc.)')
-    .option('--from-image <package>', 'Use existing image (e.g., @fius/image-local)')
+    .option('--from-image <package>', 'Use existing image (e.g., @fiusdev/image-local)')
     .option('--type <type>', 'App type: script, webapp (default: script)')
     .action(
         withAnalytics('create-app', async (name?: string, options?: CreateAppOptions) => {
@@ -424,7 +424,7 @@ async function bootstrapAgentFromGlobalOpts(options: {
         globalOpts.image || // --image flag
         mergedConfig.image || // image field in agent config
         process.env.FIUS_IMAGE || // FIUS_IMAGE env var
-        '@fius/image-local'; // Default for convenience
+        '@fiusdev/image-local'; // Default for convenience
 
     let image: FiusImage;
     try {
@@ -801,7 +801,7 @@ program
                                 './cli/utils/api-key-setup.js'
                             );
                             const { updateGlobalPreferences } = await import(
-                                '@fius/agent-management'
+                                '@fiusdev/agent-management'
                             );
 
                             const result = await promptForPendingApiKey(
@@ -821,7 +821,7 @@ program
                             }
                         } else {
                             const { updateGlobalPreferences } = await import(
-                                '@fius/agent-management'
+                                '@fiusdev/agent-management'
                             );
                             await updateGlobalPreferences({
                                 setup: { apiKeyPending: false },
@@ -855,7 +855,7 @@ program
                         opts.image || // --image flag
                         cleanedConfig.image || // image field in agent config
                         process.env.FIUS_IMAGE || // FIUS_IMAGE env var
-                        '@fius/image-local'; // Default for convenience
+                        '@fiusdev/image-local'; // Default for convenience
 
                     try {
                         image = await loadImage(imageName);

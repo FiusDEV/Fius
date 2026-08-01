@@ -3,7 +3,7 @@
 import React from 'react';
 import path from 'path';
 import { Box, Text } from 'ink';
-import type { SearchDisplayData } from '@fius/core';
+import type { SearchDisplayData } from '@fiusdev/core';
 
 
 function toRelativePath(absolutePath: string): string {

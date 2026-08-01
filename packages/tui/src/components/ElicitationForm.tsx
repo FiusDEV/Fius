@@ -3,7 +3,7 @@
 import React, { useState, forwardRef, useImperativeHandle, useCallback, useMemo } from 'react';
 import { Box, Text } from 'ink';
 import wrapAnsi from 'wrap-ansi';
-import type { ElicitationMetadata } from '@fius/core';
+import type { ElicitationMetadata } from '@fiusdev/core';
 import type { Key } from '../hooks/useInputOrchestrator.js';
 import { useTerminalSize } from '../hooks/useTerminalSize.js';
 import { parseElicitationSchema, type ElicitationFormField } from '../utils/elicitationSchema.js';

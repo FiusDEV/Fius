@@ -7,9 +7,9 @@ import {
     AgentConfigSchema,
     type AgentConfig,
     type ValidatedAgentConfig,
-} from '@fius/agent-config';
-import { FiusValidationError } from '@fius/core';
-import { fail, zodToIssues } from '@fius/core';
+} from '@fiusdev/agent-config';
+import { FiusValidationError } from '@fiusdev/core';
+import { fail, zodToIssues } from '@fiusdev/core';
 
 /**
  * Input type for adding a file-based prompt

@@ -1,4 +1,4 @@
-import { createAgentCard } from '@fius/core';
+import { createAgentCard } from '@fiusdev/core';
 import { safeExit } from '../../analytics/wrapper.js';
 import type { MainModeContext } from './context.js';
 
@@ -19,7 +19,7 @@ export async function runMcpMode(context: MainModeContext): Promise<void> {
             },
             agentCardConfig
         );
-        const { createMcpTransport, initializeMcpServer } = await import('@fius/server');
+        const { createMcpTransport, initializeMcpServer } = await import('@fiusdev/server');
         const mcpTransport = await createMcpTransport('stdio');
         await initializeMcpServer(agent, agentCardData, mcpTransport);
     } catch (err) {

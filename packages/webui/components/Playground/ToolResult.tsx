@@ -1,7 +1,7 @@
 import React from 'react';
 import { CheckCircle, XCircle, Copy, Download, File, FileAudio, FileVideo } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import type { ToolResult as ToolResultType } from '@fius/core';
+import type { ToolResult as ToolResultType } from '@fiusdev/core';
 
 interface ToolResultProps {
     result: ToolResultType;

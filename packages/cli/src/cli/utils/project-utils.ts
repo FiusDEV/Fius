@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises';
 import { parseDocument } from 'yaml';
-import { type LLMProvider, getDefaultModelForProvider } from '@fius/llm';
-import { getPrimaryApiKeyEnvVar } from '@fius/core';
+import { type LLMProvider, getDefaultModelForProvider } from '@fiusdev/llm';
+import { getPrimaryApiKeyEnvVar } from '@fiusdev/core';
 
 export async function updateFiusConfigFile(
     filepath: string,

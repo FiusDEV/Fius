@@ -5,7 +5,7 @@ import {
     getExecutionContext,
     ensureFiusGlobalDirectory,
     getFiusEnvPath,
-} from '@fius/agent-management';
+} from '@fiusdev/agent-management';
 
 /**
  * Multi-layer environment variable loading with context awareness.

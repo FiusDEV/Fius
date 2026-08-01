@@ -5,7 +5,7 @@ import { useEffect, useRef, useCallback } from 'react';
 import { useApp } from 'ink';
 import type { UIState, InputState, SessionState, OverlayType, Message } from '../state/types.js';
 import type { ApprovalRequest } from '../components/ApprovalPrompt.js';
-import type { QueuedMessage } from '@fius/core';
+import type { QueuedMessage } from '@fiusdev/core';
 import { useKeypress, type Key as RawKey } from './useKeypress.js';
 import { enableMouseEvents, disableMouseEvents } from '../utils/mouse.js';
 import type { TextBuffer } from '../components/shared/text-buffer.js';

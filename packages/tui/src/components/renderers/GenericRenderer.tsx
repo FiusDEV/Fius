@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Box, Text } from 'ink';
-import type { ContentPart } from '@fius/core';
+import type { ContentPart } from '@fiusdev/core';
 
 interface GenericRendererProps {
     

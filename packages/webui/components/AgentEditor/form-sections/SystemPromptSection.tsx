@@ -5,8 +5,8 @@ import { LabelWithTooltip } from '../../ui/label-with-tooltip';
 import { Button } from '../../ui/button';
 import { Collapsible } from '../../ui/collapsible';
 import { Plus, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
-import { PROMPT_GENERATOR_SOURCES } from '@fius/core';
-import type { ContributorConfig } from '@fius/core';
+import { PROMPT_GENERATOR_SOURCES } from '@fiusdev/core';
+import type { ContributorConfig } from '@fiusdev/core';
 
 type SystemPromptConfigObject = {
     contributors: ContributorConfig[];

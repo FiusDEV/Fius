@@ -1,6 +1,6 @@
 # Maintainer: FiusDEV <support@fius.dev>
 pkgname=fius
-pkgver=1.0.0
+pkgver=1.0.10
 pkgrel=1
 pkgdesc="Your command center for controlling computers and services with natural language"
 arch=('x86_64' 'aarch64')
@@ -9,13 +9,10 @@ license=('MIT')
 depends=('nodejs>=20' 'npm')
 makedepends=()
 options=(!emptydirs)
-source=("https://registry.npmjs.org/@fiusdev/fius/-/fiusdev-fius-${pkgver}.tgz")
+source=("https://registry.npmjs.org/@fiusdev/fius/-/fius-${pkgver}.tgz")
 sha256sums=('SKIP')
 
 package() {
     cd "$srcdir"
-    
     npm install -g --user root --prefix "$pkgdir/usr" "@fiusdev/fius@${pkgver}"
-    
-    rm -rf "$pkgdir/usr/lib/node_modules/@fiusdev/fius/node_modules/.package-lock.json"
 }

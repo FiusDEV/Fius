@@ -1,5 +1,5 @@
 import { Hono } from 'hono';
-import type { AgentCard } from '@fius/core';
+import type { AgentCard } from '@fiusdev/core';
 
 export function createA2aRouter(getAgentCard: () => AgentCard) {
     const app = new Hono();

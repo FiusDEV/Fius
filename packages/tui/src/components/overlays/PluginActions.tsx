@@ -10,7 +10,7 @@ import React, {
 } from 'react';
 import { Box, Text } from 'ink';
 import type { Key } from '../../hooks/useInputOrchestrator.js';
-import type { ListedPlugin } from '@fius/agent-management';
+import type { ListedPlugin } from '@fiusdev/agent-management';
 import { BaseSelector, type BaseSelectorHandle } from '../base/BaseSelector.js';
 
 export type PluginActionType = 'uninstall' | 'back';

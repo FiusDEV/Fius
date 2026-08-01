@@ -111,10 +111,10 @@ importers:
 
   packages/agent-config:
     dependencies:
-      '@fius/core':
+      '@fiusdev/core':
         specifier: workspace:*
         version: link:../core
-      '@fius/storage':
+      '@fiusdev/storage':
         specifier: workspace:*
         version: link:../storage
       zod:
@@ -130,19 +130,19 @@ importers:
 
   packages/agent-management:
     dependencies:
-      '@fius/agent-config':
+      '@fiusdev/agent-config':
         specifier: workspace:*
         version: link:../agent-config
-      '@fius/core':
+      '@fiusdev/core':
         specifier: workspace:*
         version: link:../core
-      '@fius/llm':
+      '@fiusdev/llm':
         specifier: workspace:*
         version: link:../llm
-      '@fius/orchestration':
+      '@fiusdev/orchestration':
         specifier: workspace:*
         version: link:../orchestration
-      '@fius/tools-builtins':
+      '@fiusdev/tools-builtins':
         specifier: workspace:*
         version: link:../tools-builtins
       yaml:
@@ -158,10 +158,10 @@ importers:
 
   packages/analytics:
     dependencies:
-      '@fius/agent-management':
+      '@fiusdev/agent-management':
         specifier: workspace:*
         version: link:../agent-management
-      '@fius/core':
+      '@fiusdev/core':
         specifier: workspace:*
         version: link:../core
       node-machine-id:
@@ -173,40 +173,40 @@ importers:
       '@clack/prompts':
         specifier: ^0.10.1
         version: 0.10.1
-      '@fius/agent-config':
+      '@fiusdev/agent-config':
         specifier: workspace:*
         version: link:../agent-config
-      '@fius/agent-management':
+      '@fiusdev/agent-management':
         specifier: workspace:*
         version: link:../agent-management
-      '@fius/analytics':
+      '@fiusdev/analytics':
         specifier: workspace:*
         version: link:../analytics
-      '@fius/client-sdk':
+      '@fiusdev/client-sdk':
         specifier: workspace:*
         version: link:../client-sdk
-      '@fius/core':
+      '@fiusdev/core':
         specifier: workspace:*
         version: link:../core
-      '@fius/image-local':
+      '@fiusdev/image-local':
         specifier: workspace:*
         version: link:../image-local
-      '@fius/image-logger-agent':
+      '@fiusdev/image-logger-agent':
         specifier: workspace:*
         version: link:../image-logger-agent
-      '@fius/llm':
+      '@fiusdev/llm':
         specifier: workspace:*
         version: link:../llm
-      '@fius/registry':
+      '@fiusdev/registry':
         specifier: workspace:*
         version: link:../registry
-      '@fius/server':
+      '@fiusdev/server':
         specifier: workspace:*
         version: link:../server
-      '@fius/storage':
+      '@fiusdev/storage':
         specifier: workspace:*
         version: link:../storage
-      '@fius/tui':
+      '@fiusdev/tui':
         specifier: workspace:*
         version: link:../tui
       '@modelcontextprotocol/sdk':
@@ -277,10 +277,10 @@ importers:
         specifier: ^4.12.12
         version: 4.12.12
     devDependencies:
-      '@fius/core':
+      '@fiusdev/core':
         specifier: workspace:*
         version: link:../core
-      '@fius/server':
+      '@fiusdev/server':
         specifier: workspace:*
         version: link:../server
       tsup:
@@ -325,7 +325,7 @@ importers:
       '@ai-sdk/xai':
         specifier: ^2.0.0
         version: 2.0.44(zod@4.3.6)
-      '@fius/llm':
+      '@fiusdev/llm':
         specifier: workspace:*
         version: link:../llm
       '@modelcontextprotocol/sdk':
@@ -383,10 +383,10 @@ importers:
 
   packages/image-bundler:
     dependencies:
-      '@fius/agent-config':
+      '@fiusdev/agent-config':
         specifier: workspace:*
         version: link:../agent-config
-      '@fius/core':
+      '@fiusdev/core':
         specifier: workspace:*
         version: link:../core
       commander:
@@ -411,37 +411,37 @@ importers:
 
   packages/image-local:
     dependencies:
-      '@fius/agent-config':
+      '@fiusdev/agent-config':
         specifier: workspace:*
         version: link:../agent-config
-      '@fius/agent-management':
+      '@fiusdev/agent-management':
         specifier: workspace:*
         version: link:../agent-management
-      '@fius/core':
+      '@fiusdev/core':
         specifier: workspace:*
         version: link:../core
-      '@fius/storage':
+      '@fiusdev/storage':
         specifier: workspace:*
         version: link:../storage
-      '@fius/tools-builtins':
+      '@fiusdev/tools-builtins':
         specifier: workspace:*
         version: link:../tools-builtins
-      '@fius/tools-filesystem':
+      '@fiusdev/tools-filesystem':
         specifier: workspace:*
         version: link:../tools-filesystem
-      '@fius/tools-lifecycle':
+      '@fiusdev/tools-lifecycle':
         specifier: workspace:*
         version: link:../tools-lifecycle
-      '@fius/tools-plan':
+      '@fiusdev/tools-plan':
         specifier: workspace:*
         version: link:../tools-plan
-      '@fius/tools-process':
+      '@fiusdev/tools-process':
         specifier: workspace:*
         version: link:../tools-process
-      '@fius/tools-scheduler':
+      '@fiusdev/tools-scheduler':
         specifier: workspace:*
         version: link:../tools-scheduler
-      '@fius/tools-todo':
+      '@fiusdev/tools-todo':
         specifier: workspace:*
         version: link:../tools-todo
       glob:
@@ -460,16 +460,16 @@ importers:
 
   packages/image-logger-agent:
     dependencies:
-      '@fius/agent-config':
+      '@fiusdev/agent-config':
         specifier: workspace:*
         version: link:../agent-config
-      '@fius/agent-management':
+      '@fiusdev/agent-management':
         specifier: workspace:*
         version: link:../agent-management
-      '@fius/core':
+      '@fiusdev/core':
         specifier: workspace:*
         version: link:../core
-      '@fius/image-local':
+      '@fiusdev/image-local':
         specifier: workspace:*
         version: link:../image-local
       zod:
@@ -494,7 +494,7 @@ importers:
 
   packages/orchestration:
     dependencies:
-      '@fius/core':
+      '@fiusdev/core':
         specifier: workspace:*
         version: link:../core
       zod:
@@ -519,25 +519,25 @@ importers:
 
   packages/server:
     dependencies:
-      '@fius/agent-config':
+      '@fiusdev/agent-config':
         specifier: workspace:*
         version: link:../agent-config
-      '@fius/agent-management':
+      '@fiusdev/agent-management':
         specifier: workspace:*
         version: link:../agent-management
-      '@fius/core':
+      '@fiusdev/core':
         specifier: workspace:*
         version: link:../core
-      '@fius/image-local':
+      '@fiusdev/image-local':
         specifier: workspace:*
         version: link:../image-local
-      '@fius/llm':
+      '@fiusdev/llm':
         specifier: workspace:*
         version: link:../llm
-      '@fius/storage':
+      '@fiusdev/storage':
         specifier: workspace:*
         version: link:../storage
-      '@fius/tools-scheduler':
+      '@fiusdev/tools-scheduler':
         specifier: workspace:*
         version: link:../tools-scheduler
       '@hono/node-server':
@@ -568,7 +568,7 @@ importers:
 
   packages/storage:
     dependencies:
-      '@fius/core':
+      '@fiusdev/core':
         specifier: workspace:*
         version: link:../core
       better-sqlite3:
@@ -593,13 +593,13 @@ importers:
 
   packages/tools-builtins:
     dependencies:
-      '@fius/agent-config':
+      '@fiusdev/agent-config':
         specifier: workspace:*
         version: link:../agent-config
-      '@fius/core':
+      '@fiusdev/core':
         specifier: workspace:*
         version: link:../core
-      '@fius/tools-git':
+      '@fiusdev/tools-git':
         specifier: workspace:*
         version: link:../tools-git
       undici:
@@ -618,10 +618,10 @@ importers:
 
   packages/tools-filesystem:
     dependencies:
-      '@fius/agent-config':
+      '@fiusdev/agent-config':
         specifier: workspace:*
         version: link:../agent-config
-      '@fius/core':
+      '@fiusdev/core':
         specifier: workspace:*
         version: link:../core
       diff:
@@ -652,7 +652,7 @@ importers:
 
   packages/tools-git:
     dependencies:
-      '@fius/core':
+      '@fiusdev/core':
         specifier: workspace:*
         version: link:../core
       zod:
@@ -665,10 +665,10 @@ importers:
 
   packages/tools-lifecycle:
     dependencies:
-      '@fius/agent-config':
+      '@fiusdev/agent-config':
         specifier: workspace:*
         version: link:../agent-config
-      '@fius/core':
+      '@fiusdev/core':
         specifier: workspace:*
         version: link:../core
       zod:
@@ -687,10 +687,10 @@ importers:
 
   packages/tools-plan:
     dependencies:
-      '@fius/agent-config':
+      '@fiusdev/agent-config':
         specifier: workspace:*
         version: link:../agent-config
-      '@fius/core':
+      '@fiusdev/core':
         specifier: workspace:*
         version: link:../core
       diff:
@@ -721,10 +721,10 @@ importers:
 
   packages/tools-process:
     dependencies:
-      '@fius/agent-config':
+      '@fiusdev/agent-config':
         specifier: workspace:*
         version: link:../agent-config
-      '@fius/core':
+      '@fiusdev/core':
         specifier: workspace:*
         version: link:../core
       zod:
@@ -740,10 +740,10 @@ importers:
 
   packages/tools-scheduler:
     dependencies:
-      '@fius/agent-config':
+      '@fiusdev/agent-config':
         specifier: workspace:*
         version: link:../agent-config
-      '@fius/core':
+      '@fiusdev/core':
         specifier: workspace:*
         version: link:../core
       cron-parser:
@@ -765,10 +765,10 @@ importers:
 
   packages/tools-todo:
     dependencies:
-      '@fius/agent-config':
+      '@fiusdev/agent-config':
         specifier: workspace:*
         version: link:../agent-config
-      '@fius/core':
+      '@fiusdev/core':
         specifier: workspace:*
         version: link:../core
       nanoid:
@@ -790,16 +790,16 @@ importers:
 
   packages/tui:
     dependencies:
-      '@fius/agent-management':
+      '@fiusdev/agent-management':
         specifier: workspace:*
         version: link:../agent-management
-      '@fius/core':
+      '@fiusdev/core':
         specifier: workspace:*
         version: link:../core
-      '@fius/llm':
+      '@fiusdev/llm':
         specifier: workspace:*
         version: link:../llm
-      '@fius/registry':
+      '@fiusdev/registry':
         specifier: workspace:*
         version: link:../registry
       chalk:
@@ -854,25 +854,25 @@ importers:
 
   packages/webui:
     dependencies:
-      '@fius/agent-config':
+      '@fiusdev/agent-config':
         specifier: workspace:*
         version: link:../agent-config
-      '@fius/analytics':
+      '@fiusdev/analytics':
         specifier: workspace:*
         version: link:../analytics
-      '@fius/client-sdk':
+      '@fiusdev/client-sdk':
         specifier: workspace:*
         version: link:../client-sdk
-      '@fius/core':
+      '@fiusdev/core':
         specifier: workspace:*
         version: link:../core
-      '@fius/llm':
+      '@fiusdev/llm':
         specifier: workspace:*
         version: link:../llm
-      '@fius/registry':
+      '@fiusdev/registry':
         specifier: workspace:*
         version: link:../registry
-      '@fius/storage':
+      '@fiusdev/storage':
         specifier: workspace:*
         version: link:../storage
       '@mcp-ui/client':

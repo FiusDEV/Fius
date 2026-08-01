@@ -1,6 +1,6 @@
 import { prettyJSON } from 'hono/pretty-json';
 import type { MiddlewareHandler } from 'hono';
-import { redactSensitiveData } from '@fius/core';
+import { redactSensitiveData } from '@fiusdev/core';
 
 export const prettyJsonMiddleware = prettyJSON();
 

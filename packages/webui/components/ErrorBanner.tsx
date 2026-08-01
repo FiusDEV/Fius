@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { AlertTriangle, CreditCard, ChevronDown, ChevronUp, X } from 'lucide-react';
 import { type ErrorMessage } from '@/lib/stores/chatStore';
-import type { Issue } from '@fius/core';
+import type { Issue } from '@fiusdev/core';
 import { CopyButton } from './ui/copy-button';
 import { SpeakButton } from './ui/speak-button';
 

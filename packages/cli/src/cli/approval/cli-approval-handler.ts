@@ -5,8 +5,8 @@ import type {
     AgentEventMap,
     EventArgs,
     EventListener,
-} from '@fius/core';
-import { ApprovalStatus, DenialReason } from '@fius/core';
+} from '@fiusdev/core';
+import { ApprovalStatus, DenialReason } from '@fiusdev/core';
 
 type ApprovalEventBus = {
     on: <K extends keyof AgentEventMap>(

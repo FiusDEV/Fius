@@ -18,8 +18,8 @@ import {
     listInstalledPlugins,
     type MarketplaceEntry,
     type MarketplacePlugin,
-} from '@fius/agent-management';
-import { logger } from '@fius/core';
+} from '@fiusdev/agent-management';
+import { logger } from '@fiusdev/core';
 import type { Key } from '../../hooks/useInputOrchestrator.js';
 import { BaseSelector, type BaseSelectorHandle } from '../base/BaseSelector.js';
 

@@ -1,5 +1,5 @@
 import type { Database } from './types.js';
-import { StorageError } from '@fius/core';
+import { StorageError } from '@fiusdev/core';
 
 /**
  * In-memory database store for development and testing.

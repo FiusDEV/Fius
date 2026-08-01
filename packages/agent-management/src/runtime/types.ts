@@ -5,8 +5,8 @@
  * the lifecycle of multiple agent instances.
  */
 
-import type { AgentConfig } from '@fius/agent-config';
-import type { FiusAgent } from '@fius/core';
+import type { AgentConfig } from '@fiusdev/agent-config';
+import type { FiusAgent } from '@fiusdev/core';
 
 /**
  * Configuration for spawning an agent

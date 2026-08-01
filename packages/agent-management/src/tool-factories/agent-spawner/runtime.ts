@@ -12,10 +12,10 @@
  */
 
 import { randomUUID } from 'crypto';
-import type { AgentConfig } from '@fius/agent-config';
-import type { FiusAgent, Logger, TaskForker } from '@fius/core';
-import { FiusRuntimeError, ErrorType } from '@fius/core';
-import { getReasoningProfile, supportsReasoningVariant } from '@fius/llm';
+import type { AgentConfig } from '@fiusdev/agent-config';
+import type { FiusAgent, Logger, TaskForker } from '@fiusdev/core';
+import { FiusRuntimeError, ErrorType } from '@fiusdev/core';
+import { getReasoningProfile, supportsReasoningVariant } from '@fiusdev/llm';
 import { AgentRuntime } from '../../runtime/AgentRuntime.js';
 import { createDelegatingApprovalHandler } from '../../runtime/approval-delegation.js';
 import { loadAgentConfig } from '../../config/loader.js';

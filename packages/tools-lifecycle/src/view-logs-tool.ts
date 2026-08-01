@@ -1,7 +1,7 @@
 import * as fs from 'node:fs/promises';
 import { z } from 'zod';
-import { ToolError, createLocalToolCallHeader, defineTool } from '@fius/core/tools';
-import type { Tool, ToolExecutionContext } from '@fius/core/tools';
+import { ToolError, createLocalToolCallHeader, defineTool } from '@fiusdev/core/tools';
+import type { Tool, ToolExecutionContext } from '@fiusdev/core/tools';
 
 const LOG_LEVEL_VALUES = ['debug', 'info', 'warn', 'error', 'silly'] as const;
 type LogLevel = (typeof LOG_LEVEL_VALUES)[number];

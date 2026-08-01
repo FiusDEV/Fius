@@ -2,7 +2,7 @@ import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
 import { InternalErrorResponse } from '../schemas/responses.js';
 import type { GetAgentFn, OpenAPIRouteSchema } from '../types.js';
 import { readFileSync, existsSync } from 'fs';
-import { getFiusGlobalPath } from '@fius/core';
+import { getFiusGlobalPath } from '@fiusdev/core';
 
 const FiusAuthStatusResponseSchema = z
     .object({

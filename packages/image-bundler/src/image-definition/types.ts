@@ -6,10 +6,10 @@
  * and must `export const factory = ...` from their `index.ts`.
  */
 
-import type { ImageDefaults } from '@fius/agent-config';
+import type { ImageDefaults } from '@fiusdev/agent-config';
 
 /**
- * Image definition structure consumed by `@fius/image-bundler`.
+ * Image definition structure consumed by `@fiusdev/image-bundler`.
  *
  * Note: Provider factories are discovered from folders; this file is metadata + defaults only.
  * Storage is supplied by the runtime image's `storage.createStores` implementation.

@@ -1,4 +1,4 @@
-import type { LLMProvider, LLMPricingStatus, TokenUsage } from '@fius/llm';
+import type { LLMProvider, LLMPricingStatus, TokenUsage } from '@fiusdev/llm';
 import type { ToolDisplayData } from '../tools/display-types.js';
 import type { ToolPresentationSnapshotV1 } from '../tools/types.js';
 import type { ToolCallMetadata } from '../tools/tool-call-metadata.js';

@@ -1,6 +1,6 @@
 import * as path from 'node:path';
-import type { ToolFactory } from '@fius/agent-config';
-import type { ToolExecutionContext } from '@fius/core/tools';
+import type { ToolFactory } from '@fiusdev/agent-config';
+import type { ToolExecutionContext } from '@fiusdev/core/tools';
 import { PlanService } from './plan-service.js';
 import type { PlanServiceGetter } from './plan-service-getter.js';
 import { createPlanCreateTool } from './tools/plan-create-tool.js';
@@ -12,7 +12,7 @@ import {
     PlanToolsConfigSchema,
     type PlanToolsConfig,
 } from './tool-factory-config.js';
-import type { Tool } from '@fius/core/tools';
+import type { Tool } from '@fiusdev/core/tools';
 
 type PlanToolName = (typeof PLAN_TOOL_NAMES)[number];
 

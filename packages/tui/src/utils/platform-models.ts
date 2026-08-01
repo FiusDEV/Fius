@@ -1,6 +1,6 @@
 import { readFileSync, existsSync } from 'fs';
-import { getFiusGlobalPath } from '@fius/core';
-import { getModelDisplayName } from '@fius/llm';
+import { getFiusGlobalPath } from '@fiusdev/core';
+import { getModelDisplayName } from '@fiusdev/llm';
 
 export interface PlatformModel {
     name: string;

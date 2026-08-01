@@ -9,8 +9,8 @@ import { z } from 'zod';
 import { randomUUID } from 'crypto';
 import { ConditionEngine } from '../condition-engine.js';
 import type { WaitCondition, Signal } from '../types.js';
-import { createLocalToolCallHeader, truncateForHeader } from '@fius/core';
-import type { Tool } from '@fius/core';
+import { createLocalToolCallHeader, truncateForHeader } from '@fiusdev/core';
+import type { Tool } from '@fiusdev/core';
 
 /**
  * Input schema for wait_for tool

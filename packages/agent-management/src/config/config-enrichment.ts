@@ -14,7 +14,7 @@
  */
 
 import { getFiusPath } from '../utils/path.js';
-import type { AgentConfig } from '@fius/agent-config';
+import type { AgentConfig } from '@fiusdev/agent-config';
 import * as path from 'path';
 import { discoverCommandPrompts, discoverAgentInstructionFile } from './discover-prompts.js';
 import { findFiusProjectRoot } from '../utils/execution-context.js';

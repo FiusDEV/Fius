@@ -1,5 +1,5 @@
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
-import type { FiusAgent } from '@fius/core';
+import type { FiusAgent } from '@fiusdev/core';
 import type { Context } from 'hono';
 import {
     InternalErrorResponse,

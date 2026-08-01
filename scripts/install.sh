@@ -172,7 +172,7 @@ main() {
         success "Installation complete!"
         echo ""
         echo -e "  Run ${CYAN}fius --help${NC} to get started"
-        echo -e "  Run ${CYAN}fius login${NC} to authenticate"
+        echo -e "  Run ${CYAN}fius${NC} to launch interactive mode"
         echo ""
     else
         warn "Fius installed but not found in PATH"

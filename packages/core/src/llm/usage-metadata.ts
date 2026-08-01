@@ -1,5 +1,5 @@
-import { calculateCostBreakdown, getModelPricing, type TokenUsageCostBreakdown } from '@fius/llm';
-import type { LLMProvider, LLMPricingStatus, TokenUsage } from '@fius/llm';
+import { calculateCostBreakdown, getModelPricing, type TokenUsageCostBreakdown } from '@fiusdev/llm';
+import type { LLMProvider, LLMPricingStatus, TokenUsage } from '@fiusdev/llm';
 
 export interface LLMUsagePricingMetadata {
     estimatedCost?: number;

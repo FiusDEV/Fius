@@ -1,7 +1,7 @@
 import { z } from 'zod';
-import type { Tool, ToolExecutionContext } from '@fius/core/tools';
-import { FiusRuntimeError, ErrorScope, ErrorType } from '@fius/core/errors';
-import { createLocalToolCallHeader, defineTool, truncateForHeader } from '@fius/core/tools';
+import type { Tool, ToolExecutionContext } from '@fiusdev/core/tools';
+import { FiusRuntimeError, ErrorScope, ErrorType } from '@fiusdev/core/errors';
+import { createLocalToolCallHeader, defineTool, truncateForHeader } from '@fiusdev/core/tools';
 
 const DelegateToUrlInputSchema = z
     .object({
@@ -99,7 +99,7 @@ class SimpleA2AClient {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'User-Agent': '@fius/core',
+                        'User-Agent': '@fiusdev/core',
                     },
                     body: JSON.stringify(rpcRequest),
                     signal: controller.signal,

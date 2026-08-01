@@ -6,4 +6,4 @@ export type {
     BlobReference,
     BlobData,
     BlobStats,
-} from '@fius/core';
+} from '@fiusdev/core';

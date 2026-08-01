@@ -1,8 +1,8 @@
-import type { StreamingEvent } from '@fius/core';
+import type { StreamingEvent } from '@fiusdev/core';
 
 /**
  * SSE (Server-Sent Events) streaming utilities for client SDK
- * Adapted from @fius/webui EventStreamClient
+ * Adapted from @fiusdev/webui EventStreamClient
  */
 
 export type MessageStreamEvent = StreamingEvent;

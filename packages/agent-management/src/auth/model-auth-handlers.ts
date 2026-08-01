@@ -1,4 +1,4 @@
-import type { LlmAuthResolver } from '@fius/core';
+import type { LlmAuthResolver } from '@fiusdev/core';
 import {
     createChatGPTRuntimeAuth,
     startChatGPTBrowserLogin,

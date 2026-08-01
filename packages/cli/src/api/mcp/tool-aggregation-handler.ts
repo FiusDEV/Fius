@@ -7,7 +7,7 @@ import {
     jsonSchemaToZodShape,
     createLogger,
     FiusLogComponent,
-} from '@fius/core';
+} from '@fiusdev/core';
 import { z } from 'zod';
 
 /**

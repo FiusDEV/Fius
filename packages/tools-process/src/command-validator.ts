@@ -5,7 +5,7 @@
  */
 
 import { ProcessConfig, CommandValidation } from './types.js';
-import type { Logger } from '@fius/core/logger';
+import type { Logger } from '@fiusdev/core/logger';
 
 const MAX_COMMAND_LENGTH = 10000; // 10K characters
 

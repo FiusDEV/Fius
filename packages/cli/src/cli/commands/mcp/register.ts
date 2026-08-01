@@ -45,8 +45,8 @@ export function registerMcpCommand({ program }: McpCommandRegisterContext): void
                             { logger, ServersConfigSchema },
                             { resolveAgentPath, loadAgentConfig },
                         ] = await Promise.all([
-                            import('@fius/core'),
-                            import('@fius/agent-management'),
+                            import('@fiusdev/core'),
+                            import('@fiusdev/agent-management'),
                         ]);
 
 
@@ -77,7 +77,7 @@ export function registerMcpCommand({ program }: McpCommandRegisterContext): void
 
                         const [{ createMcpTransport }, { initializeMcpToolAggregationServer }] =
                             await Promise.all([
-                                import('@fius/server'),
+                                import('@fiusdev/server'),
                                 import('../../../api/mcp/tool-aggregation-handler.js'),
                             ]);
 

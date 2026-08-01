@@ -13,4 +13,4 @@ export * from './mcp/mcp-handler.js';
 export * from './approval/manual-approval-handler.js';
 export * from './approval/approval-coordinator.js';
 export * from './approval/wire-approval-events.js';
-export { getSchedulerManager } from '@fius/tools-scheduler/service';
+export { getSchedulerManager } from '@fiusdev/tools-scheduler/service';

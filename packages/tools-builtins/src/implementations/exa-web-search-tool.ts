@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import { createLocalToolCallHeader, defineTool, truncateForHeader } from '@fius/core/tools';
-import type { Tool, ToolExecutionContext } from '@fius/core/tools';
+import { createLocalToolCallHeader, defineTool, truncateForHeader } from '@fiusdev/core/tools';
+import type { Tool, ToolExecutionContext } from '@fiusdev/core/tools';
 import { callExaTool } from './exa-mcp.js';
 
 const WebSearchInputSchema = z

@@ -1,4 +1,4 @@
-import type { LLMProvider } from '@fius/llm';
+import type { LLMProvider } from '@fiusdev/llm';
 import type { TuiAgentBackend } from '../agent-backend.js';
 
 export interface TuiShutdownHandle {

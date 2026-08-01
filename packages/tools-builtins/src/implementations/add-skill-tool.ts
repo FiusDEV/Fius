@@ -2,8 +2,8 @@ import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import { homedir } from 'node:os';
 import { z } from 'zod';
-import { ToolError, createLocalToolCallHeader, defineTool } from '@fius/core/tools';
-import type { Tool } from '@fius/core/tools';
+import { ToolError, createLocalToolCallHeader, defineTool } from '@fiusdev/core/tools';
+import type { Tool } from '@fiusdev/core/tools';
 
 const AddSkillInputSchema = z
     .object({

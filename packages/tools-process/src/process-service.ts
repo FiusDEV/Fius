@@ -18,8 +18,8 @@ import {
 } from './types.js';
 import { CommandValidator } from './command-validator.js';
 import { ProcessError } from './errors.js';
-import type { Logger } from '@fius/core/logger';
-import { FiusLogComponent } from '@fius/core/logger';
+import type { Logger } from '@fiusdev/core/logger';
+import { FiusLogComponent } from '@fiusdev/core/logger';
 
 const DEFAULT_TIMEOUT = 120000; // 2 minutes
 

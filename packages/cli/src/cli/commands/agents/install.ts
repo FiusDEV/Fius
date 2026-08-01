@@ -3,7 +3,7 @@ import { existsSync, statSync } from 'fs';
 import path from 'path';
 import { z } from 'zod';
 import * as p from '@clack/prompts';
-import { getFiusGlobalPath, loadBundledRegistryAgents } from '@fius/agent-management';
+import { getFiusGlobalPath, loadBundledRegistryAgents } from '@fiusdev/agent-management';
 import { textOrExit } from '../../utils/prompt-helpers.js';
 import { installBundledAgent, installCustomAgent } from '../../../utils/agent-helpers.js';
 import { capture } from '../../../analytics/index.js';

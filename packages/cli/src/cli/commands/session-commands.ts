@@ -1,5 +1,5 @@
 import chalk from 'chalk';
-import { logger, FiusAgent, type SessionMetadata } from '@fius/core';
+import { logger, FiusAgent, type SessionMetadata } from '@fiusdev/core';
 import { formatSessionInfo, formatHistoryMessage } from './helpers/formatters.js';
 
 function escapeRegExp(string: string): string {

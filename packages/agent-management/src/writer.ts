@@ -1,10 +1,10 @@
 import { promises as fs } from 'fs';
 import { parseDocument, stringify as stringifyYaml } from 'yaml';
 import * as path from 'path';
-import type { AgentConfig } from '@fius/agent-config';
-import type { LLMProvider } from '@fius/llm';
+import type { AgentConfig } from '@fiusdev/agent-config';
+import type { LLMProvider } from '@fiusdev/llm';
 import { type GlobalPreferences } from './preferences/schemas.js';
-import { logger } from '@fius/core';
+import { logger } from '@fiusdev/core';
 import { ConfigError } from './config/index.js';
 
 export interface LLMOverrides {

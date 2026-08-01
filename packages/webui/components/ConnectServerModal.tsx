@@ -4,7 +4,7 @@ import type {
     StdioServerConfig,
     SseServerConfig,
     HttpServerConfig,
-} from '@fius/core';
+} from '@fiusdev/core';
 import {
     Dialog,
     DialogContent,

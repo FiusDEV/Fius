@@ -1,5 +1,5 @@
 import { EventEmitter } from 'node:events';
-import type { ApprovalRequest, ApprovalResponse } from '@fius/core';
+import type { ApprovalRequest, ApprovalResponse } from '@fiusdev/core';
 
 export class ApprovalCoordinator extends EventEmitter {
     private approvalContexts = new Map<

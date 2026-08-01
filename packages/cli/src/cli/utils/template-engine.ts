@@ -16,7 +16,7 @@ export function generateIndexForCodeFirstDI(context: TemplateContext): string {
     return `// Standalone Fius app (programmatic)
 import 'dotenv/config';
 
-import { FiusAgent, InMemoryFiusStores, createLogger } from '@fius/core';
+import { FiusAgent, InMemoryFiusStores, createLogger } from '@fiusdev/core';
 
 const agentId = '${context.projectName}';
 const logger = createLogger({
@@ -45,8 +45,8 @@ export function generateWebServerIndexForCodeFirstDI(context: TemplateContext): 
     return `// Fius Web Server (programmatic)
 import 'dotenv/config';
 
-import { FiusAgent, InMemoryFiusStores, createLogger } from '@fius/core';
-import { startFiusServer } from '@fius/server';
+import { FiusAgent, InMemoryFiusStores, createLogger } from '@fiusdev/core';
+import { startFiusServer } from '@fiusdev/server';
 import { resolve } from 'node:path';
 
 const agentId = '${context.projectName}';
@@ -517,7 +517,7 @@ export function generateFiusImageFile(context: TemplateContext): string {
         },`
         : '';
 
-    return `import type { ImageDefinition } from '@fius/image-bundler';
+    return `import type { ImageDefinition } from '@fiusdev/image-bundler';
 
 const image = {
     name: '${context.imageName || context.projectName}',
@@ -629,8 +629,8 @@ fius image install ${imageName}
 export function generateExampleTool(toolName: string = 'example-tool'): string {
     const typeNameBase = toolName.replace(/-([a-z])/g, (_, char) => char.toUpperCase());
     return `import { z } from 'zod';
-import type { ToolFactory } from '@fius/agent-config';
-import type { Tool, ToolExecutionContext } from '@fius/core';
+import type { ToolFactory } from '@fiusdev/agent-config';
+import type { Tool, ToolExecutionContext } from '@fiusdev/core';
 
 const ConfigSchema = z
     .object({
@@ -673,8 +673,8 @@ export const factory: ToolFactory<${typeNameBase.charAt(0).toUpperCase() + typeN
 
 export function generateExampleHook(hookName: string): string {
     return `import { z } from 'zod';
-import type { HookFactory } from '@fius/agent-config';
-import type { Hook } from '@fius/core';
+import type { HookFactory } from '@fiusdev/agent-config';
+import type { Hook } from '@fiusdev/core';
 
 const ConfigSchema = z
     .object({
@@ -702,8 +702,8 @@ export const factory: HookFactory<ExampleHookConfig> = {
 
 export function generateExampleCompaction(compactionType: string): string {
     return `import { z } from 'zod';
-import type { CompactionFactory } from '@fius/agent-config';
-import type { CompactionStrategy } from '@fius/core';
+import type { CompactionFactory } from '@fiusdev/agent-config';
+import type { CompactionStrategy } from '@fiusdev/core';
 
 	const ConfigSchema = z
 	    .object({

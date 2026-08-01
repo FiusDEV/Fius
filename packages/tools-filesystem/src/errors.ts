@@ -4,7 +4,7 @@
  * Error classes for file system operations
  */
 
-import { FiusRuntimeError, ErrorType } from '@fius/core/errors';
+import { FiusRuntimeError, ErrorType } from '@fiusdev/core/errors';
 
 /** Error scope for filesystem operations */
 const FILESYSTEM_SCOPE = 'filesystem';

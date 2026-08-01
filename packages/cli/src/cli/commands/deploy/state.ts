@@ -1,7 +1,7 @@
 import { existsSync, promises as fs } from 'fs';
 import path from 'path';
 import { setTimeout as delay } from 'timers/promises';
-import { getFiusGlobalPath } from '@fius/core';
+import { getFiusGlobalPath } from '@fiusdev/core';
 import { z } from 'zod';
 
 const DEPLOY_LINKS_FILENAME = 'links.json';

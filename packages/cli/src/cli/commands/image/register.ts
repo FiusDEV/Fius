@@ -42,7 +42,7 @@ export function registerImageCommand({ program }: ImageCommandRegisterContext): 
         `
 Examples:
   $ fius image create my-image
-  $ fius image install @fius/image-local
+  $ fius image install @fiusdev/image-local
   $ fius image install @myorg/my-image@1.2.3
   $ fius image list
   $ fius image use @myorg/my-image@1.2.3
@@ -84,7 +84,7 @@ Examples:
             'after',
             `
 Examples:
-  $ fius image install @fius/image-local
+  $ fius image install @fiusdev/image-local
   $ fius image install @myorg/my-image@1.2.3
   $ fius image install ./my-image-1.0.0.tgz
 `

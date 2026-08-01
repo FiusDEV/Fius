@@ -3,7 +3,7 @@
  * API response types are inferred from Hono client - do not duplicate them here.
  */
 
-export type { UIResourcePart } from '@fius/core';
+export type { UIResourcePart } from '@fiusdev/core';
 
 /** Text content part */
 export interface TextPart {
@@ -106,7 +106,7 @@ export function isAudioPart(part: unknown): part is AudioPart {
 }
 
 /** Type guard for UI resource parts */
-export function isUIResourcePart(part: unknown): part is import('@fius/core').UIResourcePart {
+export function isUIResourcePart(part: unknown): part is import('@fiusdev/core').UIResourcePart {
     return (
         typeof part === 'object' &&
         part !== null &&

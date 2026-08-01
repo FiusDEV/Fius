@@ -39,7 +39,7 @@ import type {
     LLMContext,
     LLMProvider,
     ReasoningVariant,
-} from '@fius/llm';
+} from '@fiusdev/llm';
 import type { Logger } from '../../logger/v2/types.js';
 import { FiusLogComponent } from '../../logger/v2/types.js';
 import type { SessionEventBus, LLMFinishReason } from '../../events/index.js';

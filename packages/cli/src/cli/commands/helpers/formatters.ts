@@ -1,6 +1,6 @@
 import chalk from 'chalk';
-import type { SessionMetadata, InternalMessage, ToolCall } from '@fius/core';
-import { isAssistantMessage } from '@fius/core';
+import type { SessionMetadata, InternalMessage, ToolCall } from '@fiusdev/core';
+import { isAssistantMessage } from '@fiusdev/core';
 
 export function formatSessionInfo(
     sessionId: string,

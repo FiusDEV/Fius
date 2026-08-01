@@ -1,5 +1,5 @@
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
-import { FiusRuntimeError, ErrorType, type QueuedMessage } from '@fius/core';
+import { FiusRuntimeError, ErrorType, type QueuedMessage } from '@fiusdev/core';
 import {
     ApiErrorResponseSchema,
     BadRequestErrorResponse,

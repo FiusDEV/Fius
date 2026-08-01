@@ -42,14 +42,14 @@
  * @module effective-llm
  */
 
-import type { LLMProvider } from '@fius/llm';
+import type { LLMProvider } from '@fiusdev/llm';
 import {
     loadGlobalPreferences,
     globalPreferencesExist,
     loadAgentConfig,
     resolveAgentPath,
-} from '@fius/agent-management';
-import { logger } from '@fius/core';
+} from '@fiusdev/agent-management';
+import { logger } from '@fiusdev/core';
 
 /**
  * Source of the effective LLM configuration

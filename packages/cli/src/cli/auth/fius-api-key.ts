@@ -1,6 +1,6 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { ensureFiusGlobalDirectory, getFiusEnvPath, logger } from '@fius/core';
+import { ensureFiusGlobalDirectory, getFiusEnvPath, logger } from '@fiusdev/core';
 import { getFiusApiClient } from './api-client.js';
 import { loadAuth, storeAuth } from './service.js';
 

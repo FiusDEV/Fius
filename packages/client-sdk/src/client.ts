@@ -1,5 +1,5 @@
 import { hc } from 'hono/client';
-import type { AppType } from '@fius/server';
+import type { AppType } from '@fiusdev/server';
 import type { ClientConfig } from './types.js';
 
 /**
@@ -7,7 +7,7 @@ import type { ClientConfig } from './types.js';
  *
  * @example
  * ```typescript
- * import { createFiusClient } from '@fius/client-sdk';
+ * import { createFiusClient } from '@fiusdev/client-sdk';
  *
  * const client = createFiusClient({
  *   baseUrl: 'http://localhost:3001',
@@ -31,7 +31,7 @@ import type { ClientConfig } from './types.js';
  * });
  *
  * // Streaming responses with SSE
- * import { createMessageStream } from '@fius/client-sdk';
+ * import { createMessageStream } from '@fiusdev/client-sdk';
  *
  * const streamPromise = client.api['message-stream'].$post({
  *   json: { message: 'Tell me a story', sessionId: 'my-session' }

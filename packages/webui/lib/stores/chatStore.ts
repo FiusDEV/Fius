@@ -11,8 +11,8 @@ import type {
     Issue,
     SanitizedToolResult,
     ToolPresentationSnapshotV1,
-} from '@fius/core';
-import type { LLMProvider } from '@fius/llm';
+} from '@fiusdev/core';
+import type { LLMProvider } from '@fiusdev/llm';
 import type {
     TextPart,
     ImagePart,

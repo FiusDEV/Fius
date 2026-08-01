@@ -2,8 +2,8 @@ import { promises as fs, createReadStream } from 'fs';
 import path from 'path';
 import { createHash } from 'crypto';
 import { pathToFileURL } from 'url';
-import type { Logger } from '@fius/core';
-import { FiusLogComponent, StorageError } from '@fius/core';
+import type { Logger } from '@fiusdev/core';
+import { FiusLogComponent, StorageError } from '@fiusdev/core';
 import type {
     BlobStore,
     BlobInput,

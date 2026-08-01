@@ -4,9 +4,9 @@ import {
     createLocalToolCallHeader,
     defineTool,
     truncateForHeader,
-} from '@fius/core/tools';
-import type { SearchOptions } from '@fius/core/search';
-import type { Tool, ToolExecutionContext } from '@fius/core/tools';
+} from '@fiusdev/core/tools';
+import type { SearchOptions } from '@fiusdev/core/search';
+import type { Tool, ToolExecutionContext } from '@fiusdev/core/tools';
 
 const SearchHistoryInputSchema = z
     .object({

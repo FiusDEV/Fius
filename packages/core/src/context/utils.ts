@@ -12,8 +12,8 @@ import {
 import { clonePromptContentPart } from './content-clone.js';
 import { isValidDisplayData, type ToolDisplayData } from '../tools/display-types.js';
 import type { Logger } from '../logger/v2/types.js';
-import { validateModelFileSupport } from '@fius/llm';
-import type { LLMContext } from '@fius/llm';
+import { validateModelFileSupport } from '@fiusdev/llm';
+import type { LLMContext } from '@fiusdev/llm';
 import { safeStringify } from '../utils/safe-stringify.js';
 import { getFileMediaKind, getResourceKind } from './media-helpers.js';
 

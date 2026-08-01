@@ -1,8 +1,8 @@
 import { Hono } from 'hono';
-import type { FiusAgent } from '@fius/core';
+import type { FiusAgent } from '@fiusdev/core';
 import { JsonRpcServer } from '../../a2a/jsonrpc/server.js';
 import { A2AMethodHandlers } from '../../a2a/jsonrpc/methods.js';
-import { logger } from '@fius/core';
+import { logger } from '@fiusdev/core';
 import type { A2ASseEventSubscriber } from '../../events/a2a-sse-subscriber.js';
 import { a2aToInternalMessage } from '../../a2a/adapters/message.js';
 import type { Context } from 'hono';

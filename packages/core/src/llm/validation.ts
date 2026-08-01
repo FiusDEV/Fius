@@ -1,5 +1,5 @@
-import { getAllowedMimeTypes, validateModelFileSupport } from '@fius/llm';
-import type { LLMProvider } from '@fius/llm';
+import { getAllowedMimeTypes, validateModelFileSupport } from '@fiusdev/llm';
+import type { LLMProvider } from '@fiusdev/llm';
 import type { Logger } from '../logger/v2/types.js';
 import type { ImageData, FileData } from '../context/types.js';
 import { Result, ok, fail } from '../utils/result.js';

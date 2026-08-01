@@ -12,10 +12,10 @@ import {
 import { Box, Text } from 'ink';
 import type { Key } from '../../hooks/useInputOrchestrator.js';
 import { useTerminalSize } from '../../hooks/useTerminalSize.js';
-import type { CodexModelInfo } from '@fius/core';
+import type { CodexModelInfo } from '@fiusdev/core';
 import { fetchPlatformModels } from '../../utils/platform-models.js';
-import type { LLMProvider, ReasoningVariant } from '@fius/llm';
-import { getModelDisplayName, getReasoningProfile } from '@fius/llm';
+import type { LLMProvider, ReasoningVariant } from '@fiusdev/llm';
+import { getModelDisplayName, getReasoningProfile } from '@fiusdev/llm';
 import {
     CodexAppServerClient,
     createCodexBaseURL,
@@ -24,7 +24,7 @@ import {
     getLocalModelById,
     getCuratedModelRefsForProviders,
     parseCodexBaseURL,
-} from '@fius/core';
+} from '@fiusdev/core';
 import {
     loadCustomModels,
     deleteCustomModel,
@@ -35,7 +35,7 @@ import {
     toModelPickerKey,
     type CustomModel,
     type ModelPickerState,
-} from '@fius/agent-management';
+} from '@fiusdev/agent-management';
 import { getLLMProviderDisplayName } from '../../utils/llm-provider-display.js';
 import { getMaxVisibleItemsForTerminalRows } from '../../utils/overlaySizing.js';
 import { compareModelsLatestFirst, isDeprecatedModelStatus } from '../../utils/modelOrdering.js';

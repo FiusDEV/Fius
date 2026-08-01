@@ -19,7 +19,7 @@ import {
     isUIResourcePart,
 } from '../types';
 import type { TextPart, AudioPart, FilePart, ResourcePart, UIResourcePart } from '../types';
-import { getFileMediaKind } from '@fius/core';
+import { getFileMediaKind } from '@fiusdev/core';
 import ErrorBanner from './ErrorBanner';
 import {
     ChevronUp,
@@ -46,8 +46,8 @@ import {
     type NormalizedResourceItem,
 } from './hooks/useResourceContent';
 import { useResources } from './hooks/useResources';
-import type { ResourceMetadata } from '@fius/core';
-import { parseResourceReferences, resolveResourceReferences } from '@fius/core';
+import type { ResourceMetadata } from '@fiusdev/core';
+import { parseResourceReferences, resolveResourceReferences } from '@fiusdev/core';
 import { ToolCallTimeline } from './ToolCallTimeline';
 import { TodoPanel } from './TodoPanel';
 

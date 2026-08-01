@@ -46,7 +46,7 @@ import {
 } from '../ui/dialog';
 import { Tooltip, TooltipTrigger, TooltipContent } from '../ui/tooltip';
 import * as yaml from 'yaml';
-import type { AgentConfig } from '@fius/agent-config';
+import type { AgentConfig } from '@fiusdev/agent-config';
 
 interface CustomizePanelProps {
     isOpen: boolean;

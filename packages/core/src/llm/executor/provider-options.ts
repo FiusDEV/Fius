@@ -1,4 +1,4 @@
-import type { LLMProvider, LLMReasoningConfig } from '@fius/llm';
+import type { LLMProvider, LLMReasoningConfig } from '@fiusdev/llm';
 
 export interface ProviderOptionsConfig {
     provider: LLMProvider;

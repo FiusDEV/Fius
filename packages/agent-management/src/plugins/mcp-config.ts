@@ -1,4 +1,4 @@
-import { loadBundledMcpConfigFromDirectory } from '@fius/core';
+import { loadBundledMcpConfigFromDirectory } from '@fiusdev/core';
 import type { PluginMCPConfig } from './types.js';
 
 export interface LoadMcpConfigOptions {

@@ -1,6 +1,6 @@
 import { setMaxListeners } from 'events';
-import { AgentEventBus } from '@fius/core';
-import { logger } from '@fius/core';
+import { AgentEventBus } from '@fiusdev/core';
+import { logger } from '@fiusdev/core';
 
 interface SSEConnection {
     taskId: string;

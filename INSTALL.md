@@ -14,49 +14,28 @@ This will:
 
 ### npm
 ```bash
-npm install -g fius
+npm install -g @fiusdev/fius
 ```
 
 ### Homebrew (macOS/Linux)
 ```bash
-# Add the tap
 brew tap fiusdev/fius
-
-# Install Fius
 brew install fius
 ```
 
 ### AUR (Arch Linux)
 ```bash
-# Using paru
 paru -S fius
-
-# Using yay
-yay -S fius
 ```
 
 ### pnpm
 ```bash
-pnpm add -g fius
+pnpm add -g @fiusdev/fius
 ```
 
 ### yarn
 ```bash
-yarn global add fius
-```
-
-## Manual Installation
-
-### Download Binary
-Download the latest release from [GitHub Releases](https://github.com/fiusdev/fius/releases) and add to your PATH.
-
-### From Source
-```bash
-git clone https://github.com/fiusdev/fius.git
-cd fius
-pnpm install
-pnpm build
-pnpm link:cli
+yarn global add @fiusdev/fius
 ```
 
 ## Verifying Installation
@@ -68,12 +47,10 @@ fius --version
 ## Getting Started
 
 ```bash
-# Login to your account
-fius login
-
-# Start using Fius
 fius
 ```
+
+On first run, you'll be guided through browser-based authentication.
 
 ## Requirements
 
@@ -86,33 +63,13 @@ fius
 If `fius` is not found after installation, add npm's global bin directory to your PATH:
 
 ```bash
-# Find npm global bin directory
-npm config get prefix
-
-# Add to PATH (add to ~/.bashrc or ~/.zshrc)
 export PATH="$(npm config get prefix)/bin:$PATH"
 ```
 
 ### Permission errors
-If you get permission errors:
-
 ```bash
-# Fix npm permissions
 mkdir ~/.npm-global
 npm config set prefix '~/.npm-global'
 export PATH=~/.npm-global/bin:$PATH
-
-# Then reinstall
-npm install -g fius
-```
-
-### Windows Installation
-On Windows, use PowerShell:
-
-```powershell
-# Install via npm
-npm install -g fius
-
-# Or download from GitHub Releases
-# https://github.com/fiusdev/fius/releases
+npm install -g @fiusdev/fius
 ```

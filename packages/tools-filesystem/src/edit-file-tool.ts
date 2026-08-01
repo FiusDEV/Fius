@@ -14,9 +14,9 @@ import {
     ToolErrorCode,
     defineTool,
     truncateForHeader,
-} from '@fius/core/tools';
-import { FiusRuntimeError } from '@fius/core/errors';
-import type { DiffDisplayData, Tool, ToolExecutionContext } from '@fius/core/tools';
+} from '@fiusdev/core/tools';
+import { FiusRuntimeError } from '@fiusdev/core/errors';
+import type { DiffDisplayData, Tool, ToolExecutionContext } from '@fiusdev/core/tools';
 import type { FileSystemServiceGetter } from './file-tool-types.js';
 import { FileSystemErrorCode } from './error-codes.js';
 import { createDirectoryAccessApprovalHandlers, resolveFilePath } from './directory-approval.js';

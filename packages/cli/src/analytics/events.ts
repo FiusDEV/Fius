@@ -1,5 +1,5 @@
-import type { ExecutionContext } from '@fius/agent-management';
-import type { SharedAnalyticsEventMap } from '@fius/analytics';
+import type { ExecutionContext } from '@fiusdev/agent-management';
+import type { SharedAnalyticsEventMap } from '@fiusdev/analytics';
 
 export interface BaseEventContext {
     app?: 'fius';
@@ -119,7 +119,7 @@ export interface InitProjectEvent {
  * CLI analytics event map extending shared events with CLI-specific events.
  *
  * IMPORTANT: If an event is also tracked by WebUI, move it to SharedAnalyticsEventMap
- * in @fius/analytics to avoid duplication.
+ * in @fiusdev/analytics to avoid duplication.
  */
 export interface FiusAnalyticsEventMap extends SharedAnalyticsEventMap {
     fius_cli_command: CliCommandEvent;

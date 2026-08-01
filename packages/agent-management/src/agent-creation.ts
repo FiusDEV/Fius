@@ -1,4 +1,4 @@
-import type { AgentConfig, FiusHostContext, FiusImage } from '@fius/agent-config';
+import type { AgentConfig, FiusHostContext, FiusImage } from '@fiusdev/agent-config';
 import {
     AgentConfigSchema,
     applyImageDefaults,
@@ -6,15 +6,15 @@ import {
     loadImage,
     resolveServicesFromConfig,
     toFiusAgentOptions,
-} from '@fius/agent-config';
+} from '@fiusdev/agent-config';
 import {
     FiusAgent,
     logger,
     type FiusAgentConfigInput,
     type InitializeServicesOptions,
-} from '@fius/core';
+} from '@fiusdev/core';
 import { enrichAgentConfig, type EnrichAgentConfigOptions } from './config/index.js';
-import { BUILTIN_TOOL_NAMES } from '@fius/tools-builtins';
+import { BUILTIN_TOOL_NAMES } from '@fiusdev/tools-builtins';
 
 type CreateFiusAgentFromConfigOptions = {
     config: AgentConfig;
@@ -34,7 +34,7 @@ async function loadImageForConfig(options: {
 }): Promise<{ imageName: string; image: FiusImage }> {
     const { config, imageNameOverride } = options;
     const imageName =
-        imageNameOverride ?? config.image ?? process.env.FIUS_IMAGE ?? '@fius/image-local';
+        imageNameOverride ?? config.image ?? process.env.FIUS_IMAGE ?? '@fiusdev/image-local';
 
     try {
         const image = await loadImage(imageName);

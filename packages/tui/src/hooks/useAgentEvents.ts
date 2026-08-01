@@ -3,8 +3,8 @@
 import type React from 'react';
 import { useEffect, useRef } from 'react';
 import { setMaxListeners } from 'events';
-import { parseCodexBaseURL, type QueuedMessage, type ContentPart } from '@fius/core';
-import { getModelDisplayName } from '@fius/llm';
+import { parseCodexBaseURL, type QueuedMessage, type ContentPart } from '@fiusdev/core';
+import { getModelDisplayName } from '@fiusdev/llm';
 import type { Message, UIState, SessionState, InputState } from '../state/types.js';
 import type { ApprovalRequest } from '../components/ApprovalPrompt.js';
 import { generateMessageId } from '../utils/idGenerator.js';

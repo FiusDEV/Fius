@@ -8,8 +8,8 @@ import { Collapsible } from '../ui/collapsible';
 import { Input } from '../ui/input';
 import { LabelWithTooltip } from '../ui/label-with-tooltip';
 import { AlertCircle } from 'lucide-react';
-import type { AgentConfig } from '@fius/agent-config';
-import type { ContributorConfig } from '@fius/core';
+import type { AgentConfig } from '@fiusdev/agent-config';
+import type { ContributorConfig } from '@fiusdev/core';
 
 interface FormEditorProps {
     config: AgentConfig;

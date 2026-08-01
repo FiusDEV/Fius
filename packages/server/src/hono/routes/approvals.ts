@@ -1,5 +1,5 @@
 import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi';
-import { DenialReason, ApprovalStatus, ApprovalError } from '@fius/core';
+import { DenialReason, ApprovalStatus, ApprovalError } from '@fiusdev/core';
 import type { ApprovalCoordinator } from '../../approval/approval-coordinator.js';
 import {
     ApiErrorResponseSchema,

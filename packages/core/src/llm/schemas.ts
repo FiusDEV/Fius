@@ -12,9 +12,9 @@ import {
     getReasoningProfile,
     isValidProviderModel,
     supportsReasoningVariant,
-} from '@fius/llm';
+} from '@fiusdev/llm';
 import { getMaxInputTokensForModel } from './registry/index.js';
-import { LLM_PROVIDERS } from '@fius/llm';
+import { LLM_PROVIDERS } from '@fiusdev/llm';
 
 const LLMConfigFields = {
     provider: z
@@ -310,4 +310,4 @@ export const LLMUpdatesSchema = z
         }
     });
 export type LLMUpdates = z.input<typeof LLMUpdatesSchema>;
-export type { LLMUpdateContext } from '@fius/llm';
+export type { LLMUpdateContext } from '@fiusdev/llm';

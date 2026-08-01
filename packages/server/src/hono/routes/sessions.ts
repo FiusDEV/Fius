@@ -5,7 +5,7 @@ import {
     ErrorType,
     zodToIssues,
     type SessionMetadata as CoreSessionMetadata,
-} from '@fius/core';
+} from '@fiusdev/core';
 import {
     BadRequestErrorResponse,
     ConflictErrorResponse,

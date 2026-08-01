@@ -1,5 +1,5 @@
-import type { ApprovalHandler, ApprovalRequest, ApprovalResponse } from '@fius/core';
-import { ApprovalStatus, DenialReason } from '@fius/core';
+import type { ApprovalHandler, ApprovalRequest, ApprovalResponse } from '@fiusdev/core';
+import { ApprovalStatus, DenialReason } from '@fiusdev/core';
 import type { ApprovalCoordinator } from './approval-coordinator.js';
 
 export function createManualApprovalHandler(coordinator: ApprovalCoordinator): ApprovalHandler {

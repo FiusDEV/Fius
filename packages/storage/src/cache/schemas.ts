@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { EnvExpandedString, ErrorScope, ErrorType, StorageErrorCode } from '@fius/core/config';
+import { EnvExpandedString, ErrorScope, ErrorType, StorageErrorCode } from '@fiusdev/core/config';
 
 export const CACHE_TYPES = ['in-memory', 'redis'] as const;
 export type CacheType = (typeof CACHE_TYPES)[number];

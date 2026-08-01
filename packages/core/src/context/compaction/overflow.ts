@@ -1,4 +1,4 @@
-import type { TokenUsage } from '@fius/llm';
+import type { TokenUsage } from '@fiusdev/llm';
 
 
 export interface ModelLimits {

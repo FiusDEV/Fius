@@ -1,4 +1,4 @@
-import { AgentEventBus } from '@fius/core';
+import { AgentEventBus } from '@fiusdev/core';
 
 export interface EventSubscriber {
     subscribe(eventBus: AgentEventBus): void;

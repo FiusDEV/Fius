@@ -4,7 +4,7 @@ import { existsSync } from 'fs';
 import { isAbsolute, normalize, resolve, sep } from 'path';
 import { fileURLToPath } from 'node:url';
 import { execFile } from 'child_process';
-import { getFiusGlobalPath } from '@fius/agent-management';
+import { getFiusGlobalPath } from '@fiusdev/agent-management';
 
 export type SoundType = 'startup' | 'approval' | 'complete';
 

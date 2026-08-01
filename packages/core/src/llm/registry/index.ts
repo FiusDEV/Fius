@@ -1,6 +1,6 @@
 import type { ValidatedLLMConfig } from '../schemas.js';
 import type { Logger } from '../../logger/v2/types.js';
-import type { LLMProvider, SupportedFileType } from '@fius/llm';
+import type { LLMProvider, SupportedFileType } from '@fiusdev/llm';
 
 
 export function getModelInfo(_provider: string, _model: string): any {

@@ -1,8 +1,8 @@
-import type { ToolFactory } from '@fius/agent-config';
-import { createLocalToolCallHeader, truncateForHeader } from '@fius/core';
-import type { ToolExecutionContext } from '@fius/core';
-import type { ToolBackgroundEvent } from '@fius/core';
-import { ToolError } from '@fius/core';
+import type { ToolFactory } from '@fiusdev/agent-config';
+import { createLocalToolCallHeader, truncateForHeader } from '@fiusdev/core';
+import type { ToolExecutionContext } from '@fiusdev/core';
+import type { ToolBackgroundEvent } from '@fiusdev/core';
+import { ToolError } from '@fiusdev/core';
 import {
     ConditionEngine,
     SignalBus,
@@ -16,7 +16,7 @@ import {
     type WaitForInput,
     type CheckTaskInput,
     type ListTasksInput,
-} from '@fius/orchestration';
+} from '@fiusdev/orchestration';
 import {
     AgentSpawnerConfigSchema,
     SpawnAgentInputSchema,

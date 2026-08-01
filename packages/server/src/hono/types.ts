@@ -2,7 +2,7 @@ import type { Context } from 'hono';
 import type { Hono } from 'hono';
 import type { RouteConfig, RouteConfigToTypedResponse } from '@hono/zod-openapi';
 import type { OpenAPIHono } from '@hono/zod-openapi';
-import type { FiusAgent } from '@fius/core';
+import type { FiusAgent } from '@fiusdev/core';
 import type { Input, ToSchema } from 'hono/types';
 import type { WebhookEventSubscriber } from '../events/webhook-subscriber.js';
 

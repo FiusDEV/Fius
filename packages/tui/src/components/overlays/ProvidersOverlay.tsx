@@ -12,13 +12,13 @@ import {
 import { Box, Text } from 'ink';
 import type { Key } from '../../hooks/useInputOrchestrator.js';
 import { useTerminalSize } from '../../hooks/useTerminalSize.js';
-import type { LLMProvider } from '@fius/llm';
+import type { LLMProvider } from '@fiusdev/llm';
 import { getCachedStringWidth, stripUnsafeCharacters, toCodePoints } from '../../utils/textUtils.js';
 import { getMaxVisibleItemsForTerminalRows } from '../../utils/overlaySizing.js';
 import { HintBar } from '../shared/HintBar.js';
 import type { TuiAgentBackend } from '../../agent-backend.js';
 import { fetchPlatformModels } from '../../utils/platform-models.js';
-import { loadCustomModels, deleteCustomModel, type CustomModel } from '@fius/agent-management';
+import { loadCustomModels, deleteCustomModel, type CustomModel } from '@fiusdev/agent-management';
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */

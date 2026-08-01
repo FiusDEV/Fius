@@ -1,13 +1,13 @@
 
 
-import type { CustomModel, CustomModelProvider } from '@fius/agent-management';
+import type { CustomModel, CustomModelProvider } from '@fiusdev/agent-management';
 import {
     isReasoningCapableModel,
     getReasoningProfile,
     supportsReasoningVariant,
     type LLMProvider,
-} from '@fius/llm';
-import { getLocalModelById } from '@fius/core';
+} from '@fiusdev/llm';
+import { getLocalModelById } from '@fiusdev/core';
 import type { ProviderConfig, WizardStep } from './types.js';
 import { validators } from './types.js';
 import * as fs from 'fs';

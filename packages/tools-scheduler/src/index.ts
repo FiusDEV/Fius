@@ -1,5 +1,5 @@
 /**
- * @fius/tools-scheduler
+ * @fiusdev/tools-scheduler
  *
  * Scheduler tools provider for Fius agents.
  * Enables proactive agent behavior through cron-based task scheduling.

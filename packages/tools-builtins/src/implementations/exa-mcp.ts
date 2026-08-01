@@ -1,6 +1,6 @@
-import { FiusMcpClient, McpServerConfigSchema } from '@fius/core/mcp';
-import { ToolError } from '@fius/core/tools';
-import type { Logger } from '@fius/core/logger';
+import { FiusMcpClient, McpServerConfigSchema } from '@fiusdev/core/mcp';
+import { ToolError } from '@fiusdev/core/tools';
+import type { Logger } from '@fiusdev/core/logger';
 
 const EXA_SERVER_URL = 'https://mcp.exa.ai/mcp';
 

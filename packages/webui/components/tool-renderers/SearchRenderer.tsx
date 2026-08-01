@@ -8,7 +8,7 @@
 import { useState } from 'react';
 import { Search, ChevronDown, ChevronRight, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { SearchDisplayData, SearchMatch } from '@fius/core';
+import type { SearchDisplayData, SearchMatch } from '@fiusdev/core';
 
 interface SearchRendererProps {
     /** Search display data from tool result */

@@ -1,7 +1,7 @@
 
 
 import chalk from 'chalk';
-import { parseCodexBaseURL } from '@fius/core';
+import { parseCodexBaseURL } from '@fiusdev/core';
 import type { CommandDefinition, CommandHandlerResult, CommandContext } from './command-parser.js';
 import { formatForInkCli } from './utils/format-output.js';
 import { CommandOutputHelper } from './utils/command-output.js';

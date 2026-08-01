@@ -1,1 +1,1 @@
-export type { Cache } from '@fius/core';
+export type { Cache } from '@fiusdev/core';

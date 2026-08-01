@@ -4,10 +4,10 @@ import type { ReadResourceCallback } from '@modelcontextprotocol/sdk/server/mcp.
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
-import type { AgentCard, Logger } from '@fius/core';
-import { logger } from '@fius/core';
+import type { AgentCard, Logger } from '@fiusdev/core';
+import { logger } from '@fiusdev/core';
 import { z } from 'zod';
-import type { FiusAgent } from '@fius/core';
+import type { FiusAgent } from '@fiusdev/core';
 import { randomUUID } from 'crypto';
 
 export type McpTransportType = 'stdio' | 'sse' | 'http';

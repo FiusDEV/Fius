@@ -1,4 +1,4 @@
-import type { InternalMessage } from '@fius/core';
+import type { InternalMessage } from '@fiusdev/core';
 import type { TaskState, Message } from '../types.js';
 
 export function deriveTaskState(messages: InternalMessage[]): TaskState {

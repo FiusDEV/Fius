@@ -7,8 +7,8 @@
 
 import * as path from 'node:path';
 import { z } from 'zod';
-import { createLocalToolCallHeader, defineTool, truncateForHeader } from '@fius/core/tools';
-import type { ShellDisplayData, Tool, ToolExecutionContext } from '@fius/core/tools';
+import { createLocalToolCallHeader, defineTool, truncateForHeader } from '@fiusdev/core/tools';
+import type { ShellDisplayData, Tool, ToolExecutionContext } from '@fiusdev/core/tools';
 import { ProcessError } from './errors.js';
 import { generateCommandApprovalKey } from './command-pattern-utils.js';
 import type {

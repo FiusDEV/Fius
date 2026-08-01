@@ -1,6 +1,6 @@
-import type { FiusImage, HookFactory } from '@fius/agent-config';
-import { getFiusPackageRoot } from '@fius/agent-management';
-import imageLocal from '@fius/image-local';
+import type { FiusImage, HookFactory } from '@fiusdev/agent-config';
+import { getFiusPackageRoot } from '@fiusdev/agent-management';
+import imageLocal from '@fiusdev/image-local';
 import { z } from 'zod';
 import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
@@ -65,7 +65,7 @@ function resolveImageMetadata(defaultName: string): { name: string; version: str
     };
 }
 
-const imageMetadata = resolveImageMetadata('@fius/image-logger-agent');
+const imageMetadata = resolveImageMetadata('@fiusdev/image-logger-agent');
 
 const requestLoggerConfigSchema = z
     .object({

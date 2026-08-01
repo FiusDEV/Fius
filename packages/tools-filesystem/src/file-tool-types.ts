@@ -4,7 +4,7 @@
  * Types shared between file tools and factories.
  */
 
-import type { ToolExecutionContext } from '@fius/core/tools';
+import type { ToolExecutionContext } from '@fiusdev/core/tools';
 import type { FileSystemService } from './filesystem-service.js';
 
 /**

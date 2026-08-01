@@ -49,7 +49,7 @@ import { BlobStoreConfigSchema } from './blob/schemas.js';
  * Top-level storage configuration schema
  * Composes cache, database, and blob store configurations
  *
- * Note: detailed backend validation happens in the resolver (`@fius/agent-config`)
+ * Note: detailed backend validation happens in the resolver (`@fiusdev/agent-config`)
  * via each image factory's `configSchema`. This schema validates only the structural
  * shape required for config parsing and defaults.
  */

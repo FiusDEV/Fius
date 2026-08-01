@@ -11,7 +11,7 @@ import React, {
 import { Box, Text } from 'ink';
 import type { Key } from '../../hooks/useInputOrchestrator.js';
 import { BaseSelector, type BaseSelectorHandle } from '../base/BaseSelector.js';
-import { GlobalSkillSource, type SkillSummary } from '@fius/core';
+import { GlobalSkillSource, type SkillSummary } from '@fiusdev/core';
 
 export type SkillSelectorAction =
     | { type: 'select-skill'; skill: SkillSummary & { enabled: boolean } }

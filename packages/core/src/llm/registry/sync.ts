@@ -1,5 +1,5 @@
-import type { LLMProvider, SupportedFileType } from '@fius/llm';
-import type { ModelInfo } from '@fius/llm';
+import type { LLMProvider, SupportedFileType } from '@fiusdev/llm';
+import type { ModelInfo } from '@fiusdev/llm';
 
 
 export async function buildModelsByProviderFromRemote(_options?: {

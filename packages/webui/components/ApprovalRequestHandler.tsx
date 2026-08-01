@@ -1,7 +1,7 @@
 import { useEffect, useCallback } from 'react';
 import { useSubmitApproval } from './hooks/useApprovals';
-import type { ApprovalRequest } from '@fius/core';
-import { ApprovalStatus } from '@fius/core';
+import type { ApprovalRequest } from '@fiusdev/core';
+import { ApprovalStatus } from '@fiusdev/core';
 import { useSessionStore } from '@/lib/stores/sessionStore';
 import { useApprovalStore } from '@/lib/stores/approvalStore';
 import { useChatContext } from './hooks/ChatContext';

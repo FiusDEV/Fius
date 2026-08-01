@@ -1,5 +1,5 @@
 import { isAssistantMessage, type InternalMessage } from '../context/types.js';
-import type { TokenUsage } from '@fius/llm';
+import type { TokenUsage } from '@fiusdev/llm';
 
 export interface CumulativeTokenUsage {
     inputTokens: number;

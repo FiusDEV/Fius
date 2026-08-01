@@ -1,4 +1,4 @@
-import type { InternalMessage } from '@fius/core';
+import type { InternalMessage } from '@fiusdev/core';
 import type { Message, Part, MessageRole, ConvertedMessage } from '../types.js';
 import { randomUUID } from 'crypto';
 

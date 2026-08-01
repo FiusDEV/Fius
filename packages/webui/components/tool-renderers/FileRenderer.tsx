@@ -7,7 +7,7 @@
 
 import { FileText, FilePlus, FileX, FileEdit } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { FileDisplayData } from '@fius/core';
+import type { FileDisplayData } from '@fiusdev/core';
 
 interface FileRendererProps {
     /** File display data from tool result */

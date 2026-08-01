@@ -1,5 +1,5 @@
 /**
- * @fius/tools-plan
+ * @fiusdev/tools-plan
  *
  * Implementation planning tools with session-linked plans.
  * Provides tools for creating, reading, updating, and tracking plans.

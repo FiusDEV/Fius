@@ -1,8 +1,8 @@
 import { dirname } from 'path';
 import { mkdirSync } from 'fs';
 import type { Database } from './types.js';
-import type { Logger } from '@fius/core';
-import { FiusLogComponent, StorageError } from '@fius/core';
+import type { Logger } from '@fiusdev/core';
+import { FiusLogComponent, StorageError } from '@fiusdev/core';
 import type { SqliteDatabaseConfig } from './schemas.js';
 
 // Dynamic import for better-sqlite3

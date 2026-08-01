@@ -1,4 +1,4 @@
-import type { QueuedMessage, ContentPart, ImagePart, TextPart } from '@fius/core';
+import type { QueuedMessage, ContentPart, ImagePart, TextPart } from '@fiusdev/core';
 import type { PendingImage } from '../state/types.js';
 
 interface ComposerQueuedContent {

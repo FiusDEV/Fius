@@ -12,8 +12,8 @@ import type {
     ToolDisplayData,
     ElicitationMetadata,
     ToolPresentationSnapshotV1,
-} from '@fius/core';
-import { ApprovalType } from '@fius/core';
+} from '@fiusdev/core';
+import { ApprovalType } from '@fiusdev/core';
 import type { Key } from '../hooks/useInputOrchestrator.js';
 import { ElicitationForm, type ElicitationFormHandle } from './ElicitationForm.js';
 import { DiffPreview, CreateFilePreview, DIFF_MAX_HEIGHT } from './renderers/index.js';

@@ -1,4 +1,4 @@
-import type { AgentEventMap, AgentEventName } from '@fius/core';
+import type { AgentEventMap, AgentEventName } from '@fiusdev/core';
 
 export interface WebhookConfig {
     id: string;

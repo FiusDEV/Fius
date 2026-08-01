@@ -1,4 +1,4 @@
-import type { FiusAgent } from '@fius/core';
+import type { FiusAgent } from '@fiusdev/core';
 import type {
     Task,
     MessageSendParams,

@@ -3,9 +3,9 @@ import { promises as fs } from 'fs';
 import { parse as parseYaml, stringify as stringifyYaml } from 'yaml';
 import path from 'path';
 import { getFiusGlobalPath } from '../utils/path.js';
-import { logger } from '@fius/core';
-import { FiusValidationError, FiusRuntimeError } from '@fius/core';
-import type { LLMProvider, LLMReasoningConfig } from '@fius/llm';
+import { logger } from '@fiusdev/core';
+import { FiusValidationError, FiusRuntimeError } from '@fiusdev/core';
+import type { LLMProvider, LLMReasoningConfig } from '@fiusdev/llm';
 import {
     AgentPreferencesSchema,
     GlobalPreferencesSchema,

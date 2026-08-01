@@ -4,8 +4,8 @@ import {
     createLocalToolCallHeader,
     defineTool,
     truncateForHeader,
-} from '@fius/core/tools';
-import type { Tool, ToolExecutionContext } from '@fius/core/tools';
+} from '@fiusdev/core/tools';
+import type { Tool, ToolExecutionContext } from '@fiusdev/core/tools';
 
 const GetResourceInputSchema = z
     .object({

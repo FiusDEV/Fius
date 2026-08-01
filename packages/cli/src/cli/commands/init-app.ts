@@ -5,8 +5,8 @@ import fsExtra from 'fs-extra';
 import path from 'node:path';
 import { getPackageManager, getPackageManagerInstallCommand } from '../utils/package-mgmt.js';
 import { executeWithTimeout } from '../utils/execute.js';
-import { type LLMProvider, getDefaultModelForProvider } from '@fius/llm';
-import { saveProviderApiKey } from '@fius/agent-management';
+import { type LLMProvider, getDefaultModelForProvider } from '@fiusdev/llm';
+import { saveProviderApiKey } from '@fiusdev/agent-management';
 import {
     getProviderDisplayName,
     validateApiKeyFormat,
@@ -122,8 +122,8 @@ export async function initFius(
                 packageManager,
                 [
                     installCommand,
-                    `@fius/core@${label}`,
-                    `@fius/storage@${label}`,
+                    `@fiusdev/core@${label}`,
+                    `@fiusdev/storage@${label}`,
                     'dotenv',
                     'tsx',
                 ],
@@ -142,7 +142,7 @@ export async function initFius(
             ) {
                 spinner.stop(chalk.red('Error: Cannot install in pnpm workspace root'));
                 p.note(
-                    'You are initializing fius in a pnpm workspace root. Go to a specific workspace package and run "pnpm add @fius/core" there.',
+                    'You are initializing fius in a pnpm workspace root. Go to a specific workspace package and run "pnpm add @fiusdev/core" there.',
                     chalk.rgb(255, 165, 0)('Workspace Error')
                 );
                 process.exit(1);

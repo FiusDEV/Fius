@@ -5,8 +5,8 @@
  */
 
 import { z } from 'zod';
-import { createLocalToolCallHeader, truncateForHeader } from '@fius/core';
-import type { Tool } from '@fius/core';
+import { createLocalToolCallHeader, truncateForHeader } from '@fiusdev/core';
+import type { Tool } from '@fiusdev/core';
 import type { TaskRegistry } from '../task-registry.js';
 
 /**

@@ -5,9 +5,9 @@
 import cron from 'node-cron';
 import cronParser from 'cron-parser';
 import { randomUUID } from 'crypto';
-import { FiusRuntimeError } from '@fius/core';
-import type { Logger } from '@fius/core';
-import type { ToolStateStore } from '@fius/core/storage';
+import { FiusRuntimeError } from '@fiusdev/core';
+import type { Logger } from '@fiusdev/core';
+import type { ToolStateStore } from '@fiusdev/core/storage';
 import type { SchedulerToolsConfig } from './schemas.js';
 import {
     CreateScheduleInputSchema,

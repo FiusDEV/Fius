@@ -1,8 +1,8 @@
 import { Redis } from 'ioredis';
 import type { Cache } from './types.js';
 import type { RedisCacheConfig } from './schemas.js';
-import type { Logger } from '@fius/core';
-import { FiusLogComponent, StorageError } from '@fius/core';
+import type { Logger } from '@fiusdev/core';
+import { FiusLogComponent, StorageError } from '@fiusdev/core';
 
 /**
  * Redis cache store for production cache operations.

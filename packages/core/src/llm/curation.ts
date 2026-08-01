@@ -1,5 +1,5 @@
-import type { LLMProvider } from '@fius/llm';
-import { LLM_REGISTRY, type ModelInfo } from '@fius/llm';
+import type { LLMProvider } from '@fiusdev/llm';
+import { LLM_REGISTRY, type ModelInfo } from '@fiusdev/llm';
 import { CURATED_MODEL_IDS_BY_PROVIDER } from './curation-config.js';
 
 type CuratedModelsOptions = {

@@ -10,7 +10,7 @@ import React, {
 } from 'react';
 import { Box, Text } from 'ink';
 import type { Key } from '../../hooks/useInputOrchestrator.js';
-import type { SearchResult } from '@fius/core';
+import type { SearchResult } from '@fiusdev/core';
 import type { TuiAgentBackend } from '../../agent-backend.js';
 
 export interface SearchOverlayProps {

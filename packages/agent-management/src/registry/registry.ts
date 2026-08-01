@@ -1,7 +1,7 @@
 import { existsSync, readFileSync, readdirSync } from 'fs';
 import { promises as fs } from 'fs';
 import path from 'path';
-import { logger } from '@fius/core';
+import { logger } from '@fiusdev/core';
 import { resolveBundledScript, getFiusGlobalPath, copyDirectory } from '../utils/path.js';
 import {
     Registry,

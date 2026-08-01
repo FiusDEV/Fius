@@ -1,5 +1,5 @@
-import type { McpServerConfig } from '@fius/core';
-import type { ServerRegistryEntry } from '@fius/registry';
+import type { McpServerConfig } from '@fiusdev/core';
+import type { ServerRegistryEntry } from '@fiusdev/registry';
 
 const PLACEHOLDER_EXACT_MATCHES = new Set([
     'placeholder',

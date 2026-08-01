@@ -1,6 +1,6 @@
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
-import type { ToolFactory } from '@fius/agent-config';
+import type { ToolFactory } from '@fiusdev/agent-config';
 import {
     ToolError,
     defineTool,
@@ -8,7 +8,7 @@ import {
     type Tool,
     type ToolExecutionContext,
     type SkillSummary,
-} from '@fius/core';
+} from '@fiusdev/core';
 import { discoverStandaloneSkills, getSkillSearchPaths } from '../../plugins/discover-skills.js';
 import {
     CREATOR_TOOL_NAMES,

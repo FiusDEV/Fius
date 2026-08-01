@@ -1,5 +1,5 @@
-import { FiusRuntimeError, FiusValidationError, ErrorType, zodToIssues } from '@fius/core';
-import { logger } from '@fius/core';
+import { FiusRuntimeError, FiusValidationError, ErrorType, zodToIssues } from '@fiusdev/core';
+import { logger } from '@fiusdev/core';
 import { ZodError } from 'zod';
 
 export const mapErrorTypeToStatus = (type: ErrorType): number => {

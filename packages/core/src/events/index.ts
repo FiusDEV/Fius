@@ -1,5 +1,5 @@
-import type { LLMProvider, LLMPricingStatus, ReasoningVariant, TokenUsage } from '@fius/llm';
-import type { TokenUsageCostBreakdown } from '@fius/llm';
+import type { LLMProvider, LLMPricingStatus, ReasoningVariant, TokenUsage } from '@fiusdev/llm';
+import type { TokenUsageCostBreakdown } from '@fiusdev/llm';
 import type { AgentRuntimeSettings } from '../agent/runtime-config.js';
 import type { ApprovalRequest, ApprovalResponse } from '../approval/types.js';
 import type { SanitizedToolResult } from '../context/types.js';

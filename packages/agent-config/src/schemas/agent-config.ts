@@ -10,8 +10,8 @@ import {
     SystemPromptConfigSchema,
     PermissionsConfigSchema,
     ResourcesConfigSchema,
-} from '@fius/core/config';
-import { StorageSchema } from '@fius/storage/schemas';
+} from '@fiusdev/core/config';
+import { StorageSchema } from '@fiusdev/storage/schemas';
 import { z } from 'zod';
 import { HooksConfigSchema } from './hooks.js';
 import { CompactionConfigSchema, DEFAULT_COMPACTION_CONFIG } from './compaction.js';
@@ -79,7 +79,7 @@ export function createAgentConfigSchema() {
             image: z
                 .string()
                 .describe(
-                    'Image package that provides required providers (e.g., "@fius/image-local"). Optional - platform can load images via CLI flag, environment variable, or static imports.'
+                    'Image package that provides required providers (e.g., "@fiusdev/image-local"). Optional - platform can load images via CLI flag, environment variable, or static imports.'
                 )
                 .optional(),
 

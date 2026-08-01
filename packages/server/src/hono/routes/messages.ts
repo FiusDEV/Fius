@@ -1,8 +1,8 @@
 import { OpenAPIHono, createRoute, type RouteConfigToTypedResponse, z } from '@hono/zod-openapi';
 import { streamSSE } from 'hono/streaming';
 import type { ToSchema } from 'hono/types';
-import { HostRuntimeContextSchema, type StreamingEvent } from '@fius/core';
-import { LLM_PROVIDERS } from '@fius/llm';
+import { HostRuntimeContextSchema, type StreamingEvent } from '@fiusdev/core';
+import { LLM_PROVIDERS } from '@fiusdev/llm';
 import {
     ApiErrorResponseSchema,
     BadRequestErrorResponse,

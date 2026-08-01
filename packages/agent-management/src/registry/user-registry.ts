@@ -10,7 +10,7 @@ import {
     deriveDisplayName,
 } from './types.js';
 import { RegistryError } from './errors.js';
-import { logger } from '@fius/core';
+import { logger } from '@fiusdev/core';
 
 const USER_REGISTRY_FILENAME = 'user-agent-registry.json';
 

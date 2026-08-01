@@ -1,6 +1,6 @@
 {
-  "name": "@fius/agent-management",
-  "version": "1.0.0",
+  "name": "@fiusdev/agent-management",
+  "version": "0.3.4",
   "private": false,
   "type": "module",
   "main": "./dist/index.js",
@@ -20,11 +20,11 @@
     "./package.json": "./package.json"
   },
   "dependencies": {
-    "@fius/agent-config": "workspace:*",
-    "@fius/core": "workspace:*",
-    "@fius/llm": "workspace:*",
-    "@fius/orchestration": "workspace:*",
-    "@fius/tools-builtins": "workspace:*",
+    "@fiusdev/agent-config": "workspace:*",
+    "@fiusdev/core": "workspace:*",
+    "@fiusdev/llm": "workspace:*",
+    "@fiusdev/orchestration": "workspace:*",
+    "@fiusdev/tools-builtins": "workspace:*",
     "yaml": "^2.8.3",
     "zod": "^4.3.6"
   },

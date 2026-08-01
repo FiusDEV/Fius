@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { client } from '@/lib/client';
 import { queryKeys } from '@/lib/queryKeys';
 import { useApprovalStore } from '@/lib/stores';
-import { ApprovalStatus } from '@fius/core';
+import { ApprovalStatus } from '@fiusdev/core';
 
 type ApprovalPayload = Parameters<(typeof client.api.approvals)[':approvalId']['$post']>[0]['json'];
 

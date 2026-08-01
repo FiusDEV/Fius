@@ -6,7 +6,7 @@ import type {
     AfterToolResultPayload,
     HookResult,
     HookExecutionContext,
-} from '@fius/core';
+} from '@fiusdev/core';
 import { promises as fs } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';

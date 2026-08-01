@@ -11,8 +11,8 @@
  */
 
 import { create } from 'zustand';
-import { ApprovalStatus } from '@fius/core';
-import type { ApprovalRequest, ApprovalResponse } from '@fius/core';
+import { ApprovalStatus } from '@fiusdev/core';
+import type { ApprovalRequest, ApprovalResponse } from '@fiusdev/core';
 
 export interface PendingApproval {
     request: ApprovalRequest;

@@ -23,7 +23,7 @@ import {
     generateWebAppCSS,
     generateAppReadme,
 } from '../utils/template-engine.js';
-import { getExecutionContext } from '@fius/agent-management';
+import { getExecutionContext } from '@fiusdev/agent-management';
 
 type AppType = 'script' | 'webapp';
 
@@ -168,14 +168,14 @@ async function scaffoldCodeFirstDI(
     const fiusDependencyVersion = isFiusSource ? 'workspace:*' : versionRange;
 
     const dependencies = [
-        `@fius/core@${fiusDependencyVersion}`,
-        `@fius/storage@${fiusDependencyVersion}`,
+        `@fiusdev/core@${fiusDependencyVersion}`,
+        `@fiusdev/storage@${fiusDependencyVersion}`,
         'dotenv',
         'tsx',
     ];
 
     if (appType === 'webapp') {
-        dependencies.push(`@fius/server@${fiusDependencyVersion}`);
+        dependencies.push(`@fiusdev/server@${fiusDependencyVersion}`);
     }
 
     await installDependencies(

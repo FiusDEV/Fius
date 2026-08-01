@@ -5,7 +5,7 @@
  * the sub-agent should use. All requests go through the Fius gateway.
  */
 
-import type { LLMConfig } from '@fius/core';
+import type { LLMConfig } from '@fiusdev/core';
 
 /**
  * Result of resolving a sub-agent's LLM configuration

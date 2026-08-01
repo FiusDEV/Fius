@@ -1,5 +1,5 @@
 import type { Command } from 'commander';
-import type { FiusAgent } from '@fius/core';
+import type { FiusAgent } from '@fiusdev/core';
 
 export type BootstrapAgentMode = 'headless-run' | 'non-interactive';
 

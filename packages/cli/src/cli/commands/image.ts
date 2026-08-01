@@ -8,7 +8,7 @@ import {
     parseImageSpecifier,
     removeImageFromStore,
     setActiveImageVersion,
-} from '@fius/agent-management';
+} from '@fiusdev/agent-management';
 import { installImageToStore } from '../utils/image-store.js';
 
 const ImageInstallCommandSchema = z

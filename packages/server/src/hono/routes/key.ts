@@ -5,7 +5,7 @@ import {
     getProviderKeyStatus,
     saveProviderApiKey,
     resolveApiKeyForProvider,
-} from '@fius/agent-management';
+} from '@fiusdev/agent-management';
 import type { OpenAPIRouteSchema } from '../types.js';
 
 function maskApiKey(key: string): string {

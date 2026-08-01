@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { serverRegistry } from '@/lib/serverRegistry';
-import type { ServerRegistryEntry, ServerRegistryFilter } from '@fius/registry';
+import type { ServerRegistryEntry, ServerRegistryFilter } from '@fiusdev/registry';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from './ui/dialog';
 import { Button } from './ui/button';
 import { Input } from './ui/input';

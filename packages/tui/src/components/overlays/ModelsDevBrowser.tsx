@@ -15,9 +15,9 @@ import { useTerminalSize } from '../../hooks/useTerminalSize.js';
 import { getCachedStringWidth, stripUnsafeCharacters, toCodePoints } from '../../utils/textUtils.js';
 import { getMaxVisibleItemsForTerminalRows } from '../../utils/overlaySizing.js';
 import { HintBar } from '../shared/HintBar.js';
-import { saveCustomModel } from '@fius/agent-management';
-import type { CustomModel } from '@fius/agent-management';
-import type { LLMProvider } from '@fius/llm';
+import { saveCustomModel } from '@fiusdev/agent-management';
+import type { CustomModel } from '@fiusdev/agent-management';
+import type { LLMProvider } from '@fiusdev/llm';
 
 interface ModelsDevProvider {
     id: string;

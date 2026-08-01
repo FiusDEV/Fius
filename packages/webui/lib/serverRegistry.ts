@@ -1,5 +1,5 @@
-import type { ServerRegistryEntry, ServerRegistryFilter } from '@fius/registry';
-import { serverRegistry as sharedRegistry } from '@fius/registry';
+import type { ServerRegistryEntry, ServerRegistryFilter } from '@fiusdev/registry';
+import { serverRegistry as sharedRegistry } from '@fiusdev/registry';
 import { client } from './client';
 
 /**
@@ -165,7 +165,7 @@ export class ServerRegistryService {
 
     /**
      * Built-in registry entries for popular MCP servers
-     * Loaded from shared @fius/registry package
+     * Loaded from shared @fiusdev/registry package
      */
     private async getBuiltinEntries(): Promise<ServerRegistryEntry[]> {
         return sharedRegistry.getEntries();

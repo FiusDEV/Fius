@@ -296,7 +296,7 @@ const ToolBrowser = forwardRef<ToolBrowserHandle, ToolBrowserProps>(function Too
         } else if (effectiveTarget === 'global') {
             try {
                 const { updateAgentPreferences, saveAgentPreferences, agentPreferencesExist } =
-                    await import('@fius/agent-management');
+                    await import('@fiusdev/agent-management');
 
                 if (agentPreferencesExist(agent.config.agentId)) {
                     await updateAgentPreferences(agent.config.agentId, {

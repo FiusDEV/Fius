@@ -6,10 +6,10 @@
  */
 
 import { nanoid } from 'nanoid';
-import type { AgentEventBus } from '@fius/core/events';
-import type { Logger } from '@fius/core/logger';
-import type { ToolStateStore } from '@fius/core/storage';
-import { FiusRuntimeError } from '@fius/core/errors';
+import type { AgentEventBus } from '@fiusdev/core/events';
+import type { Logger } from '@fiusdev/core/logger';
+import type { ToolStateStore } from '@fiusdev/core/storage';
+import { FiusRuntimeError } from '@fiusdev/core/errors';
 import { TodoError } from './errors.js';
 import type { Todo, TodoInput, TodoUpdateResult, TodoConfig, TodoStatus } from './types.js';
 import { TODO_STATUS_VALUES } from './types.js';

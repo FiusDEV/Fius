@@ -1,5 +1,5 @@
 import * as p from '@clack/prompts';
-import type { AgentConfig, ToolFactoryEntry } from '@fius/agent-config';
+import type { AgentConfig, ToolFactoryEntry } from '@fiusdev/agent-config';
 import {
     createFiusAgentFromConfig,
     deriveDisplayName,
@@ -11,8 +11,8 @@ import {
     type ProjectRegistry as WorkspaceProjectRegistry,
     type ProjectRegistryEntry as WorkspaceProjectRegistryEntry,
     writeConfigFile,
-} from '@fius/agent-management';
-import type { LLMProvider } from '@fius/llm';
+} from '@fiusdev/agent-management';
+import type { LLMProvider } from '@fiusdev/llm';
 import chalk from 'chalk';
 import type { Command } from 'commander';
 import { spawn } from 'node:child_process';
@@ -534,7 +534,7 @@ async function generateAgentSystemPromptFromDescription(
             skipPluginDiscovery: true,
         },
         config: {
-            image: '@fius/image-local',
+            image: '@fiusdev/image-local',
             systemPrompt: buildSystemPromptConfig(AGENT_PROMPT_GENERATOR_SYSTEM_PROMPT),
             llm: {
                 provider: effectiveLLM.provider,
@@ -1077,7 +1077,7 @@ async function buildAgentConfig(
     };
 
     return {
-        image: '@fius/image-local',
+        image: '@fiusdev/image-local',
         systemPrompt: buildSystemPromptConfig(systemPrompt),
         greeting:
             options.greeting ??

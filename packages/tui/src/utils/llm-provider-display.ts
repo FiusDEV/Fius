@@ -1,5 +1,5 @@
-import { parseCodexBaseURL } from '@fius/core';
-import type { LLMProvider } from '@fius/llm';
+import { parseCodexBaseURL } from '@fiusdev/core';
+import type { LLMProvider } from '@fiusdev/llm';
 
 const LLM_PROVIDER_DISPLAY_NAMES: Record<LLMProvider, string> = {
     openai: 'OpenAI',

@@ -7,8 +7,8 @@ import type {
     ContentPart,
     McpConnectionStatus,
     McpServerType,
-} from '@fius/core';
-import type { LLMProvider, ReasoningVariant } from '@fius/llm';
+} from '@fiusdev/core';
+import type { LLMProvider, ReasoningVariant } from '@fiusdev/llm';
 
 
 export interface UpdateInfo {

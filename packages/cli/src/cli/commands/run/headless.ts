@@ -5,7 +5,7 @@ import {
     type SanitizedToolResult,
     type ShellDisplayData,
     type StreamingEvent,
-} from '@fius/core';
+} from '@fiusdev/core';
 
 const HEADLESS_TOOL_OUTPUT_MAX_LINES = 20;
 const HEADLESS_SECTION_SEPARATOR = '========================================';

@@ -1,6 +1,6 @@
-import type { ToolFactory } from '@fius/agent-config';
-import type { ToolExecutionContext } from '@fius/core/tools';
-import type { WorkspaceHandle } from '@fius/core/workspace';
+import type { ToolFactory } from '@fiusdev/agent-config';
+import type { ToolExecutionContext } from '@fiusdev/core/tools';
+import type { WorkspaceHandle } from '@fiusdev/core/workspace';
 import { ProcessService } from './process-service.js';
 import { createBashExecTool } from './bash-exec-tool.js';
 import { createBashOutputTool } from './bash-output-tool.js';
@@ -10,7 +10,7 @@ import { CommandValidator } from './command-validator.js';
 import { ProcessError } from './errors.js';
 import type { ExecuteOptions, ProcessConfig, ProcessOutput } from './types.js';
 import type { ProcessCommandService } from './bash-exec-tool.js';
-import { WorkspaceErrorCodes } from '@fius/core/workspace';
+import { WorkspaceErrorCodes } from '@fiusdev/core/workspace';
 
 export const processToolsFactory: ToolFactory<ProcessToolsConfig> = {
     configSchema: ProcessToolsConfigSchema,

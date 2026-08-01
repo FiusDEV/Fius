@@ -8,7 +8,7 @@ import {
     listInstalledAgents as listInstalledAgentsCore,
     type InstallOptions,
     type AgentMetadata,
-} from '@fius/agent-management';
+} from '@fiusdev/agent-management';
 
 /**
  * Singleton AgentManager instance for CLI commands

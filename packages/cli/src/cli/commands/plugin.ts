@@ -13,7 +13,7 @@ import {
     listMarketplaces,
     listAllMarketplacePlugins,
     installPluginFromMarketplace,
-} from '@fius/agent-management';
+} from '@fiusdev/agent-management';
 
 
 

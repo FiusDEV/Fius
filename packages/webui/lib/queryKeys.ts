@@ -12,7 +12,7 @@
  * - queryClient.invalidateQueries({ queryKey: queryKeys.agents.all })
  */
 
-import type { ServerRegistryFilter } from '@fius/registry';
+import type { ServerRegistryFilter } from '@fiusdev/registry';
 
 export const queryKeys = {
     agents: {

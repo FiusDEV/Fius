@@ -15,7 +15,7 @@
  */
 
 import { randomUUID } from 'crypto';
-import type { Logger, GenerateResponse } from '@fius/core';
+import type { Logger, GenerateResponse } from '@fiusdev/core';
 import { AgentPool } from './AgentPool.js';
 import { RuntimeError } from './errors.js';
 import type {

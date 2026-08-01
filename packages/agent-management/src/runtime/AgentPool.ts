@@ -5,7 +5,7 @@
  * lookup and lifecycle management capabilities.
  */
 
-import type { Logger } from '@fius/core';
+import type { Logger } from '@fiusdev/core';
 import type { AgentHandle, AgentStatus, AgentFilter } from './types.js';
 import {
     DEFAULT_MAX_AGENTS,

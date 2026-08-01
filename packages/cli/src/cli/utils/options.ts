@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { getSupportedProviders } from '@fius/llm';
+import { getSupportedProviders } from '@fiusdev/llm';
 import chalk from 'chalk';
 
 export function validateCliOptions(opts: any): void {

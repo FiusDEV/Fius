@@ -2,8 +2,8 @@
  * Storage layer for schedules and execution logs
  */
 
-import type { Logger } from '@fius/core';
-import type { ToolStateStore } from '@fius/core/storage';
+import type { Logger } from '@fiusdev/core';
+import type { ToolStateStore } from '@fiusdev/core/storage';
 import type { Schedule, ExecutionLog } from './types.js';
 import { SchedulerError } from './errors.js';
 

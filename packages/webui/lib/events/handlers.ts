@@ -17,7 +17,7 @@ import type {
     StreamingEvent,
     StreamingEventName,
     ToolPresentationSnapshotV1,
-} from '@fius/core';
+} from '@fiusdev/core';
 import { useChatStore, generateMessageId } from '../stores/chatStore.js';
 import { useAgentStore } from '../stores/agentStore.js';
 import { useApprovalStore } from '../stores/approvalStore.js';

@@ -66,7 +66,7 @@ export function Header({ modelName, sessionId, hasActiveSession, startupInfo, ag
                     setSkillCount(skills.length);
                 }
                 try {
-                    const { listInstalledPlugins } = await import('@fius/agent-management');
+                    const { listInstalledPlugins } = await import('@fiusdev/agent-management');
                     const plugins = listInstalledPlugins();
                     setPluginCount(plugins.length);
                 } catch {

@@ -6,8 +6,8 @@
 
 import { z } from 'zod';
 import { promises as fs } from 'fs';
-import { createLocalToolCallHeader, defineTool, truncateForHeader } from '@fius/core/tools';
-import type { FileDisplayData, Tool, ToolExecutionContext } from '@fius/core/tools';
+import { createLocalToolCallHeader, defineTool, truncateForHeader } from '@fiusdev/core/tools';
+import type { FileDisplayData, Tool, ToolExecutionContext } from '@fiusdev/core/tools';
 import type { FileSystemServiceGetter } from './file-tool-types.js';
 import { createDirectoryAccessApprovalHandlers, resolveFilePath } from './directory-approval.js';
 import type { ReadFileOptions } from './types.js';

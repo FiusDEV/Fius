@@ -4,13 +4,13 @@ import React, { useState, forwardRef, useRef, useImperativeHandle, useEffect } f
 import { Box, Text } from 'ink';
 import type { Key } from '../../hooks/useInputOrchestrator.js';
 import { BaseSelector, type BaseSelectorHandle } from '../base/BaseSelector.js';
-import type { SkillSummary } from '@fius/core';
+import type { SkillSummary } from '@fiusdev/core';
 import {
     GlobalSkillSource,
     enablePersistedSkill,
     disablePersistedSkill,
     removePersistedSkill,
-} from '@fius/core';
+} from '@fiusdev/core';
 
 export type SkillAction = 'toggle' | 'remove' | 'read' | 'close';
 

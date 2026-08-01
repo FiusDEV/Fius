@@ -6,7 +6,7 @@
  */
 
 import { AlertCircle } from 'lucide-react';
-import type { ToolDisplayData } from '@fius/core';
+import type { ToolDisplayData } from '@fiusdev/core';
 import { DiffRenderer } from './DiffRenderer';
 import { ShellRenderer } from './ShellRenderer';
 import { SearchRenderer } from './SearchRenderer';

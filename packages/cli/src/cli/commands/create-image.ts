@@ -22,7 +22,7 @@ import {
     generateExampleCompaction,
 } from '../utils/template-engine.js';
 import fs from 'fs-extra';
-import { getExecutionContext } from '@fius/agent-management';
+import { getExecutionContext } from '@fiusdev/agent-management';
 
 export async function createImage(name?: string): Promise<string> {
     console.log(chalk.blue('рџЋЁ Creating a Fius image - a distributable agent harness package\n'));
@@ -59,8 +59,8 @@ export async function createImage(name?: string): Promise<string> {
                 message: 'Which image to extend?',
                 options: [
                     {
-                        value: '@fius/image-local',
-                        label: '@fius/image-local (local development)',
+                        value: '@fiusdev/image-local',
+                        label: '@fiusdev/image-local (local development)',
                     },
                     { value: 'custom', label: 'Custom npm package...' },
                 ],
@@ -174,15 +174,15 @@ export async function createImage(name?: string): Promise<string> {
         const fiusDependencyVersion = isFiusSource ? 'workspace:*' : versionRange;
 
         const dependencies: string[] = [
-            `@fius/core@${fiusDependencyVersion}`,
-            `@fius/agent-config@${fiusDependencyVersion}`,
-            `@fius/storage@${fiusDependencyVersion}`,
+            `@fiusdev/core@${fiusDependencyVersion}`,
+            `@fiusdev/agent-config@${fiusDependencyVersion}`,
+            `@fiusdev/storage@${fiusDependencyVersion}`,
             'zod@^3.25.0',
         ];
         const devDependencies = [
             'typescript@^5.0.0',
             '@types/node@^20.0.0',
-            `@fius/image-bundler@${fiusDependencyVersion}`,
+            `@fiusdev/image-bundler@${fiusDependencyVersion}`,
         ];
 
         if (baseImage) {

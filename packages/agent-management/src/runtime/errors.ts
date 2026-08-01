@@ -1,4 +1,4 @@
-import { FiusRuntimeError, ErrorScope, ErrorType } from '@fius/core';
+import { FiusRuntimeError, ErrorScope, ErrorType } from '@fiusdev/core';
 import { RuntimeErrorCode } from './error-codes.js';
 
 /**

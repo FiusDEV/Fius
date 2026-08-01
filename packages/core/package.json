@@ -1,207 +1,207 @@
 {
-    "name": "@fius/core",
-    "version": "1.0.0",
-    "private": false,
-    "type": "module",
-    "main": "./dist/index.js",
-    "module": "./dist/index.js",
-    "types": "./dist/index.d.ts",
-    "exports": {
-        ".": {
-            "types": "./dist/index.d.ts",
-            "browser": {
-                "import": "./dist/index.browser.js",
-                "require": "./dist/index.browser.cjs"
-            },
-            "default": {
-                "import": "./dist/index.js",
-                "require": "./dist/index.cjs"
-            }
-        },
-        "./package.json": "./package.json",
-        "./utils/path.js": {
-            "import": "./dist/utils/path.js",
-            "require": "./dist/utils/path.cjs"
-        },
-        "./agent": {
-            "types": "./dist/agent/index.d.ts",
-            "import": "./dist/agent/index.js",
-            "require": "./dist/agent/index.cjs"
-        },
-        "./approval": {
-            "types": "./dist/approval/index.d.ts",
-            "import": "./dist/approval/index.js",
-            "require": "./dist/approval/index.cjs"
-        },
-        "./config": {
-            "types": "./dist/config/index.d.ts",
-            "import": "./dist/config/index.js",
-            "require": "./dist/config/index.cjs"
-        },
-        "./context": {
-            "types": "./dist/context/index.d.ts",
-            "import": "./dist/context/index.js",
-            "require": "./dist/context/index.cjs"
-        },
-        "./context/compaction": {
-            "types": "./dist/context/compaction/index.d.ts",
-            "import": "./dist/context/compaction/index.js",
-            "require": "./dist/context/compaction/index.cjs"
-        },
-        "./errors": {
-            "types": "./dist/errors/index.d.ts",
-            "import": "./dist/errors/index.js",
-            "require": "./dist/errors/index.cjs"
-        },
-        "./events": {
-            "types": "./dist/events/index.d.ts",
-            "import": "./dist/events/index.js",
-            "require": "./dist/events/index.cjs"
-        },
-        "./hooks": {
-            "types": "./dist/hooks/index.d.ts",
-            "import": "./dist/hooks/index.js",
-            "require": "./dist/hooks/index.cjs"
-        },
-        "./logger": {
-            "types": "./dist/logger/index.d.ts",
-            "import": "./dist/logger/index.js",
-            "require": "./dist/logger/index.cjs"
-        },
-        "./llm": {
-            "types": "./dist/llm/index.d.ts",
-            "import": "./dist/llm/index.js",
-            "require": "./dist/llm/index.cjs"
-        },
-        "./mcp": {
-            "types": "./dist/mcp/index.d.ts",
-            "import": "./dist/mcp/index.js",
-            "require": "./dist/mcp/index.cjs"
-        },
-        "./memory": {
-            "types": "./dist/memory/index.d.ts",
-            "import": "./dist/memory/index.js",
-            "require": "./dist/memory/index.cjs"
-        },
-        "./prompts": {
-            "types": "./dist/prompts/index.d.ts",
-            "import": "./dist/prompts/index.js",
-            "require": "./dist/prompts/index.cjs"
-        },
-        "./resources": {
-            "types": "./dist/resources/index.d.ts",
-            "import": "./dist/resources/index.js",
-            "require": "./dist/resources/index.cjs"
-        },
-        "./runtime": {
-            "types": "./dist/runtime/index.d.ts",
-            "import": "./dist/runtime/index.js",
-            "require": "./dist/runtime/index.cjs"
-        },
-        "./search": {
-            "types": "./dist/search/index.d.ts",
-            "import": "./dist/search/index.js",
-            "require": "./dist/search/index.cjs"
-        },
-        "./skills": {
-            "types": "./dist/skills/index.d.ts",
-            "import": "./dist/skills/index.js",
-            "require": "./dist/skills/index.cjs"
-        },
-        "./session": {
-            "types": "./dist/session/index.d.ts",
-            "import": "./dist/session/index.js",
-            "require": "./dist/session/index.cjs"
-        },
-        "./session/title-generator": {
-            "types": "./dist/session/title-generator.d.ts",
-            "import": "./dist/session/title-generator.js",
-            "require": "./dist/session/title-generator.cjs"
-        },
-        "./storage": {
-            "types": "./dist/storage/index.d.ts",
-            "import": "./dist/storage/index.js",
-            "require": "./dist/storage/index.cjs"
-        },
-        "./systemPrompt": {
-            "types": "./dist/systemPrompt/index.d.ts",
-            "import": "./dist/systemPrompt/index.js",
-            "require": "./dist/systemPrompt/index.cjs"
-        },
-        "./tools": {
-            "types": "./dist/tools/index.d.ts",
-            "import": "./dist/tools/index.js",
-            "require": "./dist/tools/index.cjs"
-        },
-        "./workspace": {
-            "types": "./dist/workspace/index.d.ts",
-            "import": "./dist/workspace/index.js",
-            "require": "./dist/workspace/index.cjs"
-        }
+  "name": "@fiusdev/core",
+  "version": "0.3.2",
+  "private": false,
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "browser": {
+        "import": "./dist/index.browser.js",
+        "require": "./dist/index.browser.cjs"
+      },
+      "default": {
+        "import": "./dist/index.js",
+        "require": "./dist/index.cjs"
+      }
     },
-    "dependencies": {
-        "@ai-sdk/amazon-bedrock": "^3.0.71",
-        "@ai-sdk/anthropic": "^2.0.65",
-        "@ai-sdk/cohere": "^2.0.0",
-        "@ai-sdk/google": "^2.0.0",
-        "@ai-sdk/google-vertex": "^3.0.94",
-        "@ai-sdk/groq": "^2.0.0",
-        "@ai-sdk/openai": "^2.0.0",
-        "@ai-sdk/openai-compatible": "^1.0.30",
-        "@ai-sdk/provider": "^2.0.0",
-        "@ai-sdk/xai": "^2.0.0",
-        "@fius/llm": "workspace:*",
-        "@modelcontextprotocol/sdk": "^1.28.0",
-        "ai": "^5.0.0",
-        "boxen": "^7.1.1",
-        "chalk": "^5.4.1",
-        "diff": "^8.0.3",
-        "dotenv": "^16.4.7",
-        "glob": "^12.0.0",
-        "nanoid": "^5.1.6",
-        "winston": "^3.17.0",
-        "yaml": "^2.8.3"
+    "./package.json": "./package.json",
+    "./utils/path.js": {
+      "import": "./dist/utils/path.js",
+      "require": "./dist/utils/path.cjs"
     },
-    "devDependencies": {
-        "@types/diff": "^8.0.0",
-        "@types/json-schema": "^7.0.15",
-        "zod": "^4.3.6"
+    "./agent": {
+      "types": "./dist/agent/index.d.ts",
+      "import": "./dist/agent/index.js",
+      "require": "./dist/agent/index.cjs"
     },
-    "peerDependencies": {
-        "better-sqlite3": "^11.10.0",
-        "ioredis": "^5.7.0",
-        "pg": "^8.15.4",
-        "tsx": "^4.19.2",
-        "zod": "^4.3.6"
+    "./approval": {
+      "types": "./dist/approval/index.d.ts",
+      "import": "./dist/approval/index.js",
+      "require": "./dist/approval/index.cjs"
     },
-    "peerDependenciesMeta": {
-        "better-sqlite3": {
-            "optional": true
-        },
-        "ioredis": {
-            "optional": true
-        },
-        "pg": {
-            "optional": true
-        },
-        "tsx": {
-            "optional": true
-        }
+    "./config": {
+      "types": "./dist/config/index.d.ts",
+      "import": "./dist/config/index.js",
+      "require": "./dist/config/index.cjs"
     },
-    "scripts": {
-        "build": "cross-env NODE_OPTIONS=--max-old-space-size=4096 tsup && node ../../scripts/clean-tsbuildinfo.mjs && cross-env NODE_OPTIONS=--max-old-space-size=4096 tsc -b tsconfig.json --emitDeclarationOnly",
-        "dev": "tsup --watch",
-        "typecheck": "tsc -p tsconfig.typecheck.json --noEmit",
-        "lint": "eslint . --ext .ts"
+    "./context": {
+      "types": "./dist/context/index.d.ts",
+      "import": "./dist/context/index.js",
+      "require": "./dist/context/index.cjs"
     },
-    "files": [
-        "dist",
-        "README.md"
-    ],
-    "publishConfig": {
-        "access": "public"
+    "./context/compaction": {
+      "types": "./dist/context/compaction/index.d.ts",
+      "import": "./dist/context/compaction/index.js",
+      "require": "./dist/context/compaction/index.cjs"
     },
-    "sideEffects": [
-        "./dist/chunk-*.js"
-    ]
+    "./errors": {
+      "types": "./dist/errors/index.d.ts",
+      "import": "./dist/errors/index.js",
+      "require": "./dist/errors/index.cjs"
+    },
+    "./events": {
+      "types": "./dist/events/index.d.ts",
+      "import": "./dist/events/index.js",
+      "require": "./dist/events/index.cjs"
+    },
+    "./hooks": {
+      "types": "./dist/hooks/index.d.ts",
+      "import": "./dist/hooks/index.js",
+      "require": "./dist/hooks/index.cjs"
+    },
+    "./logger": {
+      "types": "./dist/logger/index.d.ts",
+      "import": "./dist/logger/index.js",
+      "require": "./dist/logger/index.cjs"
+    },
+    "./llm": {
+      "types": "./dist/llm/index.d.ts",
+      "import": "./dist/llm/index.js",
+      "require": "./dist/llm/index.cjs"
+    },
+    "./mcp": {
+      "types": "./dist/mcp/index.d.ts",
+      "import": "./dist/mcp/index.js",
+      "require": "./dist/mcp/index.cjs"
+    },
+    "./memory": {
+      "types": "./dist/memory/index.d.ts",
+      "import": "./dist/memory/index.js",
+      "require": "./dist/memory/index.cjs"
+    },
+    "./prompts": {
+      "types": "./dist/prompts/index.d.ts",
+      "import": "./dist/prompts/index.js",
+      "require": "./dist/prompts/index.cjs"
+    },
+    "./resources": {
+      "types": "./dist/resources/index.d.ts",
+      "import": "./dist/resources/index.js",
+      "require": "./dist/resources/index.cjs"
+    },
+    "./runtime": {
+      "types": "./dist/runtime/index.d.ts",
+      "import": "./dist/runtime/index.js",
+      "require": "./dist/runtime/index.cjs"
+    },
+    "./search": {
+      "types": "./dist/search/index.d.ts",
+      "import": "./dist/search/index.js",
+      "require": "./dist/search/index.cjs"
+    },
+    "./skills": {
+      "types": "./dist/skills/index.d.ts",
+      "import": "./dist/skills/index.js",
+      "require": "./dist/skills/index.cjs"
+    },
+    "./session": {
+      "types": "./dist/session/index.d.ts",
+      "import": "./dist/session/index.js",
+      "require": "./dist/session/index.cjs"
+    },
+    "./session/title-generator": {
+      "types": "./dist/session/title-generator.d.ts",
+      "import": "./dist/session/title-generator.js",
+      "require": "./dist/session/title-generator.cjs"
+    },
+    "./storage": {
+      "types": "./dist/storage/index.d.ts",
+      "import": "./dist/storage/index.js",
+      "require": "./dist/storage/index.cjs"
+    },
+    "./systemPrompt": {
+      "types": "./dist/systemPrompt/index.d.ts",
+      "import": "./dist/systemPrompt/index.js",
+      "require": "./dist/systemPrompt/index.cjs"
+    },
+    "./tools": {
+      "types": "./dist/tools/index.d.ts",
+      "import": "./dist/tools/index.js",
+      "require": "./dist/tools/index.cjs"
+    },
+    "./workspace": {
+      "types": "./dist/workspace/index.d.ts",
+      "import": "./dist/workspace/index.js",
+      "require": "./dist/workspace/index.cjs"
+    }
+  },
+  "dependencies": {
+    "@ai-sdk/amazon-bedrock": "^3.0.71",
+    "@ai-sdk/anthropic": "^2.0.65",
+    "@ai-sdk/cohere": "^2.0.0",
+    "@ai-sdk/google": "^2.0.0",
+    "@ai-sdk/google-vertex": "^3.0.94",
+    "@ai-sdk/groq": "^2.0.0",
+    "@ai-sdk/openai": "^2.0.0",
+    "@ai-sdk/openai-compatible": "^1.0.30",
+    "@ai-sdk/provider": "^2.0.0",
+    "@ai-sdk/xai": "^2.0.0",
+    "@fiusdev/llm": "workspace:*",
+    "@modelcontextprotocol/sdk": "^1.28.0",
+    "ai": "^5.0.0",
+    "boxen": "^7.1.1",
+    "chalk": "^5.4.1",
+    "diff": "^8.0.3",
+    "dotenv": "^16.4.7",
+    "glob": "^12.0.0",
+    "nanoid": "^5.1.6",
+    "winston": "^3.17.0",
+    "yaml": "^2.8.3"
+  },
+  "devDependencies": {
+    "@types/diff": "^8.0.0",
+    "@types/json-schema": "^7.0.15",
+    "zod": "^4.3.6"
+  },
+  "peerDependencies": {
+    "better-sqlite3": "^11.10.0",
+    "ioredis": "^5.7.0",
+    "pg": "^8.15.4",
+    "tsx": "^4.19.2",
+    "zod": "^4.3.6"
+  },
+  "peerDependenciesMeta": {
+    "better-sqlite3": {
+      "optional": true
+    },
+    "ioredis": {
+      "optional": true
+    },
+    "pg": {
+      "optional": true
+    },
+    "tsx": {
+      "optional": true
+    }
+  },
+  "scripts": {
+    "build": "cross-env NODE_OPTIONS=--max-old-space-size=4096 tsup && node ../../scripts/clean-tsbuildinfo.mjs && cross-env NODE_OPTIONS=--max-old-space-size=4096 tsc -b tsconfig.json --emitDeclarationOnly",
+    "dev": "tsup --watch",
+    "typecheck": "tsc -p tsconfig.typecheck.json --noEmit",
+    "lint": "eslint . --ext .ts"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "sideEffects": [
+    "./dist/chunk-*.js"
+  ]
 }

@@ -1,5 +1,5 @@
 import { UIResourceRenderer } from '@mcp-ui/client';
-import type { UIResourcePart } from '@fius/core';
+import type { UIResourcePart } from '@fiusdev/core';
 import { AlertTriangle } from 'lucide-react';
 
 interface UIResourceRendererWrapperProps {

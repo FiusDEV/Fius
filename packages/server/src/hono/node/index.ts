@@ -2,8 +2,8 @@ import { createServer, type IncomingMessage, type ServerResponse } from 'node:ht
 import { Readable } from 'node:stream';
 import type { ReadableStream as NodeReadableStream } from 'stream/web';
 import type { FiusApp } from '../types.js';
-import type { FiusAgent } from '@fius/core';
-import { logger } from '@fius/core';
+import type { FiusAgent } from '@fiusdev/core';
+import { logger } from '@fiusdev/core';
 import type { WebhookEventSubscriber } from '../../events/webhook-subscriber.js';
 
 type FetchRequest = globalThis.Request;

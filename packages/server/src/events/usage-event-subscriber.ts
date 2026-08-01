@@ -5,8 +5,8 @@ import {
     logger,
     type AgentEventMap,
     type Database,
-} from '@fius/core';
-import { calculateCostBreakdown, getModelPricing } from '@fius/llm';
+} from '@fiusdev/core';
+import { calculateCostBreakdown, getModelPricing } from '@fiusdev/llm';
 import type { EventSubscriber } from './types.js';
 import type {
     UsageEvent,

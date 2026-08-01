@@ -10,7 +10,7 @@
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import { existsSync } from 'node:fs';
-import type { Logger } from '@fius/core/logger';
+import type { Logger } from '@fiusdev/core/logger';
 import { PlanMetaSchema } from './types.js';
 import type { Plan, PlanMeta, PlanServiceOptions, PlanUpdateResult } from './types.js';
 import { PlanError } from './errors.js';

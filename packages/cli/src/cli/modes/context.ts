@@ -1,5 +1,5 @@
-import type { ValidatedAgentConfig } from '@fius/agent-config';
-import type { FiusAgent } from '@fius/core';
+import type { ValidatedAgentConfig } from '@fiusdev/agent-config';
+import type { FiusAgent } from '@fiusdev/core';
 import type { UpdateInfo } from '../utils/version-check.js';
 
 export interface MainModeOptions {

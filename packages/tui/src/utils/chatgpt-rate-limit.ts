@@ -2,8 +2,8 @@ import {
     getDefaultModelForProvider,
     getModelDisplayName,
     isModelValidForProvider,
-} from '@fius/llm';
-import { type CodexRateLimitSnapshot } from '@fius/core';
+} from '@fiusdev/llm';
+import { type CodexRateLimitSnapshot } from '@fiusdev/core';
 
 export const CHATGPT_RATE_LIMIT_WARNING_THRESHOLD = 80;
 

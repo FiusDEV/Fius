@@ -2,8 +2,8 @@ import { FiusRuntimeError } from '../errors/FiusRuntimeError.js';
 import { ErrorScope } from '../errors/types.js';
 import { ErrorType } from '../errors/types.js';
 import { LLMErrorCode } from './error-codes.js';
-import { getSupportedProviders } from '@fius/llm';
-import type { LLMProvider } from '@fius/llm';
+import { getSupportedProviders } from '@fiusdev/llm';
+import type { LLMProvider } from '@fiusdev/llm';
 
 export class LLMError {
     static unknownModel(provider: LLMProvider, model: string) {

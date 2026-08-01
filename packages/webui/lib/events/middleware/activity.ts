@@ -6,7 +6,7 @@
  */
 
 import type { EventMiddleware, ClientEvent } from '../types.js';
-import type { StreamingEventName } from '@fius/core';
+import type { StreamingEventName } from '@fiusdev/core';
 import { useEventLogStore, type EventCategory } from '../../stores/eventLogStore.js';
 
 interface ActivityMapping {

@@ -1,6 +1,6 @@
 import type { SharedV2ProviderOptions } from '@ai-sdk/provider';
 import type { ModelMessage } from 'ai';
-import type { ReasoningVariant } from '@fius/llm';
+import type { ReasoningVariant } from '@fiusdev/llm';
 import type { PreparedHistoryResult } from '../../context/manager.js';
 import type { ToolSet } from '../../tools/types.js';
 

@@ -12,7 +12,7 @@ import type {
     ApprovalRequestDetails,
     ApprovalManager,
     Logger,
-} from '@fius/core';
+} from '@fiusdev/core';
 
 /**
  * Extended metadata type that includes delegation information

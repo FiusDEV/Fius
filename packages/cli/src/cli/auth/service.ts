@@ -1,7 +1,7 @@
 import chalk from 'chalk';
 import { existsSync, promises as fs } from 'fs';
 import { z } from 'zod';
-import { getFiusGlobalPath, logger } from '@fius/core';
+import { getFiusGlobalPath, logger } from '@fiusdev/core';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from './constants.js';
 
 const AUTH_CONFIG_FILE = 'auth.json';

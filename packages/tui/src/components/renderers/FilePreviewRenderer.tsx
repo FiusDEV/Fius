@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Box, Text } from 'ink';
-import type { DiffDisplayData, FileDisplayData } from '@fius/core';
+import type { DiffDisplayData, FileDisplayData } from '@fiusdev/core';
 import { makeRelativePath } from '../../utils/messageFormatting.js';
 import {
     parseUnifiedDiff,

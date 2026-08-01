@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import type { ToolFactory } from '@fius/agent-config';
-import type { Tool } from '@fius/core/tools';
+import type { ToolFactory } from '@fiusdev/agent-config';
+import type { Tool } from '@fiusdev/core/tools';
 import { createAddMcpServerTool } from './implementations/add-mcp-server-tool.js';
 import { createAddSkillTool } from './implementations/add-skill-tool.js';
 import { createAskUserTool } from './implementations/ask-user-tool.js';
@@ -15,7 +15,7 @@ import { createWebSearchTool } from './implementations/exa-web-search-tool.js';
 import { createCodeSearchTool } from './implementations/exa-code-search-tool.js';
 import {
     createGitTool,
-} from '@fius/tools-git';
+} from '@fiusdev/tools-git';
 
 export const BUILTIN_TOOL_NAMES = [
     'ask_user',
@@ -73,6 +73,7 @@ function createToolByName(name: BuiltinToolName): Tool {
         case 'code_search':
             return createCodeSearchTool();
         case 'git':
+            // @ts-ignore - tools-git returns a more specific Tool<ZodObject> type
             return createGitTool();
         default: {
             const exhaustive: never = name;

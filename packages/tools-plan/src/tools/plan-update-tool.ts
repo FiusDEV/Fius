@@ -7,8 +7,8 @@
 
 import { z } from 'zod';
 import { createPatch } from 'diff';
-import { createLocalToolCallHeader, defineTool } from '@fius/core/tools';
-import type { Tool, ToolExecutionContext, DiffDisplayData } from '@fius/core/tools';
+import { createLocalToolCallHeader, defineTool } from '@fiusdev/core/tools';
+import type { Tool, ToolExecutionContext, DiffDisplayData } from '@fiusdev/core/tools';
 import type { PlanServiceGetter } from '../plan-service-getter.js';
 import { PlanError } from '../errors.js';
 
