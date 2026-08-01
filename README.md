@@ -27,7 +27,7 @@ curl -fsSL https://fius.dev/install | bash
 ### Homebrew (macOS / Linux)
 
 ```bash
-brew tap fiusdev/fius
+brew tap Fiusdev/fius https://github.com/FiusDEV/homebrew-fius.git
 brew install fius
 ```
 
