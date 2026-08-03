@@ -111,7 +111,7 @@ async function resolveAuthToken(options: { quiet: boolean }): Promise<string | n
 
     logger.debug('Access token expired or expiring soon, refreshing...');
     if (!options.quiet) {
-        console.log(chalk.cyan('рџ”„ Access token expiring soon, refreshing...'));
+        console.log(chalk.cyan('Access token expiring soon, refreshing...'));
     }
 
     const refreshResult = await refreshAccessToken(auth.refreshToken);
@@ -119,7 +119,7 @@ async function resolveAuthToken(options: { quiet: boolean }): Promise<string | n
     if (!refreshResult) {
         logger.debug('Token refresh failed, removing auth');
         if (!options.quiet) {
-            console.log(chalk.red('вќЊ Token refresh failed. Please login again.'));
+            console.log(chalk.red('Token refresh failed. Please login again.'));
         }
         await removeAuth();
         return null;
@@ -135,7 +135,7 @@ async function resolveAuthToken(options: { quiet: boolean }): Promise<string | n
 
     logger.debug('Token refreshed successfully');
     if (!options.quiet) {
-        console.log(chalk.green('вњ… Access token refreshed successfully'));
+        console.log(chalk.green('Access token refreshed successfully'));
     }
     return refreshResult.accessToken;
 }

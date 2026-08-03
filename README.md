@@ -8,7 +8,7 @@ AI-powered CLI and Web platform for coding, reasoning, and real-time collaborati
 - **Web UI** — browser-based interface with full feature parity
 - **Build & Plan Modes** — switch between execution and planning
 - **MCP Tools** — filesystem, git, browser, and custom tool support
-- **Multi-model** — connect to OpenRouter, OpenAI, Anthropic, Google, and more
+- **Multi-model** — connect to OpenAI, Google, Mistral, DeepSeek, Kimi, xAI, Poolside, and more
 
 ## Install
 
@@ -29,12 +29,6 @@ curl -fsSL https://fius.dev/install | bash
 ```bash
 brew tap Fiusdev/fius https://github.com/FiusDEV/homebrew-fius.git
 brew install fius
-```
-
-### AUR (Arch Linux)
-
-```bash
-paru -S fius
 ```
 
 ## Quick Start

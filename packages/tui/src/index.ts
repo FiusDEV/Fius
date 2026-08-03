@@ -9,7 +9,7 @@ export {
 
 export { setTuiRuntimeServices, type TuiRuntimeServices } from './host/index.js';
 
-export { wasLogoutRequested } from './interactive-commands/exit-handler.js';
+export { wasLogoutRequested, resetLogoutRequested } from './interactive-commands/exit-handler.js';
 
 export {
     getBuildModeAsync,

@@ -23,6 +23,10 @@ export function triggerLogoutExit(): void {
     triggerExit();
 }
 
+export function resetLogoutRequested(): void {
+    logoutRequested = false;
+}
+
 export function wasLogoutRequested(): boolean {
     return logoutRequested;
 }

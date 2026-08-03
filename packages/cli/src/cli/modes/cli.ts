@@ -315,9 +315,10 @@ export async function runCliMode(context: MainModeContext): Promise<void> {
                     buildMode,
                 });
 
-                const { wasLogoutRequested } = await import('@fiusdev/tui');
+                const { wasLogoutRequested, resetLogoutRequested } = await import('@fiusdev/tui');
                 if (!wasLogoutRequested()) break;
 
+                resetLogoutRequested();
                 const { handleLoginCommand } = await import('../commands/auth/login.js');
                 console.log = originalConsole.log;
                 console.error = originalConsole.error;
@@ -331,9 +332,11 @@ export async function runCliMode(context: MainModeContext): Promise<void> {
                     console.warn = noOp;
                     console.info = noOp;
                 }
+                logger.debug('[AUTH-DEBUG] handleLoginCommand completed, creating new session');
 
                 const newSession = await agent.createSession();
                 cliSessionId = newSession.id;
+                logger.debug('[AUTH-DEBUG] New session created, sessionId=' + cliSessionId + ', restarting loop');
             }
         } catch (error) {
             inkError = error;

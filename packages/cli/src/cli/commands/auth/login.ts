@@ -118,7 +118,7 @@ export async function handleDeviceLogin(options: { platformUrl?: string } = {}):
                     if (firstAttempt) {
                         firstAttempt = false;
                         console.log(chalk.cyan('\nOpen the link below in your browser to log in:'));
-                        console.log(chalk.dim(`  вЂў ${url}`));
+                        console.log(chalk.white(`  ${url}`));
 
                         try {
                             if (process.platform === 'win32') {

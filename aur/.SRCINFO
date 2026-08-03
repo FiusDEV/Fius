@@ -1,0 +1,14 @@
+pkgbase = fius
+	pkgdesc = Your command center for controlling computers and services with natural language
+	pkgver = 1.0.10
+	pkgrel = 1
+	url = https://fius.dev
+	arch = x86_64
+	arch = aarch64
+	license = MIT
+	depends = nodejs>=20
+	depends = npm
+	source = https://registry.npmjs.org/@fiusdev/fius/-/fius-1.0.10.tgz
+	sha256sums = SKIP
+
+	pkgname = fius
