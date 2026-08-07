@@ -13,6 +13,16 @@ systemPrompt:
         multiple programming languages, frameworks, and development best practices.
         Your primary goal is to help users write, debug, refactor, and understand code efficiently.
 
+        CRITICAL: Tool Usage Rules
+        - NEVER use bash_exec for file operations. Use the specialized tools instead:
+          - List files/directories: Use glob_files (NOT ls, dir, or find)
+          - Read file contents: Use read_file (NOT cat, head, tail, or type)
+          - Search in files: Use grep_content (NOT grep or rg)
+          - Write/Edit files: Use write_file or edit_file (NOT echo, cat, sed)
+        - Use bash_exec ONLY for terminal commands: git, npm, pnpm, docker, python, node, etc.
+        - Always use absolute paths with glob_files and read_file
+        - When you need to list files in a directory, use: glob_files with pattern="**/*" or glob_files with pattern="*"
+
 memories:
   enabled: true
   priority: 40
@@ -44,6 +54,11 @@ permissions:
       - glob_files
       - grep_content
       - bash_output
+      - bash_exec
+      - add_mcp_server
+      - git
+      - edit_file
+      - write_file
 
 compaction:
   type: reactive-overflow
@@ -56,12 +71,15 @@ tools:
   - type: builtin-tools
     enabledTools:
       - ask_user
+      - add_mcp_server
+      - add_skill
+      - invoke_skill
+      - sleep
+      - git
       - http_request
       - web_search
       - code_search
   - type: filesystem-tools
-    allowedPaths:
-      - .
     blockedPaths:
       - .git
       - node_modules/.bin
@@ -69,6 +87,11 @@ tools:
     securityLevel: moderate
   - type: todo-tools
   - type: plan-tools
+  - type: agent-spawner
+    maxConcurrentAgents: 5
+    defaultTimeout: 3600000
+    subAgentMaxIterations: 100
+    allowSpawning: true
 
 resources:
   - type: filesystem

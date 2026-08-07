@@ -96,7 +96,7 @@ export class SQLiteStore implements Database {
         // Initialize database path from config (full path is provided via enrichment)
         this.dbPath = this.config.path;
 
-        this.logger.info(`SQLite using database file: ${this.dbPath}`);
+        this.logger.debug(`SQLite using database file: ${this.dbPath}`);
 
         // Ensure directory exists
         const dir = dirname(this.dbPath);
@@ -143,7 +143,7 @@ export class SQLiteStore implements Database {
         // Create tables if they don't exist
         this.initializeTables();
 
-        this.logger.info(`✅ SQLite store successfully connected to: ${this.dbPath}`);
+        this.logger.debug(`✅ SQLite store successfully connected to: ${this.dbPath}`);
     }
 
     async disconnect(): Promise<void> {

@@ -27,7 +27,7 @@ export async function getEnvironmentInfo(context: DynamicContributorContext): Pr
         const shell =
             context.environment?.shell ||
             process.env.SHELL ||
-            (os === 'win32' ? 'cmd.exe' : '/bin/sh');
+            (os === 'win32' ? 'powershell.exe' : '/bin/sh');
 
         return `<environment>
   <cwd>${cwd}</cwd>

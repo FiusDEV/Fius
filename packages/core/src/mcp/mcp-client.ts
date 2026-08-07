@@ -130,7 +130,7 @@ export class FiusMcpClient extends EventEmitter implements McpClient {
         const serverName = this.serverAlias
             ? `"${this.serverAlias}" (${command} ${this.resolvedArgs.join(' ')})`
             : `${command} ${this.resolvedArgs.join(' ')}`;
-        this.logger.info(`Connecting to MCP server: ${serverName}`);
+        this.logger.debug(`Connecting to MCP server: ${serverName}`);
 
         const expandedEnv = {
             ...process.env,

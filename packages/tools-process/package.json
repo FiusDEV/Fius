@@ -1,6 +1,6 @@
 {
   "name": "@fiusdev/tools-process",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "description": "Process tools factory for Fius agents",
   "type": "module",
   "main": "./dist/index.js",

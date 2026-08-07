@@ -119,7 +119,7 @@ class LocalWorkspaceProcesses {
         cwd?: string;
     }): Promise<{ stdout: string; stderr: string }> => {
         const cwd = input.cwd === undefined ? this.root : resolveInsideRoot(this.root, input.cwd);
-        const result = await exec(input.command, { cwd });
+        const result = await exec(input.command, { cwd, shell: 'powershell.exe' });
         return {
             stdout: result.stdout,
             stderr: result.stderr,

@@ -70,7 +70,7 @@ export async function installBundledAgent(
     const agentsDir = getAgentsDir(options);
     const bundledRegistryPath = resolveBundledScript('agents/agent-registry.json');
 
-    logger.info(`Installing agent: ${agentId}`);
+    logger.debug(`Installing agent: ${agentId}`);
 
     let bundledRegistry: any;
     try {
@@ -117,7 +117,7 @@ export async function installBundledAgent(
 
         await fs.rename(tempDir, targetDir);
 
-        logger.info(`✓ Installed agent '${agentId}' to ${targetDir}`);
+        logger.debug(`✓ Installed agent '${agentId}' to ${targetDir}`);
 
         const userRegistryPath = getUserRegistryPath(agentsDir);
         const userRegistry = await loadUserRegistry(userRegistryPath);

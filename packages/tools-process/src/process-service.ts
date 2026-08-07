@@ -243,13 +243,22 @@ export class ProcessService {
 
             this.logger.debug(`Executing command: ${command}`);
 
-            // Spawn process with shell and detached for process group support (Unix)
-            const child = spawn(command, {
-                cwd: options.cwd,
-                env: options.env,
-                shell: true,
-                detached: process.platform !== 'win32', // Create process group on Unix
-            });
+            // On Windows, wrap command in PowerShell for Unix-like command support (ls, pwd, find, etc.)
+            const isWin = process.platform === 'win32';
+
+            const child = isWin
+                ? spawn('powershell.exe', ['-NoProfile', '-Command', command], {
+                      cwd: options.cwd,
+                      env: { ...options.env, PYTHONIOENCODING: 'utf-8', PYTHONUTF8: '1', PYTHONLEGACYWINDOWSSTDIO: '0' },
+                      shell: false,
+                      detached: false,
+                  })
+                : spawn(command, {
+                      cwd: options.cwd,
+                      env: { ...options.env, PYTHONIOENCODING: 'utf-8', PYTHONUTF8: '1', PYTHONLEGACYWINDOWSSTDIO: '0' },
+                      shell: true,
+                      detached: true,
+                  });
 
             // Setup timeout
             const timeoutHandle = setTimeout(() => {
@@ -417,13 +426,21 @@ export class ProcessService {
 
         this.logger.debug(`Starting background process ${processId}: ${command}`);
 
-        // Spawn process
-        const child = spawn(command, {
-            cwd,
-            env,
-            shell: true,
-            detached: false,
-        });
+        // On Windows, wrap command in PowerShell for Unix-like command support
+        const isWin = process.platform === 'win32';
+        const child = isWin
+            ? spawn('powershell.exe', ['-NoProfile', '-Command', command], {
+                  cwd,
+                  env: { ...env, PYTHONIOENCODING: 'utf-8', PYTHONUTF8: '1', PYTHONLEGACYWINDOWSSTDIO: '0' },
+                  shell: false,
+                  detached: false,
+              })
+            : spawn(command, {
+                  cwd,
+                  env: { ...env, PYTHONIOENCODING: 'utf-8', PYTHONUTF8: '1', PYTHONLEGACYWINDOWSSTDIO: '0' },
+                  shell: true,
+                  detached: false,
+              });
 
         // Create output buffer
         const outputBuffer: OutputBuffer = {

@@ -221,7 +221,7 @@ export class FiusAgent {
 
         this.agentEventBus = new AgentEventBus();
 
-        this.logger.info('FiusAgent created.');
+        this.logger.debug('FiusAgent created.');
     }
 
     
@@ -231,7 +231,7 @@ export class FiusAgent {
         }
 
         try {
-            this.logger.info('Starting FiusAgent...');
+            this.logger.debug('Starting FiusAgent...');
 
             const services = await createAgentServices(
                 this.config,
@@ -346,7 +346,7 @@ export class FiusAgent {
 
             this._isStarted = true;
             this._isStopped = false;
-            this.logger.info('FiusAgent started successfully.');
+            this.logger.debug('FiusAgent started successfully.');
 
             for (const subscriber of this.eventSubscribers) {
                 subscriber.subscribe(this.agentEventBus);
@@ -371,7 +371,7 @@ export class FiusAgent {
         }
 
         try {
-            this.logger.info('Stopping FiusAgent...');
+            this.logger.debug('Stopping FiusAgent...');
 
             const shutdownErrors: Error[] = [];
 
@@ -442,7 +442,7 @@ export class FiusAgent {
                 const errorMessages = shutdownErrors.map((e) => e.message).join('; ');
                 this.logger.warn(`FiusAgent stopped with some errors: ${errorMessages}`);
             } else {
-                this.logger.info('FiusAgent stopped successfully.');
+                this.logger.debug('FiusAgent stopped successfully.');
             }
 
             this.agentEventBus.emit('agent:stopped');
@@ -2080,7 +2080,7 @@ export class FiusAgent {
                 source: 'mcp',
             });
 
-            this.logger.info(`MCP server '${name}' added and connected successfully`);
+            this.logger.debug(`MCP server '${name}' added and connected successfully`);
 
             addPersistedMcpServer(name, validatedConfig).catch((err) => {
                 this.logger.warn(`Failed to persist MCP server '${name}': ${err}`);

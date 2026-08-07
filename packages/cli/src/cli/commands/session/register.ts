@@ -20,8 +20,13 @@ export function registerSessionCommand({
                     await handleSessionListCommand(agent);
                     safeExit('session list', 0);
                 } catch (err) {
-                    if (err instanceof ExitSignal) throw err;
-                    console.error(`вќЊ fius session list command failed: ${err}`);
+                    if (err instanceof ExitSignal) {
+                        if ((err as ExitSignal).code !== 0) {
+                            console.error(`❌ fius session list command failed: ${err}`);
+                        }
+                        process.exit((err as ExitSignal).code);
+                    }
+                    console.error(`❌ fius session list command failed: ${err}`);
                     safeExit('session list', 1, 'error');
                 } finally {
                     if (agent) {
@@ -45,8 +50,13 @@ export function registerSessionCommand({
                     await handleSessionHistoryCommand(agent, sessionId);
                     safeExit('session history', 0);
                 } catch (err) {
-                    if (err instanceof ExitSignal) throw err;
-                    console.error(`вќЊ fius session history command failed: ${err}`);
+                    if (err instanceof ExitSignal) {
+                        if ((err as ExitSignal).code !== 0) {
+                            console.error(`❌ fius session history command failed: ${err}`);
+                        }
+                        process.exit((err as ExitSignal).code);
+                    }
+                    console.error(`❌ fius session history command failed: ${err}`);
                     safeExit('session history', 1, 'error');
                 } finally {
                     if (agent) {
@@ -70,8 +80,13 @@ export function registerSessionCommand({
                     await handleSessionDeleteCommand(agent, sessionId);
                     safeExit('session delete', 0);
                 } catch (err) {
-                    if (err instanceof ExitSignal) throw err;
-                    console.error(`вќЊ fius session delete command failed: ${err}`);
+                    if (err instanceof ExitSignal) {
+                        if ((err as ExitSignal).code !== 0) {
+                            console.error(`❌ fius session delete command failed: ${err}`);
+                        }
+                        process.exit((err as ExitSignal).code);
+                    }
+                    console.error(`❌ fius session delete command failed: ${err}`);
                     safeExit('session delete', 1, 'error');
                 } finally {
                     if (agent) {

@@ -1,6 +1,6 @@
 {
   "name": "@fiusdev/image-local",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "description": "Local development base image for Fius agents with filesystem and process tools",
   "type": "module",
   "main": "./dist/index.js",

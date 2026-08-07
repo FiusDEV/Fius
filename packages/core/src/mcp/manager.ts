@@ -505,7 +505,7 @@ export class MCPManager {
     
     async initializeFromConfig(serverConfigs: ValidatedServersConfig): Promise<void> {
         if (Object.keys(serverConfigs).length === 0) {
-            this.logger.info('No MCP servers configured - running without external tools');
+            this.logger.debug('No MCP servers configured - running without external tools');
             return;
         }
 
@@ -743,7 +743,7 @@ export class MCPManager {
             disconnectPromises.push(
                 client
                     .disconnect()
-                    .then(() => this.logger.info(`Disconnected client: ${name}`))
+                    .then(() => this.logger.debug(`Disconnected client: ${name}`))
                     .catch((error) =>
                         this.logger.error(`Failed to disconnect client '${name}': ${error}`)
                     )
@@ -759,7 +759,7 @@ export class MCPManager {
         this.promptCache.clear();
         this.resourceCache.clear();
         this.sanitizedNameToServerMap.clear();
-        this.logger.info('Disconnected all clients and cleared caches.');
+        this.logger.debug('Disconnected all clients and cleared caches.');
     }
 
     

@@ -214,7 +214,7 @@ export async function createAgentServices(
 
     const mcpServerCount = Object.keys(config.mcpServers).length;
     if (mcpServerCount === 0) {
-        logger.info('Agent initialized without MCP servers - only built-in capabilities available');
+        logger.debug('Agent initialized without MCP servers - only built-in capabilities available');
     } else {
         logger.debug(`MCPManager initialized with ${mcpServerCount} MCP server(s)`);
     }

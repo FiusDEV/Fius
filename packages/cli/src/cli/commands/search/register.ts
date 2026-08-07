@@ -35,7 +35,7 @@ export function registerSearchCommand({
                             const allowed = new Set(['user', 'assistant', 'system', 'tool']);
                             if (!allowed.has(options.role)) {
                                 console.error(
-                                    `вќЊ Invalid role: ${options.role}. Use one of: user, assistant, system, tool`
+                                    `❌ Invalid role: ${options.role}. Use one of: user, assistant, system, tool`
                                 );
                                 safeExit('search', 1, 'invalid-role');
                             }
@@ -54,7 +54,7 @@ export function registerSearchCommand({
                                 parsed <= 0
                             ) {
                                 console.error(
-                                    `вќЊ Invalid --limit: ${options.limit}. Use a positive integer (e.g., 10).`
+                                    `❌ Invalid --limit: ${options.limit}. Use a positive integer (e.g., 10).`
                                 );
                                 safeExit('search', 1, 'invalid-limit');
                             }
@@ -71,8 +71,13 @@ export function registerSearchCommand({
                         await handleSessionSearchCommand(agent, query, searchOptions);
                         safeExit('search', 0);
                     } catch (err) {
-                        if (err instanceof ExitSignal) throw err;
-                        console.error(`вќЊ fius search command failed: ${err}`);
+                        if (err instanceof ExitSignal) {
+                            if ((err as ExitSignal).code !== 0) {
+                                console.error(`❌ fius search command failed: ${err}`);
+                            }
+                            process.exit((err as ExitSignal).code);
+                        }
+                        console.error(`❌ fius search command failed: ${err}`);
                         safeExit('search', 1, 'error');
                     } finally {
                         if (agent) {

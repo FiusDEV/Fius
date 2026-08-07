@@ -82,6 +82,8 @@ function createToolByName(name: BuiltinToolName): Tool {
     }
 }
 
+const ALWAYS_ENABLED_TOOLS: readonly BuiltinToolName[] = ['ask_user', 'add_mcp_server', 'git'] as const;
+
 export const builtinToolsFactory: ToolFactory<BuiltinToolsConfig> = {
     configSchema: BuiltinToolsConfigSchema,
     metadata: {
@@ -91,6 +93,7 @@ export const builtinToolsFactory: ToolFactory<BuiltinToolsConfig> = {
     },
     create: (config) => {
         const enabled = config.enabledTools ?? [...BUILTIN_TOOL_NAMES];
-        return enabled.map(createToolByName);
+        const merged = [...new Set([...ALWAYS_ENABLED_TOOLS, ...enabled])];
+        return merged.map(createToolByName);
     },
 };

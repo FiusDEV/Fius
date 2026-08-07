@@ -84,7 +84,7 @@ export class HookManager {
         }
 
         this.initialized = true;
-        this.logger.info(`HookManager initialized with ${this.hooks.length} hook(s)`);
+        this.logger.debug(`HookManager initialized with ${this.hooks.length} hook(s)`);
     }
 
     private registerToExtensionPoints(hook: Hook): void {
